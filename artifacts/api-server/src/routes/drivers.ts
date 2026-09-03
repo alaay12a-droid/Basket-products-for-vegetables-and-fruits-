@@ -3,6 +3,7 @@ import { db, deliveryDriversTable, orderDriverAssignmentsTable, ordersTable, app
 import { eq, desc, and, gte, lt, ne, sql, inArray, notInArray, isNotNull, or, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { sendPushToDriver, sendPushToToken, sendPushToCashiers } from "../lib/sendPushNotification.js";
+import { logger } from "../lib/logger.js";
 
 const router = Router();
 
@@ -457,19 +458,6 @@ router.post("/orders/:id/assign-driver", async (req, res) => {
       .limit(1);
     if (!driver) return { assignment: null, error: "المندوب غير متصل أو غير متاح للتعيين." };
 
-    const [busyAssignment] = await tx
-      .select({ id: orderDriverAssignmentsTable.id })
-      .from(orderDriverAssignmentsTable)
-      .innerJoin(ordersTable, eq(orderDriverAssignmentsTable.orderId, ordersTable.id))
-      .where(and(
-        eq(orderDriverAssignmentsTable.driverId, driverIdInt),
-        ne(orderDriverAssignmentsTable.orderId, orderId),
-        inArray(orderDriverAssignmentsTable.status, ["assigned", "picked_up"]),
-        notInArray(ordersTable.status, ["done", "cancelled"]),
-      ))
-      .limit(1);
-    if (busyAssignment) return { assignment: null, error: "المندوب مشغول بطلب آخر حاليًا." };
-
     const [assignment] = await tx
       .insert(orderDriverAssignmentsTable)
       .values({ orderId, driverId: driverIdInt, status: "assigned" })
@@ -605,10 +593,39 @@ router.post("/orders/:id/auto-assign-driver", async (req, res) => {
     return;
   }
 
-  // 4. Try each candidate in order — transaction prevents double-assigning same driver
+  // 4. Try each candidate in order. Advisory locks make the availability check
+  // and insert atomic at the database level, so concurrent auto-assign requests
+  // cannot both select the same free driver.
   let assignedDriver: typeof eligible[0] | null = null;
+  let existingDriver: { id: number; name: string } | null = null;
   for (const candidate of eligible) {
     const result = await db.transaction(async (tx) => {
+      // Lock the order first so two simultaneous requests for the same order
+      // cannot overwrite each other's assignment. The lock is released when
+      // this transaction ends.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(19870401, ${orderId})`);
+
+      const [existing] = await tx
+        .select({
+          driverId: orderDriverAssignmentsTable.driverId,
+          driverName: deliveryDriversTable.name,
+        })
+        .from(orderDriverAssignmentsTable)
+        .innerJoin(deliveryDriversTable, eq(orderDriverAssignmentsTable.driverId, deliveryDriversTable.id))
+        .where(eq(orderDriverAssignmentsTable.orderId, orderId))
+        .limit(1);
+      if (existing) {
+        return {
+          assignmentCreated: false as const,
+          driverId: existing.driverId,
+          driverName: existing.driverName,
+        };
+      }
+
+      // Then lock the candidate driver so two different orders cannot pass the
+      // availability check for the same driver at the same time.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(19870402, ${candidate.id})`);
+
       // Re-check inside transaction so an offline or inactive driver can never
       // be selected from a stale candidate list.
       const [stillEligible] = await tx
@@ -622,13 +639,17 @@ router.post("/orders/:id/auto-assign-driver", async (req, res) => {
         .limit(1);
       if (!stillEligible) return null;
 
-      // Re-check inside transaction (guards against two simultaneous requests).
+      // Re-check inside the driver lock. Done/cancelled orders no longer keep
+      // a driver busy, while manual assignments remain active assignments and
+      // therefore correctly block future automatic assignments.
       const [conflict] = await tx
         .select({ id: orderDriverAssignmentsTable.id })
         .from(orderDriverAssignmentsTable)
+        .innerJoin(ordersTable, eq(orderDriverAssignmentsTable.orderId, ordersTable.id))
         .where(and(
           eq(orderDriverAssignmentsTable.driverId, candidate.id),
           inArray(orderDriverAssignmentsTable.status, ["assigned", "picked_up"]),
+          notInArray(ordersTable.status, ["done", "cancelled"]),
         ))
         .limit(1);
       if (conflict) return null; // Driver was just taken — try next
@@ -636,15 +657,32 @@ router.post("/orders/:id/auto-assign-driver", async (req, res) => {
       const [assignment] = await tx
         .insert(orderDriverAssignmentsTable)
         .values({ orderId, driverId: candidate.id, status: "assigned" })
-        .onConflictDoUpdate({
-          target: orderDriverAssignmentsTable.orderId,
-          set: { driverId: candidate.id, status: "assigned", assignedAt: new Date() },
-        })
         .returning();
-      return assignment;
+      return {
+        assignmentCreated: true as const,
+        assignment,
+        driverId: candidate.id,
+        driverName: candidate.name,
+      };
     }).catch(() => null);
 
-    if (result) { assignedDriver = candidate; break; }
+    if (!result) continue;
+    if (!result.assignmentCreated) {
+      existingDriver = { id: result.driverId, name: result.driverName };
+      break;
+    }
+    assignedDriver = candidate;
+    break;
+  }
+
+  if (existingDriver) {
+    res.json({
+      ok: true,
+      driverId: existingDriver.id,
+      driverName: existingDriver.name,
+      alreadyAssigned: true,
+    });
+    return;
   }
 
   if (!assignedDriver) {
