@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useDeferredValue, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useDeferredValue, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,14 @@ import {
   Platform,
   Linking,
   ScrollView,
+  Modal,
 } from "react-native";
 import { Image } from "expo-image";
 import { FlashList } from "@shopify/flash-list";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { useMenu } from "@/hooks/useMenu";
 import { useCartActions, useCartState } from "@/context/CartContext";
@@ -172,6 +173,7 @@ const ModernItemCard = React.memo(({
 export default function ModernMenuScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const router = useRouter();
   const { language } = useLanguage();
   const isEn = language === "en";
   const { categories, loading, refreshIfStale } = useMenu();
@@ -185,6 +187,22 @@ export default function ModernMenuScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
   const [selectedItem, setSelectedItem] = useState<RawItem | null>(null);
+  const [showStaffPicker, setShowStaffPicker] = useState(false);
+  const logoTapCount = useRef(0);
+  const logoTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogoTap = useCallback(() => {
+    logoTapCount.current += 1;
+    if (logoTapTimer.current) clearTimeout(logoTapTimer.current);
+    if (logoTapCount.current >= 3) {
+      logoTapCount.current = 0;
+      setShowStaffPicker(true);
+    } else {
+      logoTapTimer.current = setTimeout(() => {
+        logoTapCount.current = 0;
+      }, 1200);
+    }
+  }, []);
 
   useFocusEffect(useCallback(() => {
     refreshIfStale();
@@ -268,7 +286,14 @@ export default function ModernMenuScreen() {
             {isEn ? info.locationEn || info.location : info.location} {isOpen ? "" : `· ${closedMessage}`}
           </Text>
         </View>
-        <Feather name="map-pin" size={20} color="#8FD9B8" />
+        <TouchableOpacity
+          onPress={handleLogoTap}
+          activeOpacity={1}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityLabel="موقع التوصيل"
+        >
+          <Feather name="map-pin" size={20} color="#8FD9B8" />
+        </TouchableOpacity>
       </View>
 
       <View style={[styles.searchWrap, { backgroundColor: PAGE_BG }]}>
@@ -396,6 +421,54 @@ export default function ModernMenuScreen() {
         visible={!!selectedItem}
         onClose={() => setSelectedItem(null)}
       />
+
+      <Modal visible={showStaffPicker} transparent animationType="fade" onRequestClose={() => setShowStaffPicker(false)}>
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: "#00000088", justifyContent: "flex-end" }}
+          activeOpacity={1}
+          onPress={() => setShowStaffPicker(false)}
+        >
+          <View style={{ backgroundColor: "#0D241B", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 14, paddingBottom: Platform.OS === "web" ? 24 : 40 }}>
+            <Text style={{ color: "#8FD9B8", fontFamily: F.extra, fontSize: 16, textAlign: "center", marginBottom: 4 }}>
+              دخول الموظفين
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => { setShowStaffPicker(false); router.push("/cashier"); }}
+              style={{ backgroundColor: "#123527", borderRadius: 16, padding: 18, flexDirection: "row-reverse", alignItems: "center", gap: 14, borderWidth: 1, borderColor: "#1E7A4466" }}
+              activeOpacity={0.8}
+            >
+              <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: "#174632", alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "#8FD9B8" }}>
+                <Feather name="monitor" size={22} color="#8FD9B8" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#fff", fontFamily: F.extra, fontSize: 17 }}>الكاشير</Text>
+                <Text style={{ color: "#8FB3A2", fontFamily: F.regular, fontSize: 13, marginTop: 2 }}>استقبال الطلبات وإدارة المبيعات</Text>
+              </View>
+              <Feather name="chevron-left" size={18} color="#8FB3A2" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => { setShowStaffPicker(false); router.push("/mandoob"); }}
+              style={{ backgroundColor: "#123527", borderRadius: 16, padding: 18, flexDirection: "row-reverse", alignItems: "center", gap: 14, borderWidth: 1, borderColor: "#1E7A4466" }}
+              activeOpacity={0.8}
+            >
+              <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: "#174632", alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "#8FD9B8" }}>
+                <Feather name="truck" size={22} color="#8FD9B8" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#fff", fontFamily: F.extra, fontSize: 17 }}>المندوب</Text>
+                <Text style={{ color: "#8FB3A2", fontFamily: F.regular, fontSize: 13, marginTop: 2 }}>استلام الطلبات وتوصيلها للعملاء</Text>
+              </View>
+              <Feather name="chevron-left" size={18} color="#8FB3A2" />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setShowStaffPicker(false)} style={{ alignItems: "center", paddingVertical: 10 }}>
+              <Text style={{ color: "#8FB3A2", fontFamily: F.semi, fontSize: 14 }}>إلغاء</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
