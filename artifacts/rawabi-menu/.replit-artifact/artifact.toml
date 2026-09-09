@@ -1,6 +1,6 @@
 kind = "mobile"
 previewPath = "/"
-title = "سلة الخضار"
+title = "منتجات السلة للخضار والفواكه"
 version = "1.0.0"
 id = "artifacts/rawabi-menu"
 router = "expo-domain"

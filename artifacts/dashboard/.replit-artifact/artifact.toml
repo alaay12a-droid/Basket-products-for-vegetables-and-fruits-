@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/dashboard/"
-title = "لوحة إدارة سلة الخضار"
+title = "لوحة إدارة منتجات السلة للخضار والفواكه"
 version = "1.0.0"
 id = "artifacts/dashboard"
 router = "path"
