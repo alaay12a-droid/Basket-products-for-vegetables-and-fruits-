@@ -97,6 +97,7 @@ export default function OnboardingScreen() {
     border:  cl.border,
     green:   "#1DBF47",
   };
+  const isModern = cl.primary === "#0F3D2E";
 
   const [step, setStep] = useState<Step>("name");
   const [name, setName] = useState("");
@@ -283,8 +284,8 @@ export default function OnboardingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.brand}>
-          <Text style={styles.brandTitle}>منتجات السلة للخضار والفواكه</Text>
-          <Text style={styles.brandSub}>خضار طازجة كل يوم</Text>
+          <Text style={[styles.brandTitle, { color: C.primary }]}>منتجات السلة للخضار والفواكه</Text>
+          <Text style={[styles.brandSub, { color: C.gold }]}>خضار طازجة كل يوم</Text>
         </View>
 
         <View style={styles.dots}>
@@ -293,14 +294,15 @@ export default function OnboardingScreen() {
               key={s.id}
               style={[
                 styles.dot,
-                i === stepIndex && styles.dotActive,
-                i < stepIndex && styles.dotDone,
+                { backgroundColor: C.border },
+                i === stepIndex && [styles.dotActive, { backgroundColor: C.primary }],
+                i < stepIndex && { backgroundColor: C.gold },
               ]}
             />
           ))}
         </View>
 
-        <View style={[styles.card, { borderColor: C.border }]}>
+        <View style={[styles.card, { backgroundColor: C.card, borderColor: C.border, borderRadius: isModern ? 24 : 20 }]}>
           <View style={[styles.cardAccent, { backgroundColor: C.gold }]} />
 
           <Image
@@ -309,12 +311,12 @@ export default function OnboardingScreen() {
             resizeMode="contain"
           />
 
-          <Text style={styles.stepTitle}>{current.title}</Text>
-          <Text style={styles.stepSub}>{current.subtitle}</Text>
+          <Text style={[styles.stepTitle, { color: C.fg }]}>{current.title}</Text>
+          <Text style={[styles.stepSub, { color: C.muted }]}>{current.subtitle}</Text>
 
           {step === "name" && (
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: C.surface, borderColor: C.border, color: C.fg, borderRadius: isModern ? 16 : 12 }]}
               placeholder="اكتب اسمك هنا"
               placeholderTextColor={C.muted}
               value={name}
@@ -349,6 +351,7 @@ export default function OnboardingScreen() {
                   ref={phoneRef}
                   style={[styles.input, {
                     flex: 1, marginBottom: 0,
+                    backgroundColor: C.surface, color: C.fg, borderRadius: isModern ? 16 : 12,
                     borderColor: phone.replace(/\D/g,"").length === country.localLength ? C.green : phone.length > 0 ? C.border : C.border,
                   }]}
                   placeholder={country.hint}
@@ -476,12 +479,12 @@ export default function OnboardingScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.gpsBtn, { flex: 1, borderColor: "#CE93D8", backgroundColor: "#CE93D818" }]}
+                  style={[styles.gpsBtn, { flex: 1, borderColor: C.primary, backgroundColor: C.primary + "18" }]}
                   onPress={() => setMapPickerVisible(true)}
                   activeOpacity={0.75}
                 >
-                  <Feather name="map-pin" size={16} color="#CE93D8" />
-                  <Text style={[styles.gpsBtnText, { color: "#CE93D8", fontSize: 13 }]}>
+                  <Feather name="map-pin" size={16} color={C.primary} />
+                  <Text style={[styles.gpsBtnText, { color: C.primary, fontSize: 13 }]}>
                     خريطة دقيقة
                   </Text>
                 </TouchableOpacity>
@@ -495,7 +498,7 @@ export default function OnboardingScreen() {
 
               <TextInput
                 ref={addressRef}
-                style={[styles.input, styles.addressInput]}
+                style={[styles.input, styles.addressInput, { backgroundColor: C.surface, borderColor: C.border, color: C.fg, borderRadius: isModern ? 16 : 12 }]}
                 placeholder="اكتب اسم الحي أو الشارع..."
                 placeholderTextColor={C.muted}
                 value={address}

@@ -153,8 +153,8 @@ export function MapPickerModal({ visible, initialLat, initialLng, onConfirm, onC
         <View style={{ flex: 1, position: "relative" }}>
           {!mapReady && (
             <View style={s.loadingOverlay}>
-              <ActivityIndicator size="large" color="#E8920C" />
-              <Text style={{ color: "#9A7A5A", marginTop: 10, fontFamily: "Cairo_400Regular" }}>جارٍ تحميل الخريطة...</Text>
+              <ActivityIndicator size="large" color={colors.gold} />
+              <Text style={{ color: colors.mutedForeground, marginTop: 10, fontFamily: "Cairo_400Regular" }}>جارٍ تحميل الخريطة...</Text>
             </View>
           )}
           <WebView
@@ -174,11 +174,11 @@ export function MapPickerModal({ visible, initialLat, initialLng, onConfirm, onC
         {/* Confirm button */}
         <View style={[s.footer, { backgroundColor: colors.card, paddingBottom: insets.bottom + 12, borderTopColor: colors.border }]}>
           <View style={{ alignItems: "center", marginBottom: 10 }}>
-            <Text style={{ color: "#E8920C", fontFamily: "Cairo_600SemiBold", fontSize: 12 }}>
+            <Text style={{ color: colors.gold, fontFamily: "Cairo_600SemiBold", fontSize: 12 }}>
               {pickedLat.toFixed(6)}  ،  {pickedLng.toFixed(6)}
             </Text>
           </View>
-          <TouchableOpacity onPress={handleConfirm} style={s.confirmBtn} activeOpacity={0.85}>
+          <TouchableOpacity onPress={handleConfirm} style={[s.confirmBtn, { backgroundColor: colors.primary }]} activeOpacity={0.85}>
             <Feather name="check-circle" size={18} color="#fff" />
             <Text style={{ color: "#fff", fontFamily: "Cairo_700Bold", fontSize: 16 }}>
               تأكيد الموقع

@@ -271,7 +271,7 @@ export default function BranchPickerModal({
             onPress={() => selected && onConfirm(selected)}
             style={[
               styles.confirmBtn,
-              { backgroundColor: selected ? "#E8920C" : colors.border },
+              { backgroundColor: selected ? colors.primary : colors.border },
             ]}
           >
             <Text style={[styles.confirmBtnText, { fontFamily: F.bold, color: selected ? "#fff" : colors.mutedForeground }]}>
