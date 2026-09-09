@@ -28,12 +28,12 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 ---
 
-## سلة الخضار (`artifacts/rawabi-menu`)
+## منتجات السلة للخضار والفواكه (`artifacts/rawabi-menu`)
 
 Premium Arabic mobile restaurant ordering app built with Expo React Native.
 
 ### App Info
-- **Name**: سلة الخضار
+- **Name**: منتجات السلة للخضار والفواكه
 - **WhatsApp**: 966530707042
 - **Phone**: 0530707042
 - **Location**: تبوك - حي الروضة

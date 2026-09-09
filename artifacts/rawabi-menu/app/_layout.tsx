@@ -142,7 +142,7 @@ function UpdateChecker() {
         <View style={updateStyles.card}>
           <Text style={updateStyles.title}>🎉 يوجد تحديث جديد</Text>
           <Text style={updateStyles.body}>
-            يتوفر إصدار جديد من تطبيق سلة الخضار يحتوي على تحسينات وميزات جديدة.
+            يتوفر إصدار جديد من تطبيق منتجات السلة للخضار والفواكه يحتوي على تحسينات وميزات جديدة.
           </Text>
           {update.downloadUrl ? (
             <TouchableOpacity

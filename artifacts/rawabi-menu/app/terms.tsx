@@ -94,7 +94,7 @@ export default function TermsScreen() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.foreground, fontFamily: F.extra }]}>الشروط والأحكام</Text>
-          <Text style={[styles.headerSub, { color: colors.gold, fontFamily: F.bold }]}>سلة الخضار</Text>
+          <Text style={[styles.headerSub, { color: colors.gold, fontFamily: F.bold }]}>منتجات السلة للخضار والفواكه</Text>
         </View>
         <View style={{ width: 36 }} />
       </View>
@@ -105,7 +105,7 @@ export default function TermsScreen() {
       >
         {/* Creator badge */}
         <View style={[styles.creatorBadge, { backgroundColor: "#1A1008", borderColor: colors.gold + "44" }]}>
-          <Text style={[styles.creatorText, { color: colors.gold, fontFamily: F.bold }]}>سلة الخضار</Text>
+          <Text style={[styles.creatorText, { color: colors.gold, fontFamily: F.bold }]}>منتجات السلة للخضار والفواكه</Text>
           <Text style={[styles.creatorSub, { color: colors.mutedForeground, fontFamily: F.regular }]}>
             منشأ من قبل{" "}
             <Text style={{ color: "#82B1FF", fontFamily: F.semi }}>@ala738120</Text>
@@ -115,7 +115,7 @@ export default function TermsScreen() {
         {/* Intro */}
         <View style={[styles.introBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.introText, { color: colors.foreground, fontFamily: F.semi }]}>
-            مرحبًا بك في تطبيق "سلة الخضار". باستخدامك لهذا التطبيق، فإنك توافق على الالتزام بالشروط والأحكام التالية:
+            مرحبًا بك في تطبيق "منتجات السلة للخضار والفواكه". باستخدامك لهذا التطبيق، فإنك توافق على الالتزام بالشروط والأحكام التالية:
           </Text>
         </View>
 
@@ -155,7 +155,7 @@ export default function TermsScreen() {
         </View>
 
         <Text style={[styles.version, { color: colors.mutedForeground, fontFamily: F.regular }]}>
-          سلة الخضار • نسخة 1.0{"\n"}منشأ من قبل @ala738120
+          منتجات السلة للخضار والفواكه • نسخة 1.0{"\n"}منشأ من قبل @ala738120
         </Text>
       </ScrollView>
     </View>

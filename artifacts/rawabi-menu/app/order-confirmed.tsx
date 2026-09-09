@@ -204,8 +204,8 @@ function StatusDone({ colors, onReturn, isEn, isDelivery }: { colors: ReturnType
       </Text>
       <Text style={[styles.statusDesc, { color: colors.mutedForeground, fontFamily: F.regular }]}>
         {isEn
-          ? "Thank you for choosing سلة الخضار 🥬\nEnjoy your fresh order!"
-          : "شكراً لاختيارك سلة الخضار 🥬\nنتمنى لك طلبًا طازجًا!"}
+          ? "Thank you for choosing منتجات السلة للخضار والفواكه 🥬\nEnjoy your fresh order!"
+          : "شكراً لاختيارك منتجات السلة للخضار والفواكه 🥬\nنتمنى لك طلبًا طازجًا!"}
       </Text>
       <TouchableOpacity
         onPress={onReturn}

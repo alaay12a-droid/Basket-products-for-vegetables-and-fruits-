@@ -489,7 +489,7 @@ router.get("/orders", requireDashboardUser, async (_req, res) => {
   res.json(orders);
 });
 
-const RESTAURANT_NAME = "سلة الخضار";
+const RESTAURANT_NAME = "منتجات السلة للخضار والفواكه";
 
 function buildCustomerStatusMessage(status: string, dailyNumber: number, isDelivery: boolean): { title: string; body: string } | null {
   switch (status) {
@@ -629,7 +629,7 @@ router.patch("/orders/:id/status", requireDashboardUser, async (req, res) => {
   if (status === "cancelled" && order.customerPhone) {
     sendSms(
       order.customerPhone,
-      `عزيزنا ${order.customerName}، نأسف لإبلاغك بأنه تم إلغاء طلبك رقم #${order.dailyNumber} من سلة الخضار. للاستفسار تواصل معنا مباشرة. شكراً لتفهمك 🙏`
+      `عزيزنا ${order.customerName}، نأسف لإبلاغك بأنه تم إلغاء طلبك رقم #${order.dailyNumber} من منتجات السلة للخضار والفواكه. للاستفسار تواصل معنا مباشرة. شكراً لتفهمك 🙏`
     ).catch(() => {});
   }
 });

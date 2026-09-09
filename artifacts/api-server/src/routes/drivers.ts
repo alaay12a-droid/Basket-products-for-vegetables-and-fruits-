@@ -1488,7 +1488,7 @@ router.get("/map/:orderId", async (req, res) => {
   const orderId = parseInt(req.params.orderId);
   if (isNaN(orderId)) { res.status(400).send("معرّف غير صحيح"); return; }
 
-  // Restaurant location — سلة الخضار، تبوك حي الروضة
+  // Restaurant location — منتجات السلة للخضار والفواكه، تبوك حي الروضة
   const RESTAURANT_LAT = 28.410769;
   const RESTAURANT_LNG = 36.532353;
 
@@ -1769,7 +1769,7 @@ router.get("/map/:orderId", async (req, res) => {
     staticMarkersAdded = true;
     /* restaurant always shown */
     var restMarker = L.marker([REST_LAT, REST_LNG],{icon:restaurantIcon}).addTo(map);
-    restMarker.bindPopup('<div style="font-family:Cairo,sans-serif;font-weight:700;color:#C8171A;text-align:center;direction:rtl">🏪 سلة الخضار</div>');
+    restMarker.bindPopup('<div style="font-family:Cairo,sans-serif;font-weight:700;color:#C8171A;text-align:center;direction:rtl">🏪 منتجات السلة للخضار والفواكه</div>');
     /* customer home — only if coords available */
     if (CUSTOMER_LAT !== null && CUSTOMER_LNG !== null) {
       var homeMarker = L.marker([CUSTOMER_LAT, CUSTOMER_LNG],{icon:homeIcon}).addTo(map);

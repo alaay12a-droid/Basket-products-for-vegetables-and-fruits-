@@ -80,7 +80,7 @@ export function Layout({ children, fullWidth = false }: LayoutProps) {
           <div className="flex items-center gap-2">
             <img
               src={`${import.meta.env.BASE_URL}logo.png`}
-              alt="سلة الخضار"
+              alt="منتجات السلة للخضار والفواكه"
               className="h-9 w-auto object-contain"
             />
             {!isHome && (

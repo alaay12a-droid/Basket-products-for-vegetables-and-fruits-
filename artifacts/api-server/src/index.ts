@@ -434,7 +434,7 @@ runMigrationsAndSeed()
               const name = row.customerName?.trim() || "عزيزنا";
               try {
                 await sendPushToToken(row.token, {
-                  title: "سلة الخضار 🥬",
+                  title: "منتجات السلة للخضار والفواكه 🥬",
                   body: `وحشتنا يا ${name} 👋 مرت فترة ما زرتنا فيها، تعال شوف عروضنا الجديدة 🥬`,
                   data: { type: "reengagement" },
                 });

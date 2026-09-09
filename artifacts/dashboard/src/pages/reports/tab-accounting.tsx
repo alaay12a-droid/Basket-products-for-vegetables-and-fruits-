@@ -416,7 +416,7 @@ export function TabAccounting({ today, week, month, year, orders, loading }: Pro
   @media print{body{padding:5mm}}
 </style></head><body>
 <h1>📊 تقرير المحاسبة — ${range.label}</h1>
-<p class="sub">سلة الخضار · مطبوع: ${now}</p>
+<p class="sub">منتجات السلة للخضار والفواكه · مطبوع: ${now}</p>
 <div class="kpis">
   <div class="kpi"><div class="n">${kpis.total.toFixed(2)} ر.س</div><div class="l">إجمالي المبيعات</div></div>
   <div class="kpi"><div class="n">${kpis.net.toFixed(2)} ر.س</div><div class="l">صافي الإيرادات</div></div>

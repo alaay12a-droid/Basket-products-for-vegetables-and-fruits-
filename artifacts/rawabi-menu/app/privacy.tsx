@@ -40,8 +40,8 @@ const SECTIONS: Section[] = [
     number: "1",
     title: { ar: "من نحن", en: "Who We Are" },
     body: {
-      ar: "نحن \"سلة الخضار\"، نقدم خدمات طلب المنتجات والتوصيل عبر تطبيقنا وموقعنا الإلكتروني في المملكة العربية السعودية. نحن الجهة المسؤولة عن معالجة بياناتك الشخصية (\"مراقب البيانات\").",
-      en: "سلة الخضار provides product ordering and delivery services through our app and website within Saudi Arabia. We are the data controller responsible for processing your personal data.",
+      ar: "نحن \"منتجات السلة للخضار والفواكه\"، نقدم خدمات طلب المنتجات والتوصيل عبر تطبيقنا وموقعنا الإلكتروني في المملكة العربية السعودية. نحن الجهة المسؤولة عن معالجة بياناتك الشخصية (\"مراقب البيانات\").",
+      en: "منتجات السلة للخضار والفواكه provides product ordering and delivery services through our app and website within Saudi Arabia. We are the data controller responsible for processing your personal data.",
     },
     contact: true,
   },
@@ -214,7 +214,7 @@ export default function PrivacyScreen() {
             {isEn ? "Privacy Policy" : "سياسة الخصوصية"}
           </Text>
           <Text style={[styles.headerSub, { color: colors.gold, fontFamily: F.bold }]}>
-            سلة الخضار
+            منتجات السلة للخضار والفواكه
           </Text>
         </View>
         <View style={{ width: 36 }} />
@@ -231,8 +231,8 @@ export default function PrivacyScreen() {
           </Text>
           <Text style={[styles.introText, { color: colors.foreground, fontFamily: F.semi, textAlign: isEn ? "left" : "right" }]}>
             {isEn
-              ? "At سلة الخضار (\"we,\" \"us,\" \"the Platform,\" \"the App\"), we take the privacy of our customers and visitors seriously and are committed to protecting it in accordance with the Saudi Personal Data Protection Law (PDPL). This Privacy Policy explains what personal data we collect, why we process it, who we may share it with, and how you can exercise your legal rights. By using the سلة الخضار app or website, you agree to the terms of this policy."
-              : "نحن في \"سلة الخضار\" (يشار إليها في هذه الوثيقة بـ \"نحن\" أو \"المنصة\" أو \"التطبيق\") نولي خصوصية عملائنا وزوارنا أهمية كبيرة، ونلتزم بحمايتها وفقًا لأحكام نظام حماية البيانات الشخصية في المملكة العربية السعودية (PDPL).\n\nتوضح هذه السياسة نوع البيانات التي نجمعها، وأسباب معالجتها، والجهات التي قد نشارك بياناتك معها، وكيف يمكنك ممارسة حقوقك القانونية بخصوصها. باستخدامك لتطبيق أو موقع سلة الخضار فإنك توافق على الشروط الواردة في هذه السياسة."}
+              ? "At منتجات السلة للخضار والفواكه (\"we,\" \"us,\" \"the Platform,\" \"the App\"), we take the privacy of our customers and visitors seriously and are committed to protecting it in accordance with the Saudi Personal Data Protection Law (PDPL). This Privacy Policy explains what personal data we collect, why we process it, who we may share it with, and how you can exercise your legal rights. By using the منتجات السلة للخضار والفواكه app or website, you agree to the terms of this policy."
+              : "نحن في \"منتجات السلة للخضار والفواكه\" (يشار إليها في هذه الوثيقة بـ \"نحن\" أو \"المنصة\" أو \"التطبيق\") نولي خصوصية عملائنا وزوارنا أهمية كبيرة، ونلتزم بحمايتها وفقًا لأحكام نظام حماية البيانات الشخصية في المملكة العربية السعودية (PDPL).\n\nتوضح هذه السياسة نوع البيانات التي نجمعها، وأسباب معالجتها، والجهات التي قد نشارك بياناتك معها، وكيف يمكنك ممارسة حقوقك القانونية بخصوصها. باستخدامك لتطبيق أو موقع منتجات السلة للخضار والفواكه فإنك توافق على الشروط الواردة في هذه السياسة."}
           </Text>
         </View>
 
@@ -308,7 +308,7 @@ export default function PrivacyScreen() {
         ))}
 
         <Text style={[styles.version, { color: colors.mutedForeground, fontFamily: F.regular }]}>
-          {isEn ? "سلة الخضار — All rights reserved © 2026" : "سلة الخضار — جميع الحقوق محفوظة © 2026"}
+          {isEn ? "منتجات السلة للخضار والفواكه — All rights reserved © 2026" : "منتجات السلة للخضار والفواكه — جميع الحقوق محفوظة © 2026"}
         </Text>
       </ScrollView>
     </View>

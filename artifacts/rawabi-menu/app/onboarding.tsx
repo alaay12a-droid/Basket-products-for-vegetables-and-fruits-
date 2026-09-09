@@ -283,7 +283,7 @@ export default function OnboardingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.brand}>
-          <Text style={styles.brandTitle}>سلة الخضار</Text>
+          <Text style={styles.brandTitle}>منتجات السلة للخضار والفواكه</Text>
           <Text style={styles.brandSub}>خضار طازجة كل يوم</Text>
         </View>
 

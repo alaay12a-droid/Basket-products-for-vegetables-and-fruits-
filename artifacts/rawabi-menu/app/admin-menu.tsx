@@ -590,7 +590,7 @@ export default function AdminMenuScreen() {
   const [smsEnabled, setSmsEnabled] = useState(false);
   const [smsHasKey, setSmsHasKey] = useState(false);
   const [smsApiKey, setSmsApiKey] = useState("");
-  const [smsSender, setSmsSender] = useState("سلة الخضار");
+  const [smsSender, setSmsSender] = useState("منتجات السلة للخضار والفواكه");
   const [smsLoading, setSmsLoading] = useState(false);
   const [smsProvider, setSmsProvider] = useState<"msegat"|"taqnyat"|"4jawaly"|"unifonic"|"twilio"|"authentica">("msegat");
   const [smsMethod, setSmsMethod] = useState<"sms"|"whatsapp">("sms");
@@ -697,7 +697,7 @@ export default function AdminMenuScreen() {
   .pay-item .l{font-size:10px;color:#888;}
   @media print{body{padding:5mm;}}
 </style></head><body>
-<h1>سلة الخضار — التقرير المالي</h1>
+<h1>منتجات السلة للخضار والفواكه — التقرير المالي</h1>
 <div class="sub">الفترة: ${label} | طُبع في ${now}</div>
 ${kpiBlock}${payBlock}${sumBlock}
 <script>window.onload=function(){window.print();}</script>
@@ -748,7 +748,7 @@ ${kpiBlock}${payBlock}${sumBlock}
       const r = await apiGet<{ enabled: boolean; hasApiKey: boolean; sender: string; provider: "msegat"|"taqnyat"|"4jawaly"|"unifonic"|"twilio"|"authentica"; method: "sms"|"whatsapp" }>("/sms-settings");
       setSmsEnabled(r.enabled);
       setSmsHasKey(r.hasApiKey);
-      setSmsSender(r.sender === "روابي المندي" ? "سلة الخضار" : (r.sender ?? "سلة الخضار"));
+      setSmsSender(r.sender === "روابي المندي" ? "منتجات السلة للخضار والفواكه" : (r.sender ?? "منتجات السلة للخضار والفواكه"));
       setSmsProvider(r.provider ?? "msegat");
       setSmsMethod(r.method ?? "sms");
     } catch {}
@@ -3642,7 +3642,7 @@ ${kpiBlock}${payBlock}${sumBlock}
             <TextInput
               value={smsSender}
               onChangeText={setSmsSender}
-              placeholder="سلة الخضار"
+              placeholder="منتجات السلة للخضار والفواكه"
               placeholderTextColor={colors.mutedForeground}
               style={{ backgroundColor: colors.secondary, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, color: colors.foreground, fontFamily: F.regular, textAlign: "right", borderWidth: 1, borderColor: colors.border }}
             />

@@ -125,7 +125,7 @@ export function TabExport({ today, year, orders }: Props) {
       <div className="rounded-2xl border bg-muted/20 p-5">
         <p className="text-xs text-muted-foreground mb-1">التقرير يشمل بيانات حتى</p>
         <p className="text-xl font-bold">{dateStr} الساعة {timeStr}</p>
-        <p className="text-sm text-muted-foreground mt-1">المتجر: سلة الخضار — تبوك</p>
+        <p className="text-sm text-muted-foreground mt-1">المتجر: منتجات السلة للخضار والفواكه — تبوك</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">

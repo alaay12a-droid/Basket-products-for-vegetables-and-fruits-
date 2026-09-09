@@ -18,10 +18,10 @@ export function buildReferralPage(ref: string | undefined): string {
     ? `intent://onboarding?ref=${encodeURIComponent(code)}#Intent;scheme=rawabi-menu;package=com.rwabi.almndi;S.browser_fallback_url=${encodeURIComponent(androidUrl)};end`
     : `intent://#Intent;scheme=rawabi-menu;package=com.rwabi.almndi;S.browser_fallback_url=${encodeURIComponent(androidUrl)};end`;
 
-  const title = hasCode ? "دعوة للانضمام إلى سلة الخضار 🎁" : "سلة الخضار — خضار طازجة في تبوك";
+  const title = hasCode ? "دعوة للانضمام إلى منتجات السلة للخضار والفواكه 🎁" : "منتجات السلة للخضار والفواكه — خضار طازجة في تبوك";
   const metaDesc = hasCode
-    ? `صديقك يدعوك للانضمام إلى تطبيق سلة الخضار، استخدم كود ${code} للحصول على المكافأة`
-    : "اطلب خضارك الطازجة في تبوك من تطبيق سلة الخضار";
+    ? `صديقك يدعوك للانضمام إلى تطبيق منتجات السلة للخضار والفواكه، استخدم كود ${code} للحصول على المكافأة`
+    : "اطلب خضارك الطازجة في تبوك من تطبيق منتجات السلة للخضار والفواكه";
 
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -282,7 +282,7 @@ export function buildReferralPage(ref: string | undefined): string {
     <!-- Logo -->
     <div class="logo-wrap">
       <div>
-        <div class="logo-text">سلة الخضار</div>
+        <div class="logo-text">منتجات السلة للخضار والفواكه</div>
         <div class="logo-sub">تبوك — Tabuk</div>
       </div>
       <div class="logo-icon">🍖</div>
@@ -298,7 +298,7 @@ export function buildReferralPage(ref: string | undefined): string {
     <div class="no-code-banner">📲</div>
 
     <!-- Headline -->
-    <div class="headline">${hasCode ? "حمّل التطبيق وسجّل الآن" : "سلة الخضار"}</div>
+    <div class="headline">${hasCode ? "حمّل التطبيق وسجّل الآن" : "منتجات السلة للخضار والفواكه"}</div>
     <div class="sub">${hasCode
       ? "خضار طازجة في تبوك تصلك إلى باب البيت"
       : "اطلب خضارك الطازجة مباشرة من هاتفك"
@@ -347,7 +347,7 @@ export function buildReferralPage(ref: string | undefined): string {
     </div>
   </div>
 
-  <footer>سلة الخضار &copy; ${new Date().getFullYear()}</footer>
+  <footer>منتجات السلة للخضار والفواكه &copy; ${new Date().getFullYear()}</footer>
 
   <script>
     (function () {
