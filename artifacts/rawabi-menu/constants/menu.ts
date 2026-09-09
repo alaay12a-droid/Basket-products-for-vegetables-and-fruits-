@@ -47,10 +47,10 @@ export interface MenuCategory {
 }
 
 export const RESTAURANT_INFO = {
-  name: "منتجات السلة للخضار والفواكه",
+  name: "سلة الخضار",
   tagline: "خضار طازجة كل يوم",
   taglineEn: "Fresh vegetables every day",
-  nameEn: "منتجات السلة للخضار والفواكه",
+  nameEn: "سلة الخضار",
   phone: "0530707042",
   whatsapp: "966530707042",
   location: "تبوك - حي الروضة",

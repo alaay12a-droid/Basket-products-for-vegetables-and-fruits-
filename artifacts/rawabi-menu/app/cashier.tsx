@@ -530,7 +530,7 @@ export default function CashierScreen() {
 
   const handleShareLink = async () => {
     try {
-      await Share.share({ message: `اطلب من منتجات السلة للخضار والفواكه: ${customerUrl}`, url: customerUrl });
+      await Share.share({ message: `اطلب من سلة الخضار: ${customerUrl}`, url: customerUrl });
     } catch { /* silent */ }
   };
 
@@ -558,7 +558,7 @@ export default function CashierScreen() {
         const pendingCount = newPending.length;
         document.title = pendingCount > 0
           ? `(${pendingCount}) طلب جديد 🔔 | الكاشير`
-          : "الكاشير | منتجات السلة للخضار والفواكه";
+          : "الكاشير | سلة الخضار";
       }
 
       setOrders(data);
@@ -584,7 +584,7 @@ export default function CashierScreen() {
       clearInterval(interval);
       clearTimeout(initTimer);
       if (Platform.OS === "web" && typeof document !== "undefined") {
-        document.title = "منتجات السلة للخضار والفواكه";
+        document.title = "سلة الخضار";
       }
     };
   }, [authenticated, fetchOrders]);
@@ -740,9 +740,9 @@ export default function CashierScreen() {
 
   <!-- Header -->
   <div class="logo-wrap">
-    <img src="${LOGO_URI}" alt="منتجات السلة للخضار والفواكه"/>
+    <img src="${LOGO_URI}" alt="سلة الخضار"/>
   </div>
-  <div class="restaurant-name">منتجات السلة للخضار والفواكه</div>
+  <div class="restaurant-name">سلة الخضار</div>
   <div class="restaurant-sub">تبوك — المملكة العربية السعودية</div>
 
   <hr class="divider-solid"/>
@@ -800,7 +800,7 @@ export default function CashierScreen() {
 
   <hr class="divider"/>
   <div class="footer">
-    شكراً لاختيارك منتجات السلة للخضار والفواكه 🥬<br/>
+    شكراً لاختيارك سلة الخضار 🥬<br/>
     نتمنى لك طلبًا طازجًا!
   </div>
 </div>
@@ -878,7 +878,7 @@ export default function CashierScreen() {
   tbody tr:nth-child(even){background:#fafafa;}
   @media print{body{padding:4mm;}.driver-block{page-break-inside:avoid;}}
 </style></head><body>
-<h1>منتجات السلة للخضار والفواكه — تقرير مناديب التوصيل</h1>
+<h1>سلة الخضار — تقرير مناديب التوصيل</h1>
 <div class="sub">📅 ${dateLabel} | طُبع في ${now}</div>
 <div class="summary">
   <div class="card"><div class="v" style="color:#E8920C;">${rows.length}</div><div style="font-size:10px;">إجمالي الطلبات</div></div>
@@ -947,7 +947,7 @@ ${driverSections}
   tbody tr:nth-child(even){background:#fafafa;}
   @media print{body{padding:4mm;}.day-block{page-break-inside:avoid;}}
 </style></head><body>
-<h1>منتجات السلة للخضار والفواكه — تقرير المندوب: ${driverName}</h1>
+<h1>سلة الخضار — تقرير المندوب: ${driverName}</h1>
 <div class="sub">📱 ${driverPhone} | الفترة: ${tabLabel} | طُبع في ${now}</div>
 ${totals ? `
 <div class="summary">
@@ -1008,7 +1008,7 @@ ${daySections}
   tbody tr:nth-child(even){background:#fafafa;}
   @media print{body{padding:5mm 5mm;}button{display:none!important;}}
 </style></head><body>
-<h1>منتجات السلة للخضار والفواكه — ${title}</h1>
+<h1>سلة الخضار — ${title}</h1>
 <div class="sub">طُبع في ${now}</div>
 <div class="summary">
   <div class="card"><div class="val" style="color:#2e7d32;">${fmt(totalDone)} ر.س</div><div style="font-size:11px;">إجمالي الإيرادات</div></div>

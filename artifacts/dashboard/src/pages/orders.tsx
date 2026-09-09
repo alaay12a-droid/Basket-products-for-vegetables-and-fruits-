@@ -195,7 +195,7 @@ h1{text-align:center;font-size:18px;font-weight:800;color:#8B4513;margin-bottom:
 .item-modifiers{display:block;margin-top:2px;color:#666;font-size:9.5px;font-weight:400;line-height:1.3;white-space:normal;word-break:normal;overflow-wrap:normal}
 hr{border:none;border-top:1px dashed #bbb;margin:8px 0}
 .total{font-size:16px;font-weight:800;text-align:left}@media print{body{padding:5mm}.items-table{width:100%;max-width:100%;margin-inline:0}.items-table col.item-name-col{width:25mm}.items-table col.unit-price-col{width:14mm}.items-table col.quantity-col{width:10mm}.items-table col.total-col{width:13mm}}</style></head><body>
-<h1>منتجات السلة للخضار والفواكه</h1>
+<h1>سلة الخضار</h1>
 <div class="sub">تبوك، الروضة، 47711 — المملكة العربية السعودية</div>
 <div class="sub">الرقم الضريبي: 302282730200003</div>
 <div class="daily">طلب اليوم #${order.dailyNumber ?? order.id}</div>
@@ -217,9 +217,9 @@ ${deliveryFee > 0 ? `<p style="font-size:12px;color:#555;text-align:left">${fmt2
 ${discount > 0.005 ? `<p style="font-size:12px;color:#C8171A;text-align:left">- ${fmt2(discount)} ر.س خصم</p>` : ""}
 <p class="total">${fmt2(totalPaid)} ر.س — الإجمالي</p>
 ${order.notes ? `<p style="margin-top:8px;font-size:12px;color:#555"><strong>ملاحظات:</strong> ${order.notes}</p>` : ""}
-<p style="text-align:center;margin-top:14px;font-size:11px;color:#888">شكراً لاختيارك منتجات السلة للخضار والفواكه 🥬</p>
+<p style="text-align:center;margin-top:14px;font-size:11px;color:#888">شكراً لاختيارك سلة الخضار 🥬</p>
 <div style="text-align:center;margin-top:16px;">
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`منتجات السلة للخضار والفواكه - طلب رقم ${order.dailyNumber ?? order.id} - ${fmt2(totalPaid)} ر.س`)}" width="100" height="100" alt="QR"/>
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`سلة الخضار - طلب رقم ${order.dailyNumber ?? order.id} - ${fmt2(totalPaid)} ر.س`)}" width="100" height="100" alt="QR"/>
 <p style="font-size:10px;color:#aaa;margin-top:4px;">طلب #${order.dailyNumber ?? order.id}</p>
 </div>
 <script>window.onload=function(){window.print();}</script></body></html>`;
@@ -234,7 +234,7 @@ function printBulk(orders: Order[]) {
     const pf = getOrderPriceFactor(o);
     const itemsRows = o.items.map(i => `<tr><td style="padding:3px 6px">${getOrderItemDisplayName(i)} × ${i.quantity}</td><td style="padding:3px 6px;text-align:left">${fmt2(i.price*i.quantity*pf)} ر.س</td></tr>`).join("");
     return `<div style="page-break-after:always;padding:8mm;font-family:Cairo,sans-serif;direction:rtl">
-<h2 style="text-align:center;color:#8B4513;font-size:16px;margin-bottom:2px">منتجات السلة للخضار والفواكه</h2>
+<h2 style="text-align:center;color:#8B4513;font-size:16px;margin-bottom:2px">سلة الخضار</h2>
 <p style="text-align:center;font-size:10px;color:#888;margin-bottom:2px">الرقم الضريبي: 302282730200003</p>
 <p style="text-align:center;font-size:10px;color:#888;margin-bottom:6px">تبوك، الروضة، 47711</p>
 <p style="text-align:center;font-size:14px;font-weight:700;margin-bottom:8px">طلب اليوم #${o.dailyNumber ?? o.id} — ${o.customerName}</p>
@@ -243,7 +243,7 @@ function printBulk(orders: Order[]) {
 <tr><td colspan="2" style="border-top:1px dashed #ccc;padding-top:6px;font-weight:700;font-size:15px">${fmt2(o.totalPrice/100)} ر.س</td></tr>
 </table>
 <div style="text-align:center;margin-top:12px;">
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`منتجات السلة للخضار والفواكه - طلب رقم ${o.dailyNumber ?? o.id} - ${fmt2(o.totalPrice/100)} ر.س`)}" width="80" height="80" alt="QR"/>
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`سلة الخضار - طلب رقم ${o.dailyNumber ?? o.id} - ${fmt2(o.totalPrice/100)} ر.س`)}" width="80" height="80" alt="QR"/>
 <p style="font-size:9px;color:#aaa;margin-top:2px;">طلب #${o.dailyNumber ?? o.id}</p>
 </div>
 </div>`;
@@ -612,7 +612,7 @@ export default function Orders() {
     }, 10000);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
-      document.title = "منتجات السلة للخضار والفواكه";
+      document.title = "سلة الخضار";
     };
   }, [fetchOrders, fetchDriversData, fetchAssignments, fetchUnreadCounts]);
 

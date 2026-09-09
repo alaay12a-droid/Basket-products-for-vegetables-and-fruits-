@@ -32,7 +32,7 @@ export function LocationDisclosureModal({ visible, onContinue, onCancel }: Props
             <Text style={styles.titleAr}>تتبع الموقع في الخلفية</Text>
             <Text style={styles.sectionAr}>لماذا نطلب هذا الإذن؟</Text>
             <Text style={styles.bodyAr}>
-              يستخدم تطبيق منتجات السلة للخضار والفواكه موقعك الجغرافي أثناء تشغيل التطبيق وفي الخلفية فقط عندما تكون مسجلًا كمندوب وتقوم بتنفيذ طلب توصيل نشط.
+              يستخدم تطبيق سلة الخضار موقعك الجغرافي أثناء تشغيل التطبيق وفي الخلفية فقط عندما تكون مسجلًا كمندوب وتقوم بتنفيذ طلب توصيل نشط.
             </Text>
             <Text style={styles.bodyAr}>يُستخدم الموقع من أجل:</Text>
             <Text style={styles.bulletAr}>• عرض موقع المندوب المباشر للعميل وإدارة المطعم.</Text>
@@ -50,7 +50,7 @@ export function LocationDisclosureModal({ visible, onContinue, onCancel }: Props
             <Text style={styles.titleEn}>Background Location Tracking</Text>
             <Text style={styles.sectionEn}>Why do we need this permission?</Text>
             <Text style={styles.bodyEn}>
-              منتجات السلة للخضار والفواكه uses your location while the app is in use and in the background only when you are logged in as a delivery driver and actively delivering an order.
+              سلة الخضار uses your location while the app is in use and in the background only when you are logged in as a delivery driver and actively delivering an order.
             </Text>
             <Text style={styles.bodyEn}>Your location is used to:</Text>
             <Text style={styles.bulletEn}>• Show the driver's live location to customers and restaurant management.</Text>

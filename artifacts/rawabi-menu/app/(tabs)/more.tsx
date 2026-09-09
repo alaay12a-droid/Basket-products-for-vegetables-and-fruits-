@@ -234,7 +234,7 @@ export default function MoreScreen() {
       label: t("aboutUs"),
       action: () =>
         Alert.alert(
-          "منتجات السلة للخضار والفواكه",
+          "سلة الخضار",
           `${info.tagline}\n\n${info.location}\nهاتف: ${info.phone}`
         ),
     },
@@ -391,7 +391,7 @@ export default function MoreScreen() {
         </View>
 
         <Text style={[styles.version, { color: colors.mutedForeground, fontFamily: F.regular }]}>
-          منتجات السلة للخضار والفواكه • نسخة 1.0
+          سلة الخضار • نسخة 1.0
         </Text>
 
         {/* ── بواسطة ── */}

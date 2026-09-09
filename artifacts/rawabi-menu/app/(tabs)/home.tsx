@@ -296,7 +296,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.greetBlock}>
             <Text style={[styles.greetName, { color: visual.foreground, fontFamily: F.extra }]}>
-              {user?.name ? `مرحبا، ${user.name}` : "منتجات السلة للخضار والفواكه"}
+              {user?.name ? `مرحبا، ${user.name}` : "سلة الخضار"}
             </Text>
             <Text style={[styles.greetSub, { color: visual.accent, fontFamily: F.regular }]}>
               {greeting} 👋

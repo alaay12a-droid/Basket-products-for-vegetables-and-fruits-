@@ -91,12 +91,12 @@ function LoginScreen({ onLogin }: { onLogin: (d: Driver) => void }) {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0F0A05] p-6 gap-6" dir="rtl">
-      <img src={`${BASE_URL}/logo.png`} alt="منتجات السلة للخضار والفواكه" className="h-20 w-auto object-contain" />
+      <img src={`${BASE_URL}/logo.png`} alt="سلة الخضار" className="h-20 w-auto object-contain" />
       <div className="w-full max-w-sm bg-[#1A1208] rounded-2xl border border-[#E8920C33] p-6 space-y-4 shadow-2xl">
         <div className="text-center space-y-1">
           <div className="text-4xl">🛵</div>
           <h1 className="text-xl font-bold text-[#E8920C]">بوابة المناديب</h1>
-          <p className="text-xs text-[#666]">منتجات السلة للخضار والفواكه</p>
+          <p className="text-xs text-[#666]">سلة الخضار</p>
         </div>
         <input
           value={phone} onChange={e => { setPhone(e.target.value); setError(""); }}
@@ -393,7 +393,7 @@ function DriverHome({ driver, onLogout }: { driver: Driver; onLogout: () => void
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-[#1A1208] border-b border-[#E8920C33]">
         <div className="flex items-center gap-3">
-          <img src={`${BASE_URL}/logo.png`} alt="منتجات السلة للخضار والفواكه" className="h-8 w-auto object-contain" />
+          <img src={`${BASE_URL}/logo.png`} alt="سلة الخضار" className="h-8 w-auto object-contain" />
           <div>
             <p className="text-white font-bold text-sm leading-tight">{driver.name}</p>
             <p className="text-[#E8920C] text-[11px]">{driver.phone}</p>

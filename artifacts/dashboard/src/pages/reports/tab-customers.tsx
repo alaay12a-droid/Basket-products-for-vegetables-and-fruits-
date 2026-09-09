@@ -153,13 +153,13 @@ function TopCustomerReward({ customer }: { customer: CustomerStat }) {
       ? `خصم ${value} ر.س على طلبك القادم (الحد الأدنى ${minOrder} ر.س)`
       : `خصم ${value}% على طلبك القادم (الحد الأدنى ${minOrder} ر.س)`;
     const msg = encodeURIComponent(
-      `🎁 هدية من منتجات السلة للخضار والفواكه\n\n` +
+      `🎁 هدية من سلة الخضار\n\n` +
       `عزيزنا العميل المميز، شكراً لك على ولائك! 🏆\n` +
       `إليك كود خصم خاص:\n\n` +
       `🎟️ *${result}*\n\n` +
       `${discountText}\n` +
       `يُستخدم مرة واحدة فقط.\n\n` +
-      `منتجات السلة للخضار والفواكه 🥬`
+      `سلة الخضار 🥬`
     );
     window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
   }
@@ -389,7 +389,7 @@ export function TabCustomers({ orders, loading }: Props) {
   @media print{body{padding:5mm}}
 </style></head><body>
 <h1>👥 تقرير العملاء تفصيل — ${range.label}</h1>
-<p class="sub">منتجات السلة للخضار والفواكه · مطبوع: ${now}</p>
+<p class="sub">سلة الخضار · مطبوع: ${now}</p>
 <div class="summary">
   <div class="sc"><div class="n">${displayCustomers.length}</div><div class="l">عدد العملاء</div></div>
   <div class="sc"><div class="n">${returning}</div><div class="l">متكررون</div></div>

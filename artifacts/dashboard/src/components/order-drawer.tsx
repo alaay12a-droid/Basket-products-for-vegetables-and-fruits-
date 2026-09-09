@@ -193,7 +193,7 @@ h1{text-align:center;font-size:18px;font-weight:800;color:#8B4513;margin-bottom:
 table{width:100%;border-collapse:collapse;font-size:13px}thead th{background:#8B4513;color:#fff;padding:7px 8px;text-align:center}
 tbody tr:nth-child(even){background:#fafafa}.summary{border-top:2px solid #aaa;padding-top:8px;margin-top:8px}
 @media print{body{padding:5mm}}</style></head><body>
-<h1>منتجات السلة للخضار والفواكه</h1>
+<h1>سلة الخضار</h1>
 <div class="sub">الرقم الضريبي: 302282730200003 | العنوان: تبوك، الروضة، 47711</div>
 <div class="sub">إيصال طلب #${formatEasternNumber(order.dailyNumber ?? order.id)} — ${dateStr} ${timeStr}</div>
 <p style="font-size:13px;margin-bottom:4px;"><strong>العميل:</strong> ${order.customerName || "عميل"}</p>
@@ -208,7 +208,7 @@ ${discount > 0 ? `<p style="font-size:12px;color:#C8171A;text-align:left;">- ${f
 </div>
 ${order.notes ? `<p style="margin-top:8px;font-size:12px;color:#555;"><strong>ملاحظات:</strong> ${order.notes}</p>` : ""}
 <div style="text-align:center;margin-top:16px;">
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`منتجات السلة للخضار والفواكه - طلب رقم ${order.dailyNumber ?? order.id} - ${fmt(totalPaid)} ر.س`)}" width="100" height="100" alt="QR"/>
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`سلة الخضار - طلب رقم ${order.dailyNumber ?? order.id} - ${fmt(totalPaid)} ر.س`)}" width="100" height="100" alt="QR"/>
 <p style="font-size:10px;color:#aaa;margin-top:4px;">طلب #${order.dailyNumber ?? order.id}</p>
 </div>
 <script>window.onload=function(){window.print();}</script></body></html>`;

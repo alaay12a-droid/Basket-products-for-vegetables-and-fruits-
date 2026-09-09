@@ -206,7 +206,7 @@ router.get("/sms-settings", async (_req, res) => {
     enabled: enabled === "true",
     apiKey:  apiKey ? "***" : "",
     hasApiKey: !!apiKey,
-    sender:  sender ?? "منتجات السلة للخضار والفواكه",
+    sender:  sender ?? "سلة الخضار",
     provider: (provider ?? "msegat") as Provider,
     method:   method ?? "sms",
   });
@@ -278,8 +278,8 @@ router.post("/sms/send-otp", async (req, res) => {
   const code = String(Math.floor(1000 + Math.random() * 9000));
   await storeOtp(phone, code);
 
-  const senderName = sender ?? "منتجات السلة للخضار والفواكه";
-  const message = `${code} رمز التحقق الخاص بطلبك في منتجات السلة للخضار والفواكه. صالح 5 دقائق.`;
+  const senderName = sender ?? "سلة الخضار";
+  const message = `${code} رمز التحقق الخاص بطلبك في سلة الخضار. صالح 5 دقائق.`;
 
   req.log.info({ phone, provider, senderName }, "Sending OTP");
   const { success, response } = await sendSmsViaProvider(provider, apiKey, senderName, phone, message, method);
@@ -366,7 +366,7 @@ router.post("/sms/test", async (req, res) => {
   const provider   = (providerRaw ?? "msegat") as Provider;
   const method     = methodRaw ?? "sms";
   const phone      = parsed.data.phone.replace(/[\s+]/g, "");
-  const senderName = sender ?? "منتجات السلة للخضار والفواكه";
+  const senderName = sender ?? "سلة الخضار";
 
   req.log.info({ phone, provider, senderName }, "Test SMS requested");
 
@@ -374,7 +374,7 @@ router.post("/sms/test", async (req, res) => {
   if (provider === "authentica") {
     ({ success, response } = await sendViaAuthentica(apiKey, phone, method));
   } else {
-    ({ success, response } = await sendSmsViaProvider(provider, apiKey, senderName, phone, "اختبار — منتجات السلة للخضار والفواكه. نظام الرسائل يعمل ✅", method));
+    ({ success, response } = await sendSmsViaProvider(provider, apiKey, senderName, phone, "اختبار — سلة الخضار. نظام الرسائل يعمل ✅", method));
   }
 
   if (success) {

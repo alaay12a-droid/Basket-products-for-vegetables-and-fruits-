@@ -60,7 +60,7 @@ export default function ReferralScreen() {
     if (!code) return;
     const base = API_BASE.replace(/\/+$/, "");
     const appLink = `${base}?ref=${code}`;
-    const msg = `🥬 جرّب منتجات السلة للخضار والفواكه — خضار طازجة تصلك إلى بابك!\n\nحمّل التطبيق الآن واستمتع بتجربة الطلب:\n${appLink}\n\nكود الإحالة الخاص بك: ${code}`;
+    const msg = `🥬 جرّب سلة الخضار — خضار طازجة تصلك إلى بابك!\n\nحمّل التطبيق الآن واستمتع بتجربة الطلب:\n${appLink}\n\nكود الإحالة الخاص بك: ${code}`;
     try {
       await Share.share({ message: msg, url: appLink });
     } catch {}

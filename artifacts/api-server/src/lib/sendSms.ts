@@ -27,7 +27,7 @@ export async function sendSms(phone: string, message: string): Promise<void> {
     if (enabled !== "true" || !apiKey) return;
 
     const provider = (providerRaw ?? "msegat") as "msegat" | "taqnyat" | "4jawaly" | "unifonic" | "twilio" | "authentica";
-    const senderName = sender ?? "منتجات السلة للخضار والفواكه";
+    const senderName = sender ?? "سلة الخضار";
     const cleanPhone = phone.replace(/[\s+]/g, "");
 
     let success = false;

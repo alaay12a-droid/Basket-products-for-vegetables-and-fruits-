@@ -84,7 +84,7 @@ function LoginScreen({ onLogin }: { onLogin: (driver: Driver) => void }) {
           بوابة المناديب
         </Text>
         <Text style={{ color: colors.mutedForeground, fontFamily: F.regular, fontSize: 14, textAlign: "center" }}>
-          منتجات السلة للخضار والفواكه — دخول المناديب
+          سلة الخضار — دخول المناديب
         </Text>
 
         <View style={{ width: "100%", gap: 12 }}>
@@ -429,7 +429,7 @@ function DriverHome({ driver, onLogout }: { driver: Driver; onLogout: () => void
           // Android requires a foreground service notification to keep the
           // task alive when the app is backgrounded.
           foregroundService: {
-            notificationTitle: "منتجات السلة للخضار والفواكه",
+            notificationTitle: "سلة الخضار",
             notificationBody: "يتم إرسال موقعك للعميل أثناء التوصيل",
             notificationColor: "#E8920C",
           },
