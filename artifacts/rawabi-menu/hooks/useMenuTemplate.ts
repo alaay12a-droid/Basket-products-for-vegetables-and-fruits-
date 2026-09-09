@@ -1,23 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useFocusEffect } from "expo-router";
 import { apiGet } from "@/constants/api";
+import { useAppConfig } from "@/context/AppConfigContext";
 
 export type MenuTemplate = "classic" | "modern";
 
 export function useMenuTemplate() {
-  const [menuTemplate, setMenuTemplate] = useState<MenuTemplate>("classic");
-  const [loading, setLoading] = useState(true);
+  const { config, loaded, update } = useAppConfig();
 
   const refresh = useCallback(async () => {
     try {
       const result = await apiGet<{ menuTemplate: MenuTemplate }>("/settings/menu-template");
-      setMenuTemplate(result.menuTemplate === "modern" ? "modern" : "classic");
+      await update({ menuTemplate: result.menuTemplate === "modern" ? "modern" : "classic" });
     } catch {
-      setMenuTemplate("classic");
-    } finally {
-      setLoading(false);
+      // Keep the last known value; DEFAULT_CONFIG remains classic.
     }
-  }, []);
+  }, [update]);
 
   useEffect(() => {
     void refresh();
@@ -29,5 +27,5 @@ export function useMenuTemplate() {
     }, [refresh])
   );
 
-  return { menuTemplate, loading, refresh };
+  return { menuTemplate: config.menuTemplate, loading: !loaded, refresh };
 }

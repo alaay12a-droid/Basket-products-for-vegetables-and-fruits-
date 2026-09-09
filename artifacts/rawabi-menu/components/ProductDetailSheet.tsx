@@ -286,8 +286,8 @@ export function ProductDetailSheet({ item, menuItems = EMPTY_MENU_ITEMS, visible
                           styles.sizeBtn,
                           {
                             flex: 1,
-                            backgroundColor: active ? "#C8171A" : colors.secondary,
-                            borderColor: active ? "#C8171A" : colors.border,
+                            backgroundColor: active ? colors.primary : colors.secondary,
+                            borderColor: active ? colors.primary : colors.border,
                           },
                         ]}
                         activeOpacity={0.8}
@@ -320,8 +320,8 @@ export function ProductDetailSheet({ item, menuItems = EMPTY_MENU_ITEMS, visible
                           styles.sizeBtn,
                           {
                             flex: 1,
-                            backgroundColor: active ? "#C8171A" : colors.secondary,
-                            borderColor: active ? "#C8171A" : colors.border,
+                            backgroundColor: active ? colors.primary : colors.secondary,
+                            borderColor: active ? colors.primary : colors.border,
                           },
                         ]}
                         activeOpacity={0.8}
@@ -523,7 +523,7 @@ export function ProductDetailSheet({ item, menuItems = EMPTY_MENU_ITEMS, visible
 
             <TouchableOpacity
               onPress={handleAdd}
-              style={[styles.addBtn, { backgroundColor: "#C8171A" }]}
+              style={[styles.addBtn, { backgroundColor: colors.primary }]}
               activeOpacity={0.85}
             >
               <Text style={{ color: "#fff", fontFamily: F.extra, fontSize: 17 }}>

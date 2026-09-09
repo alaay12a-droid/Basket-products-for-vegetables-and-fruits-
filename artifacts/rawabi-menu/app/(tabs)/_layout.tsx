@@ -32,7 +32,7 @@ export default function TabLayout() {
           paddingBottom: pb,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: config.accentColor,
+        tabBarActiveTintColor: config.menuTemplate === "modern" ? "#0F3D2E" : config.accentColor,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarLabelStyle: {
           fontFamily: "Cairo_700Bold",

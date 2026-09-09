@@ -131,6 +131,7 @@ export interface AppConfig {
   deliveryEnabled: boolean;
   deliveryFee: number;
   freeDeliveryThreshold: number;
+  menuTemplate: "classic" | "modern";
 }
 
 export const DEFAULT_CONFIG: AppConfig = {
@@ -157,6 +158,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   deliveryEnabled: false,
   deliveryFee: 0,
   freeDeliveryThreshold: 0,
+  menuTemplate: "classic",
 };
 
 interface AppConfigContextValue {
@@ -196,6 +198,11 @@ export function AppConfigProvider({ children }: { children: React.ReactNode }) {
         if (remote.deliveryEnabled !== undefined)        local.deliveryEnabled         = remote.deliveryEnabled;
         if (remote.deliveryFee !== undefined)            local.deliveryFee             = remote.deliveryFee;
         if (remote.freeDeliveryThreshold !== undefined)  local.freeDeliveryThreshold   = remote.freeDeliveryThreshold;
+      } catch {}
+
+      try {
+        const template = await apiGet<{ menuTemplate: "classic" | "modern" }>("/settings/menu-template");
+        local.menuTemplate = template.menuTemplate === "modern" ? "modern" : "classic";
       } catch {}
 
       // 3. Load global sound settings from server → write into AsyncStorage so useAppSound picks them up
