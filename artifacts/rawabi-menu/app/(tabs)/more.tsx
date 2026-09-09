@@ -398,11 +398,18 @@ export default function MoreScreen() {
         <View style={{ alignItems: "center", marginTop: 12, marginBottom: 20, gap: 4 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <Text style={{ color: colors.mutedForeground, fontFamily: F.regular, fontSize: 12 }}>بواسطة</Text>
-            <Image
-              source={require("@/assets/images/alaa-logo-nobg.png")}
-              style={{ width: 90, height: 90 }}
-              resizeMode="contain"
-            />
+            <TouchableOpacity
+              onPress={() => Linking.openURL("https://jivn-platform.netlify.app/").catch(() => {})}
+              activeOpacity={0.75}
+              accessibilityRole="link"
+              accessibilityLabel="فتح موقع منصة چڤن"
+            >
+              <Image
+                source={require("@/assets/images/jiven-developer-logo.png")}
+                style={{ width: 90, height: 90 }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
