@@ -195,9 +195,10 @@ h1{text-align:center;font-size:18px;font-weight:800;color:#8B4513;margin-bottom:
 .item-modifiers{display:block;margin-top:2px;color:#666;font-size:9.5px;font-weight:400;line-height:1.3;white-space:normal;word-break:normal;overflow-wrap:normal}
 hr{border:none;border-top:1px dashed #bbb;margin:8px 0}
 .total{font-size:16px;font-weight:800;text-align:left}@media print{body{padding:5mm}.items-table{width:100%;max-width:100%;margin-inline:0}.items-table col.item-name-col{width:25mm}.items-table col.unit-price-col{width:14mm}.items-table col.quantity-col{width:10mm}.items-table col.total-col{width:13mm}}</style></head><body>
-<h1>منتجات السلة للخضار والفواكه</h1>
-<div class="sub">تبوك، الروضة، 47711 — المملكة العربية السعودية</div>
-<div class="sub">الرقم الضريبي: 302282730200003</div>
+<h1>شركة منتجات السلة للخضار والفواكه</h1>
+<div class="sub">تبوك — حي الصفا — شارع إبراهيم الخليل</div>
+<div class="sub">الرقم الضريبي: 312385645800003</div>
+<div class="sub">فاتورة ضريبية مبسطة<br/>Simplified Tax Invoice</div>
 <div class="daily">طلب اليوم #${order.dailyNumber ?? order.id}</div>
 <hr/>
 <p style="font-size:13px;margin-bottom:3px"><strong>الاسم:</strong> ${order.customerName}</p>
@@ -234,9 +235,10 @@ function printBulk(orders: Order[]) {
     const pf = getOrderPriceFactor(o);
     const itemsRows = o.items.map(i => `<tr><td style="padding:3px 6px">${getOrderItemDisplayName(i)} × ${i.quantity}</td><td style="padding:3px 6px;text-align:left">${fmt2(i.price*i.quantity*pf)} ر.س</td></tr>`).join("");
     return `<div style="page-break-after:always;padding:8mm;font-family:Cairo,sans-serif;direction:rtl">
-<h2 style="text-align:center;color:#8B4513;font-size:16px;margin-bottom:2px">منتجات السلة للخضار والفواكه</h2>
-<p style="text-align:center;font-size:10px;color:#888;margin-bottom:2px">الرقم الضريبي: 302282730200003</p>
-<p style="text-align:center;font-size:10px;color:#888;margin-bottom:6px">تبوك، الروضة، 47711</p>
+<h2 style="text-align:center;color:#8B4513;font-size:16px;margin-bottom:2px">شركة منتجات السلة للخضار والفواكه</h2>
+<p style="text-align:center;font-size:10px;color:#888;margin-bottom:2px">الرقم الضريبي: 312385645800003</p>
+<p style="text-align:center;font-size:10px;color:#888;margin-bottom:2px">تبوك — حي الصفا — شارع إبراهيم الخليل</p>
+<p style="text-align:center;font-size:10px;font-weight:700;margin-bottom:6px">فاتورة ضريبية مبسطة<br/>Simplified Tax Invoice</p>
 <p style="text-align:center;font-size:14px;font-weight:700;margin-bottom:8px">طلب اليوم #${o.dailyNumber ?? o.id} — ${o.customerName}</p>
 <p style="font-size:12px;color:#666;margin-bottom:6px">${time} · ${o.paymentMethod === "cash" ? "نقدي" : "إلكتروني"}</p>
 <table style="width:100%;border-collapse:collapse;font-size:13px">${itemsRows}

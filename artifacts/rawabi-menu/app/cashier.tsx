@@ -742,8 +742,11 @@ export default function CashierScreen() {
   <div class="logo-wrap">
     <img src="${LOGO_URI}" alt="منتجات السلة للخضار والفواكه"/>
   </div>
-  <div class="restaurant-name">منتجات السلة للخضار والفواكه</div>
-  <div class="restaurant-sub">تبوك — المملكة العربية السعودية</div>
+  <div class="restaurant-name">شركة منتجات السلة للخضار والفواكه</div>
+  <div class="restaurant-sub">تبوك — حي الصفا — شارع إبراهيم الخليل</div>
+  <div class="restaurant-sub">الرقم الضريبي: 312385645800003</div>
+  <div class="restaurant-name" style="font-size:13px;margin-top:6px;">فاتورة ضريبية مبسطة</div>
+  <div class="restaurant-sub" style="font-size:12px;color:#111;font-weight:700;">Simplified Tax Invoice</div>
 
   <hr class="divider-solid"/>
 

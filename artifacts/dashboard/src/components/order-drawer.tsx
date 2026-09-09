@@ -193,8 +193,9 @@ h1{text-align:center;font-size:18px;font-weight:800;color:#8B4513;margin-bottom:
 table{width:100%;border-collapse:collapse;font-size:13px}thead th{background:#8B4513;color:#fff;padding:7px 8px;text-align:center}
 tbody tr:nth-child(even){background:#fafafa}.summary{border-top:2px solid #aaa;padding-top:8px;margin-top:8px}
 @media print{body{padding:5mm}}</style></head><body>
-<h1>منتجات السلة للخضار والفواكه</h1>
-<div class="sub">الرقم الضريبي: 302282730200003 | العنوان: تبوك، الروضة، 47711</div>
+<h1>شركة منتجات السلة للخضار والفواكه</h1>
+<div class="sub">الرقم الضريبي: 312385645800003 | العنوان: تبوك — حي الصفا — شارع إبراهيم الخليل</div>
+<div class="sub">فاتورة ضريبية مبسطة<br/>Simplified Tax Invoice</div>
 <div class="sub">إيصال طلب #${formatEasternNumber(order.dailyNumber ?? order.id)} — ${dateStr} ${timeStr}</div>
 <p style="font-size:13px;margin-bottom:4px;"><strong>العميل:</strong> ${order.customerName || "عميل"}</p>
 ${order.customerPhone ? `<p style="font-size:13px;margin-bottom:4px;" dir="ltr"><strong>الجوال:</strong> ${order.customerPhone}</p>` : ""}
