@@ -2,13 +2,13 @@ export default function PrivacyPolicy() {
   return (
     <div dir="rtl" className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-6 py-10 leading-relaxed">
-        <h1 className="mb-2 text-2xl font-bold text-primary">سياسة الخصوصية — روابي المندي</h1>
+        <h1 className="mb-2 text-2xl font-bold text-primary">سياسة الخصوصية — منتجات السلة للخضار والفواكه</h1>
         <p className="mb-8 text-sm text-muted-foreground">آخر تحديث: 9 يوليو 2026</p>
 
         <section className="mb-8 space-y-3">
           <h2 className="text-lg font-bold">1. جمع بيانات الموقع الجغرافي في الخلفية</h2>
           <p>
-            يجمع تطبيق "روابي المندي" (تطبيق المندوب) بيانات الموقع الجغرافي أثناء تشغيل التطبيق وفي الخلفية،
+            يجمع تطبيق "منتجات السلة للخضار والفواكه" (تطبيق المندوب) بيانات الموقع الجغرافي أثناء تشغيل التطبيق وفي الخلفية،
             وذلك فقط عندما يكون المستخدم مسجّلاً كمندوب توصيل نشط ويقوم بتنفيذ طلب توصيل حالي.
           </p>
         </section>
@@ -44,7 +44,7 @@ export default function PrivacyPolicy() {
         <section className="mb-8 space-y-3">
           <h2 className="text-lg font-bold">5. كيفية تخزين البيانات وحمايتها والاحتفاظ بها</h2>
           <ul className="list-inside list-disc space-y-1">
-            <li>يتم إرسال بيانات الموقع (خط الطول والعرض فقط) عبر اتصال مشفّر (HTTPS/TLS) إلى خادم روابي المندي.</li>
+            <li>يتم إرسال بيانات الموقع (خط الطول والعرض فقط) عبر اتصال مشفّر (HTTPS/TLS) إلى خادم منتجات السلة للخضار والفواكه.</li>
             <li>تُخزَّن بيانات الموقع الحالية للمندوب مرتبطة فقط بالطلب النشط قيد التوصيل، ولا تُخزَّن كسجل تتبع دائم لمسار المندوب.</li>
             <li>يُستبدل آخر موقع مُسجَّل تلقائياً بموقع جديد كل عدة ثوانٍ أثناء التوصيل، ولا يُحتفظ بسجل تاريخي مفصّل لمسار الحركة.</li>
             <li>الوصول إلى بيانات الموقع مقيّد بموظفي إدارة المطعم والكاشير المخوّلين فقط عبر لوحة تحكم محمية بكلمة مرور.</li>
@@ -64,19 +64,19 @@ export default function PrivacyPolicy() {
           <h2 className="text-lg font-bold">7. التواصل معنا</h2>
           <p>
             لأي استفسار يخص هذه السياسة أو بياناتك الشخصية، يمكنك التواصل معنا عبر واتساب: 966530707042
-            أو الهاتف: 0530707042 — روابي المندي، تبوك، حي الروضة.
+            أو الهاتف: 0530707042 — منتجات السلة للخضار والفواكه، تبوك، حي الروضة.
           </p>
         </section>
 
         <hr className="my-10 border-border" />
 
-        <h1 className="mb-2 text-2xl font-bold text-primary" dir="ltr">Privacy Policy — Rawabi Al-Mandi</h1>
+        <h1 className="mb-2 text-2xl font-bold text-primary" dir="ltr">Privacy Policy — Salat Al Khodar</h1>
         <p className="mb-8 text-sm text-muted-foreground" dir="ltr">Last updated: July 9, 2026</p>
 
         <section className="mb-8 space-y-3" dir="ltr">
           <h2 className="text-lg font-bold">1. Background Location Data Collection</h2>
           <p>
-            The Rawabi Al-Mandi driver app collects location data while the app is in use and in the background,
+            The Salat Al Khodar driver app collects location data while the app is in use and in the background,
             only when the user is logged in as an active delivery driver and is fulfilling an active delivery order.
           </p>
         </section>
@@ -112,7 +112,7 @@ export default function PrivacyPolicy() {
         <section className="mb-8 space-y-3" dir="ltr">
           <h2 className="text-lg font-bold">5. How Data Is Stored, Protected, and Retained</h2>
           <ul className="list-inside list-disc space-y-1">
-            <li>Location data (latitude/longitude only) is transmitted over an encrypted connection (HTTPS/TLS) to the Rawabi Al-Mandi server.</li>
+            <li>Location data (latitude/longitude only) is transmitted over an encrypted connection (HTTPS/TLS) to the Salat Al Khodar server.</li>
             <li>Only the driver's current location for the active order is stored — it is not retained as a permanent route history.</li>
             <li>The last recorded location is overwritten every few seconds during delivery; no detailed historical movement log is kept.</li>
             <li>Access to location data is restricted to authorized restaurant management and cashier staff via a password-protected dashboard.</li>
@@ -132,7 +132,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-lg font-bold">7. Contact Us</h2>
           <p>
             For any questions about this policy or your personal data, contact us via WhatsApp: 966530707042
-            or phone: 0530707042 — Rawabi Al-Mandi, Tabuk, Al-Rawdah District.
+            or phone: 0530707042 — Salat Al Khodar, Tabuk, Al-Rawdah District.
           </p>
         </section>
       </div>

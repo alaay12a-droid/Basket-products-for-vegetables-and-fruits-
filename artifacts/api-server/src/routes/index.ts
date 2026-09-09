@@ -24,6 +24,8 @@ import dashboardAuthRouter from "./dashboard-auth";
 import referralsRouter from "./referrals";
 import appVersionRouter from "./app-version";
 import branchesRouter from "./branches";
+import dashboardUsersRouter from "./dashboard-users";
+import branchResolvePreviewRouter from "./branch-resolve-preview";
 
 const router: IRouter = Router();
 
@@ -52,5 +54,7 @@ router.use(dashboardAuthRouter);
 router.use(referralsRouter);
 router.use(appVersionRouter);
 router.use(branchesRouter);
+router.use(branchResolvePreviewRouter);
+router.use(dashboardUsersRouter);
 
 export default router;

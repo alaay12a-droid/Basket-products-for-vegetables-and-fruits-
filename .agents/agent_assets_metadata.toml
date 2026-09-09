@@ -4,34 +4,39 @@ uploads = []
 id = "amMdbeZTjrPYMfZrXzQuX"
 uri = "file://artifacts/rawabi-menu/assets/images/icon.png"
 type = "image"
-title = "rawabi mandi restaurant icon"
+title = "سلة الخضار restaurant icon"
 
 [[outputs]]
 id = "NgFkFuxj9j6w4gMZGqCvA"
 uri = "file://AsalaAlMamlakah.zip"
 type = "unspecified"
 title = "AsalaAlMamlakah - Android Studio Project"
+logical_id = "fb5d2c33-c2a3-4bce-9e78-e53546d7d6f4"
 
 [[outputs]]
 id = "uCj9nv55iXqztHqRMC2Uo"
 uri = "file://RawabiAlMandi.zip"
 type = "unspecified"
-title = "RawabiAlMandi.zip — آخر تحديث"
+title = "سلة الخضار — آخر تحديث"
+logical_id = "18f7d035-03a0-4e9d-91f7-1d9acc4f46f0"
 
 [[outputs]]
 id = "ZDyeEUweczbzM_WPDvYNq"
 uri = "file://RawabiAlMandi-Source.zip"
 type = "unspecified"
-title = "RawabiAlMandi — جاهز لـ Google Play"
+title = "سلة الخضار — جاهز لـ Google Play"
+logical_id = "00d57340-cca1-4f12-ae29-6c736e278b22"
 
 [[outputs]]
 id = "HWHbb8SioEOg7vaeP7mZi"
 uri = "file://expo-qr.png"
 type = "image"
-title = "Expo QR Code - روابي المندي"
+title = "Expo QR Code - سلة الخضار"
+logical_id = "c57fa3bf-e2a2-4852-8424-120b6bf9ade2"
 
 [[outputs]]
 id = "TWgZiHigzMS8ByJPZEC9B"
 uri = "file://expo_qr.jpg"
 type = "image"
 title = "امسح لتجربة كود الخصم"
+logical_id = "d06f445f-3470-4497-8247-f5d35cd6ef08"

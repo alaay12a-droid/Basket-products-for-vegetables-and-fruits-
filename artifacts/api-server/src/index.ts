@@ -98,6 +98,11 @@ async function runMigrationsAndSeed() {
       updated_at TIMESTAMP DEFAULT NOW() NOT NULL
     )
   `);
+  await db.execute(sql`
+    INSERT INTO app_settings (key, value)
+    VALUES ('menu_template', 'classic')
+    ON CONFLICT (key) DO NOTHING
+  `);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS push_tokens (
@@ -338,13 +343,37 @@ async function runMigrationsAndSeed() {
       active BOOLEAN NOT NULL DEFAULT TRUE,
       lat REAL,
       lng REAL,
+      delivery_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      pickup_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      weekly_operating_hours JSONB,
+      delivery_capacity INTEGER,
       created_at TIMESTAMP DEFAULT NOW() NOT NULL
+    )
+  `);
+  await db.execute(sql`ALTER TABLE branches ADD COLUMN IF NOT EXISTS delivery_enabled BOOLEAN NOT NULL DEFAULT TRUE`);
+  await db.execute(sql`ALTER TABLE branches ADD COLUMN IF NOT EXISTS pickup_enabled BOOLEAN NOT NULL DEFAULT TRUE`);
+  await db.execute(sql`ALTER TABLE branches ADD COLUMN IF NOT EXISTS weekly_operating_hours JSONB`);
+  await db.execute(sql`ALTER TABLE branches ADD COLUMN IF NOT EXISTS delivery_capacity INTEGER`);
+  await db.execute(sql`
+    DO $$ BEGIN
+      ALTER TABLE branches ADD CONSTRAINT branches_delivery_capacity_positive
+        CHECK (delivery_capacity IS NULL OR delivery_capacity > 0);
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$
+  `);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS branch_product_availability (
+      id SERIAL PRIMARY KEY,
+      branch_id INTEGER NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+      item_id TEXT NOT NULL REFERENCES menu_items(item_id) ON DELETE CASCADE,
+      available BOOLEAN NOT NULL,
+      UNIQUE(branch_id, item_id)
     )
   `);
 
   // ── Branch columns on orders (added after initial deploy) ─────────────────
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS branch_id INTEGER`);
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS branch_name TEXT`);
+  await db.execute(sql`CREATE INDEX IF NOT EXISTS orders_delivery_capacity_lookup_idx ON orders (order_type, status, branch_id)`);
 
   logger.info("All migrations complete");
 
@@ -405,8 +434,8 @@ runMigrationsAndSeed()
               const name = row.customerName?.trim() || "عزيزنا";
               try {
                 await sendPushToToken(row.token, {
-                  title: "روابي المندي 🍗",
-                  body: `وحشتنا يا ${name} 👋 مرت فترة ما زرتنا فيها، تعال شوف عروضنا الجديدة 🍗`,
+                  title: "منتجات السلة للخضار والفواكه 🥬",
+                  body: `وحشتنا يا ${name} 👋 مرت فترة ما زرتنا فيها، تعال شوف عروضنا الجديدة 🥬`,
                   data: { type: "reengagement" },
                 });
                 await db

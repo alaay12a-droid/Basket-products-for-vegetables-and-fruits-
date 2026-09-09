@@ -136,7 +136,6 @@ export function TabErp({ orders, loading }: Props) {
   const [search,       setSearch]       = useState("");
   const [page,         setPage]         = useState(1);
   const [pageSize,     setPageSize]     = useState(25);
-  const [expanded,     setExpanded]     = useState<Set<string>>(new Set());
   const [activePreset, setActivePreset] = useState<DatePreset>("today");
   const [applied,      setApplied]      = useState({ dateFrom: todayStr(), dateTo: todayStr(), timeFrom: "00:00", timeTo: "23:59", payment: "all" as "all"|"cash"|"moyasar" });
 
@@ -192,7 +191,10 @@ export function TabErp({ orders, loading }: Props) {
         arr.push(r);
         catMap.set(r.category, arr);
       }
-      const cats = CATEGORY_ORDER.filter(c => catMap.has(c));
+      const cats = [
+        ...CATEGORY_ORDER.filter(c => catMap.has(c)),
+        ...Array.from(catMap.keys()).filter(c => !CATEGORY_ORDER.includes(c)),
+      ];
 
       tableHtml = `
         <table>
@@ -209,31 +211,12 @@ export function TabErp({ orders, loading }: Props) {
             </tr>
           </thead>
           <tbody>
-            <tr class="totals-row">
-              <td colspan="2"><strong>الإجمالي الكلي</strong></td>
-              <td></td>
-              <td><strong>${fmt0(totals.qty)}</strong></td>
-              <td><strong>${fmt2(totals.revenue)}</strong></td>
-              <td><strong>${fmt2(totals.tax)}</strong></td>
-              <td><strong>${fmt2(totals.discount)}</strong></td>
-              <td><strong>${fmt2(totals.net)}</strong></td>
-            </tr>
             ${cats.map(cat => {
               const rows = catMap.get(cat)!;
-              const catRev = rows.reduce((s,r)=>s+r.revenue,0);
-              const catQty = rows.reduce((s,r)=>s+r.qty,0);
-              const catTax = rows.reduce((s,r)=>s+r.tax,0);
-              const catNet = rows.reduce((s,r)=>s+r.net,0);
               const label  = CATEGORY_AR[cat] || cat;
               return `
                 <tr class="group-row">
-                  <td colspan="2"><strong>${label}</strong></td>
-                  <td></td>
-                  <td>${fmt0(catQty)}</td>
-                  <td>${fmt2(catRev)}</td>
-                  <td>${fmt2(catTax)}</td>
-                  <td>0.00</td>
-                  <td><strong>${fmt2(catNet)}</strong></td>
+                  <td colspan="8"><strong>${label}</strong></td>
                 </tr>
                 ${rows.map(r => `
                   <tr class="item-row">
@@ -249,6 +232,15 @@ export function TabErp({ orders, loading }: Props) {
                 `).join("")}
               `;
             }).join("")}
+            <tr class="totals-row">
+              <td colspan="2"><strong>الإجمالي الكلي</strong></td>
+              <td></td>
+              <td><strong>${fmt0(totals.qty)}</strong></td>
+              <td><strong>${fmt2(totals.revenue)}</strong></td>
+              <td><strong>${fmt2(totals.tax)}</strong></td>
+              <td><strong>${fmt2(totals.discount)}</strong></td>
+              <td><strong>${fmt2(totals.net)}</strong></td>
+            </tr>
           </tbody>
         </table>`;
     } else {
@@ -336,7 +328,7 @@ export function TabErp({ orders, loading }: Props) {
 <div class="page">
   <div class="header">
     <div>
-      <div class="restaurant-name">روابي المندي</div>
+      <div class="restaurant-name">منتجات السلة للخضار والفواكه</div>
       <div class="restaurant-sub">للمذاق فن وأصول — تبوك، حي الروضة</div>
     </div>
     <div class="report-meta">
@@ -353,7 +345,7 @@ export function TabErp({ orders, loading }: Props) {
   </div>
   ${tableHtml}
   <div class="footer">
-    <span>روابي المندي للمذاق فن وأصول</span>
+    <span>منتجات السلة للخضار والفواكه</span>
     <span>تقرير آلي — جميع المبالغ بالريال السعودي</span>
   </div>
 </div>
@@ -363,14 +355,6 @@ export function TabErp({ orders, loading }: Props) {
 
     const w = window.open("", "_blank", "width=900,height=700");
     if (w) { w.document.write(html); w.document.close(); }
-  }
-
-  function toggleGroup(cat: string) {
-    setExpanded(prev => {
-      const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat); else next.add(cat);
-      return next;
-    });
   }
 
   // ── Filter orders ──────────────────────────────────────────────────────────
@@ -660,8 +644,8 @@ export function TabErp({ orders, loading }: Props) {
             const rows = viewMode==="summary" ? flatItems : filteredInvoices;
             if (!rows.length) return;
             const csv = viewMode==="summary"
-              ? [["اسم الصنف","المجموعة","السعر","الكمية","الضريبة","الخصم","رسوم الخدمة","الصافي"],
-                 ...flatItems.map(r => [r.name, CATEGORY_AR[r.category]||r.category, fmt2(r.unitPrice), r.qty, fmt2(r.tax), fmt2(r.discount), fmt2(r.serviceCharge), fmt2(r.net)])]
+              ? [["اسم الصنف","المجموعة","السعر","الكمية","الإجمالي","الضريبة 15%","الخصم","الصافي"],
+                 ...flatItems.map(r => [r.name, CATEGORY_AR[r.category]||r.category, fmt2(r.unitPrice), r.qty, fmt2(r.revenue), fmt2(r.tax), fmt2(r.discount), fmt2(r.net)])]
               : [["رقم الفاتورة","التاريخ","الوقت","العميل","طريقة الدفع","الأصناف","الإجمالي","الخصم","الضريبة","الصافي"],
                  ...filteredInvoices.map(r => [r.ref, r.date, r.time, r.customer, r.paymentMethod, r.itemCount, fmt2(r.revenue), fmt2(r.discount), fmt2(r.tax), fmt2(r.net)])];
             const content = "\uFEFF" + csv.map(row => row.join(",")).join("\n");
@@ -694,10 +678,10 @@ export function TabErp({ orders, loading }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground">
-                  <th className="py-2.5 px-4 text-right w-8"></th>
                   <th className="py-2.5 px-4 text-right min-w-[180px]">
                     <span className="flex items-center gap-1">اسم الصنف <span className="text-[10px] opacity-50">▼</span></span>
                   </th>
+                  <th className="py-2.5 px-4 text-right">المجموعة</th>
                   <th className="py-2.5 px-4 text-right">
                     <span className="flex items-center gap-1">السعر <span className="text-[10px] opacity-50">▼</span></span>
                   </th>
@@ -705,72 +689,57 @@ export function TabErp({ orders, loading }: Props) {
                     <span className="flex items-center gap-1">الكمية <span className="text-[10px] opacity-50">▼</span></span>
                   </th>
                   <th className="py-2.5 px-4 text-right">
-                    <span className="flex items-center gap-1">الضريبة <span className="text-[10px] opacity-50">▼</span></span>
+                    الإجمالي
                   </th>
+                  <th className="py-2.5 px-4 text-right">الضريبة 15%</th>
                   <th className="py-2.5 px-4 text-right">الخصم</th>
-                  <th className="py-2.5 px-4 text-right">رسوم الخدمة</th>
                   <th className="py-2.5 px-4 text-right font-bold">الصافي</th>
                 </tr>
               </thead>
               <tbody>
-                {/* Grand totals row */}
-                <tr className="border-b bg-amber-50/60 dark:bg-amber-950/20 font-bold text-sm">
-                  <td className="py-2 px-4"></td>
-                  <td className="py-2 px-4 text-amber-800 dark:text-amber-400">الإجمالي الكلي</td>
-                  <td className="py-2 px-4 text-amber-800 dark:text-amber-400">{fmt2(totals.revenue)}</td>
-                  <td className="py-2 px-4 text-amber-800 dark:text-amber-400">{fmt0(totals.qty)}</td>
-                  <td className="py-2 px-4 text-amber-800 dark:text-amber-400">{fmt2(totals.tax)}</td>
-                  <td className="py-2 px-4 text-amber-800 dark:text-amber-400">{fmt2(totals.discount)}</td>
-                  <td className="py-2 px-4 text-amber-800 dark:text-amber-400">0.00</td>
-                  <td className="py-2 px-4 text-emerald-700 dark:text-emerald-400">{fmt2(totals.net)}</td>
-                </tr>
-
                 {pagedCategories.length === 0 && (
                   <tr><td colSpan={8} className="py-12 text-center text-muted-foreground text-sm">لا توجد بيانات</td></tr>
                 )}
 
                 {pagedCategories.map(({ cat, rows }) => {
-                  const catRev   = rows.reduce((s,r)=>s+r.revenue,0);
-                  const catQty   = rows.reduce((s,r)=>s+r.qty,0);
-                  const catTax   = rows.reduce((s,r)=>s+r.tax,0);
-                  const catNet   = rows.reduce((s,r)=>s+r.net,0);
-                  const isOpen   = expanded.has(cat);
                   const label    = CATEGORY_AR[cat] || cat;
                   return [
                     /* Group header row */
                     <tr key={`g-${cat}`}
-                      onClick={() => toggleGroup(cat)}
-                      className="border-b cursor-pointer bg-muted/30 hover:bg-muted/50 select-none transition-colors">
-                      <td className="py-2 px-4 text-center">
-                        <span className={`inline-block transition-transform text-xs ${isOpen?"rotate-90":""}`}>▶</span>
-                      </td>
-                      <td className="py-2 px-4 font-bold text-sm">{label}</td>
-                      <td className="py-2 px-4 font-semibold text-xs">{fmt2(catRev)}</td>
-                      <td className="py-2 px-4 font-semibold text-xs">{fmt0(catQty)}</td>
-                      <td className="py-2 px-4 font-semibold text-xs">{fmt2(catTax)}</td>
-                      <td className="py-2 px-4 text-xs text-muted-foreground">0.00</td>
-                      <td className="py-2 px-4 text-xs text-muted-foreground">0.00</td>
-                      <td className="py-2 px-4 font-bold text-xs text-emerald-700 dark:text-emerald-400">{fmt2(catNet)}</td>
+                      className="border-b bg-muted/30">
+                      <td colSpan={8} className="py-2 px-4 font-bold text-sm">{label}</td>
                     </tr>,
                     /* Item rows */
-                    ...(isOpen ? rows.map(r => (
+                    ...rows.map(r => (
                       <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10 transition-colors">
-                        <td className="py-2 px-4"></td>
                         <td className="py-2 px-4 text-sm pr-8">{r.name}</td>
+                        <td className="py-2 px-4 text-sm">{label}</td>
                         <td className="py-2 px-4 text-sm tabular-nums">{fmt2(r.unitPrice)}</td>
                         <td className="py-2 px-4">
                           <span className="inline-flex items-center justify-center h-5 min-w-[24px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-bold text-xs">
                             {r.qty}
                           </span>
                         </td>
+                        <td className="py-2 px-4 text-sm tabular-nums">{fmt2(r.revenue)}</td>
                         <td className="py-2 px-4 text-sm tabular-nums text-muted-foreground">{fmt2(r.tax)}</td>
-                        <td className="py-2 px-4 text-sm tabular-nums text-muted-foreground">0.00</td>
                         <td className="py-2 px-4 text-sm tabular-nums text-muted-foreground">0.00</td>
                         <td className="py-2 px-4 text-sm tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{fmt2(r.net)}</td>
                       </tr>
-                    )) : [])
+                    ))
                   ];
                 })}
+
+                {pagedCategories.length > 0 && (
+                  <tr className="border-b bg-amber-50/60 dark:bg-amber-950/20 font-bold text-sm">
+                    <td colSpan={2} className="py-2 px-4 text-amber-800 dark:text-amber-400">الإجمالي الكلي</td>
+                    <td className="py-2 px-4"></td>
+                    <td className="py-2 px-4 text-amber-800 dark:text-amber-400">{fmt0(totals.qty)}</td>
+                    <td className="py-2 px-4 text-amber-800 dark:text-amber-400">{fmt2(totals.revenue)}</td>
+                    <td className="py-2 px-4 text-amber-800 dark:text-amber-400">{fmt2(totals.tax)}</td>
+                    <td className="py-2 px-4 text-amber-800 dark:text-amber-400">{fmt2(totals.discount)}</td>
+                    <td className="py-2 px-4 text-emerald-700 dark:text-emerald-400">{fmt2(totals.net)}</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           )}

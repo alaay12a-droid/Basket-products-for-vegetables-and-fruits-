@@ -138,7 +138,7 @@ function printDriverReport(drivers: DriverStat[], rangeLabel: string) {
   @media print{body{padding:5mm}}
 </style></head><body>
 <h1>🛵 تقرير المندوبين — ${rangeLabel}</h1>
-<p class="sub">روابي المندي للمذاق فن وأصول · مطبوع: ${now}</p>
+<p class="sub">منتجات السلة للخضار والفواكه · مطبوع: ${now}</p>
 <div class="summary">
   <div class="sc"><div class="n">${grandCount}</div><div class="l">إجمالي التوصيلات</div></div>
   <div class="sc"><div class="n">${grandTotal.toFixed(2)} ر.س</div><div class="l">إجمالي المحصّل</div></div>

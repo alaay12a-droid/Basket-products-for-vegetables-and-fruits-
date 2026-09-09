@@ -3,14 +3,14 @@ import { Resend } from "resend";
 const ADMIN_EMAIL = "alaay12a@gmail.com";
 
 export async function sendPinOtpEmail(code: string): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey || apiKey === "none") throw new Error("RESEND_API_KEY غير مضبوط");
+  const apiKey = process.env.PROJECT_RESEND_API_KEY;
+  if (!apiKey || apiKey === "none") throw new Error("PROJECT_RESEND_API_KEY غير مضبوط");
 
   const resend = new Resend(apiKey);
 
   const html = `
     <div dir="rtl" style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;background:#1A0A00;border-radius:12px;color:#F5E6D0">
-      <h2 style="color:#E8920C;text-align:center">🔐 روابي المندي</h2>
+      <h2 style="color:#E8920C;text-align:center">🔐 منتجات السلة للخضار والفواكه</h2>
       <p style="font-size:15px;text-align:center">طلب تغيير رمز الدخول</p>
       <div style="background:#2A1800;border:2px solid #E8920C;border-radius:12px;padding:20px;text-align:center;margin:20px 0">
         <p style="font-size:13px;color:#C9A86C;margin:0 0 10px">رمز التحقق</p>
@@ -22,9 +22,9 @@ export async function sendPinOtpEmail(code: string): Promise<void> {
   `;
 
   const { error } = await resend.emails.send({
-    from: "روابي المندي <onboarding@resend.dev>",
+    from: "منتجات السلة للخضار والفواكه <onboarding@resend.dev>",
     to: ADMIN_EMAIL,
-    subject: `${code} — رمز تغيير كلمة المرور | روابي المندي`,
+    subject: `${code} — رمز تغيير كلمة المرور | منتجات السلة للخضار والفواكه`,
     html,
   });
 

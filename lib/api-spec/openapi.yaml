@@ -35,6 +35,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  /settings/menu-template:
+    get:
+      operationId: getMenuTemplate
+      tags: [menu]
+      summary: Get the active customer menu template
+      responses:
+        "200":
+          description: Current menu template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuTemplateSetting"
+    put:
+      operationId: updateMenuTemplate
+      tags: [menu]
+      summary: Update the active customer menu template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuTemplateSetting"
+      responses:
+        "200":
+          description: Menu template updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuTemplateSetting"
+
   # ── Dashboard Auth ───────────────────────────────────────────────────
   /dashboard/auth/login:
     post:
@@ -586,6 +616,15 @@ components:
       required: [today, week, month, year, dailyBreakdown, monthlyBreakdown, topItems]
 
     # ── Menu ──────────────────────────────────────────────────────────
+    MenuTemplateSetting:
+      type: object
+      properties:
+        menuTemplate:
+          type: string
+          enum: [classic, modern]
+          default: classic
+      required: [menuTemplate]
+
     SizeOption:
       type: object
       properties:

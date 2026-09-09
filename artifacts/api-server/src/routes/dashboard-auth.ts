@@ -1,8 +1,8 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "@workspace/db";
-import { dashboardUsersTable } from "@workspace/db/schema";
+import { branchesTable, dashboardUserBranchesTable, dashboardUsersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { sendPinOtpEmail } from "../lib/sendEmail";
@@ -36,6 +36,97 @@ function verifyToken(token: string): { userId: number; role: string } | null {
     return null;
   }
 }
+
+export interface DashboardActor {
+  id: number;
+  username: string;
+  role: string;
+  branchIds: number[];
+}
+
+/**
+ * Resolves the dashboard_token cookie to the user's current database access.
+ * The token's role is deliberately not used as an authorization decision.
+ */
+export async function resolveOptionalDashboardActor(req: Parameters<RequestHandler>[0]): Promise<DashboardActor | null> {
+  const token = req.cookies?.[COOKIE_NAME] as string | undefined;
+  if (!token) return null;
+
+  const payload = verifyToken(token);
+  if (!payload) return null;
+
+  const [user] = await db
+    .select({
+      id: dashboardUsersTable.id,
+      username: dashboardUsersTable.username,
+      role: dashboardUsersTable.role,
+    })
+    .from(dashboardUsersTable)
+    .where(eq(dashboardUsersTable.id, payload.userId))
+    .limit(1);
+  if (!user) return null;
+
+  const branchRows = user.role === "admin"
+    ? await db.select({ id: branchesTable.id }).from(branchesTable)
+    : await db
+      .select({ id: dashboardUserBranchesTable.branchId })
+      .from(dashboardUserBranchesTable)
+      .where(eq(dashboardUserBranchesTable.dashboardUserId, user.id));
+
+  return {
+    ...user,
+    branchIds: branchRows.map((branch) => branch.id),
+  };
+}
+
+function rejectCrossOriginRequest(req: Parameters<RequestHandler>[0], res: Parameters<RequestHandler>[1]): boolean {
+  const origin = req.get("origin");
+  if (!origin) return false;
+  let originHost: string;
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    res.status(403).json({ error: "مصدر الطلب غير مسموح" });
+    return true;
+  }
+  const requestHost = req.get("host");
+  if (!requestHost || originHost !== requestHost) {
+    res.status(403).json({ error: "مصدر الطلب غير مسموح" });
+    return true;
+  }
+  return false;
+}
+
+/** Requires a current database-backed dashboard session. */
+export const requireDashboardUser: RequestHandler = async (req, res, next) => {
+  if (rejectCrossOriginRequest(req, res)) return;
+  const actor = await resolveOptionalDashboardActor(req);
+  if (!actor) {
+    res.status(401).json({ error: "غير مصرح" });
+    return;
+  }
+  res.locals.dashboardActor = actor;
+  next();
+};
+
+/**
+ * Require a current dashboard admin session authenticated by the existing
+ * httpOnly dashboard_token cookie.
+ */
+export const requireDashboardAdmin: RequestHandler = async (req, res, next) => {
+  if (rejectCrossOriginRequest(req, res)) return;
+  const actor = await resolveOptionalDashboardActor(req);
+  if (!actor) {
+    res.status(401).json({ error: "غير مصرح" });
+    return;
+  }
+  if (actor.role !== "admin") {
+    res.status(403).json({ error: "صلاحيات المشرف مطلوبة" });
+    return;
+  }
+  res.locals.dashboardActor = actor;
+  next();
+};
 
 router.post("/dashboard/auth/login", async (req, res) => {
   const { username, password } = req.body as { username?: string; password?: string };
@@ -104,30 +195,12 @@ router.post("/dashboard/auth/login", async (req, res) => {
 });
 
 router.get("/dashboard/auth/me", async (req, res) => {
-  const token = req.cookies?.[COOKIE_NAME] as string | undefined;
-  if (!token) {
+  const actor = await resolveOptionalDashboardActor(req);
+  if (!actor) {
     res.status(401).json({ error: "غير مصرح" });
     return;
   }
-
-  const payload = verifyToken(token);
-  if (!payload) {
-    res.status(401).json({ error: "جلسة منتهية" });
-    return;
-  }
-
-  const [user] = await db
-    .select()
-    .from(dashboardUsersTable)
-    .where(eq(dashboardUsersTable.id, payload.userId))
-    .limit(1);
-
-  if (!user) {
-    res.status(401).json({ error: "المستخدم غير موجود" });
-    return;
-  }
-
-  res.json({ id: user.id, username: user.username, role: user.role });
+  res.json(actor);
 });
 
 router.post("/dashboard/auth/logout", (req, res) => {

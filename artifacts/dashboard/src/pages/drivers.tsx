@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, RefreshCw, Pencil, Trash2, Phone, Users, TrendingUp, Loader2, Camera } from "lucide-react";
+import { Plus, RefreshCw, Pencil, Trash2, Phone, Users, TrendingUp, Loader2, Camera, GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fileToCompressedDataUrl } from "@/lib/imageUpload";
 
@@ -27,6 +27,21 @@ interface DrvSummary {
   driver: Driver;
   ordersCount: number;
   totalCollected: number;
+}
+
+interface Branch {
+  id: number;
+  name: string;
+  active: boolean;
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
+}
+
+interface DriverBranchMembership {
+  id: number;
+  branchId: number;
+  active: boolean;
+  branch?: Branch;
 }
 
 interface DriverForm {
@@ -61,6 +76,15 @@ export default function Drivers() {
   const [deleteId, setDeleteId]     = useState<number | null>(null);
   const [deleting, setDeleting]     = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [membershipDriver, setMembershipDriver] = useState<Driver | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [memberships, setMemberships] = useState<DriverBranchMembership[]>([]);
+  const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
+  const [membershipsLoading, setMembershipsLoading] = useState(false);
+  const [membershipsSaving, setMembershipsSaving] = useState(false);
+  const [togglingMembershipId, setTogglingMembershipId] = useState<number | null>(null);
+  const membershipRequestId = useRef(0);
+  const membershipDriverId = useRef<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -177,6 +201,77 @@ export default function Drivers() {
       toast({ title: "تعذّر تحديث الحالة", variant: "destructive" });
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const openMemberships = async (driver: Driver) => {
+    const requestId = ++membershipRequestId.current;
+    membershipDriverId.current = driver.id;
+    setMembershipDriver(driver);
+    setSelectedBranchIds([]);
+    setBranches([]);
+    setMemberships([]);
+    setMembershipsLoading(true);
+    try {
+      const [branchList, membershipList] = await Promise.all([
+        apiGet<Branch[]>("/branches"),
+        apiGet<DriverBranchMembership[]>(`/drivers/${driver.id}/branches`),
+      ]);
+      if (requestId !== membershipRequestId.current) return;
+      setBranches(branchList);
+      setMemberships(membershipList);
+    } catch {
+      if (requestId !== membershipRequestId.current) return;
+      toast({ title: "تعذّر تحميل عضويات الفروع", variant: "destructive" });
+    } finally {
+      if (requestId === membershipRequestId.current) setMembershipsLoading(false);
+    }
+  };
+
+  const addMemberships = async () => {
+    if (!membershipDriver || selectedBranchIds.length === 0) return;
+    const driverId = membershipDriver.id;
+    setMembershipsSaving(true);
+    try {
+      const results = await Promise.allSettled(selectedBranchIds.map(branchId =>
+        apiPost<DriverBranchMembership>(`/drivers/${driverId}/branches`, { branchId })
+      ));
+      const refreshed = await apiGet<DriverBranchMembership[]>(`/drivers/${driverId}/branches`);
+      if (membershipDriverId.current !== driverId) return;
+      setMemberships(refreshed);
+      setSelectedBranchIds([]);
+      const failedCount = results.filter(result => result.status === "rejected").length;
+      if (failedCount > 0) {
+        toast({
+          title: "تم تحديث العضويات جزئيًا",
+          description: `تعذّرت إضافة ${failedCount} من الفروع المحددة`,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "تمت إضافة عضويات الفروع" });
+      }
+    } catch {
+      toast({ title: "تعذّرت إضافة عضويات الفروع", variant: "destructive" });
+    } finally {
+      setMembershipsSaving(false);
+    }
+  };
+
+  const toggleMembership = async (membership: DriverBranchMembership) => {
+    if (!membershipDriver) return;
+    const driverId = membershipDriver.id;
+    setTogglingMembershipId(membership.id);
+    try {
+      const updated = await apiPut<DriverBranchMembership>(
+        `/drivers/${driverId}/branches/${membership.branchId}`,
+        { active: !membership.active },
+      );
+      if (membershipDriverId.current !== driverId) return;
+      setMemberships(prev => prev.map(m => m.id === membership.id ? updated : m));
+    } catch {
+      toast({ title: "تعذّر تحديث حالة عضوية الفرع", variant: "destructive" });
+    } finally {
+      setTogglingMembershipId(null);
     }
   };
 
@@ -346,6 +441,15 @@ export default function Drivers() {
                           <Button
                             size="icon"
                             variant="ghost"
+                            className="h-8 w-8"
+                            onClick={() => openMemberships(driver)}
+                            title="إدارة عضويات الفروع"
+                          >
+                            <GitBranch className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
                             className="h-8 w-8 text-destructive hover:text-destructive"
                             onClick={() => setDeleteId(driver.id)}
                           >
@@ -451,6 +555,95 @@ export default function Drivers() {
               {form.id ? "حفظ التعديلات" : "إضافة"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Branch memberships are independent from the driver's global active status. */}
+      <Dialog open={membershipDriver !== null} onOpenChange={open => {
+        if (!open) {
+          membershipDriverId.current = null;
+          membershipRequestId.current += 1;
+          setMembershipDriver(null);
+        }
+      }}>
+        <DialogContent className="max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>عضويات الفروع — {membershipDriver?.name}</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            حالة المندوب العامة منفصلة عن حالة عضويته في كل فرع.
+          </p>
+          {membershipsLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-lg border divide-y">
+                {memberships.length === 0 ? (
+                  <p className="p-4 text-sm text-muted-foreground text-center">لا توجد عضويات فروع لهذا المندوب</p>
+                ) : memberships.map(membership => {
+                  const branch = membership.branch ?? branches.find(b => b.id === membership.branchId);
+                  return (
+                    <div key={membership.id} className="p-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{branch?.name ?? `فرع #${membership.branchId}`}</p>
+                        {branch ? (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <Badge variant={branch.active ? "outline" : "secondary"} className="text-[10px]">
+                              الفرع: {branch.active ? "نشط" : "موقوف"}
+                            </Badge>
+                            <Badge variant={branch.deliveryEnabled ? "outline" : "secondary"} className="text-[10px]">
+                              التوصيل: {branch.deliveryEnabled ? "مفعّل" : "موقوف"}
+                            </Badge>
+                            <Badge variant={branch.pickupEnabled ? "outline" : "secondary"} className="text-[10px]">
+                              الاستلام: {branch.pickupEnabled ? "مفعّل" : "موقوف"}
+                            </Badge>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-destructive mt-1">الفرع غير موجود</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {togglingMembershipId === membership.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                          <Switch checked={membership.active} onCheckedChange={() => toggleMembership(membership)} />
+                        )}
+                        <Badge variant={membership.active ? "default" : "outline"} className={cn("text-xs", membership.active ? "bg-green-500/15 text-green-700 border-green-500/30" : "text-zinc-400")}>
+                          العضوية: {membership.active ? "نشطة" : "موقوفة"}
+                        </Badge>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="rounded-lg border p-3 space-y-3">
+                <p className="text-sm font-medium">إضافة عضويات فروع</p>
+                <div className="max-h-40 overflow-y-auto space-y-2">
+                  {branches.filter(branch => !memberships.some(membership => membership.branchId === branch.id)).map(branch => (
+                    <label key={branch.id} className="flex items-start gap-2 cursor-pointer text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedBranchIds.includes(branch.id)}
+                        onChange={e => setSelectedBranchIds(ids => e.target.checked ? [...ids, branch.id] : ids.filter(id => id !== branch.id))}
+                        className="mt-1"
+                      />
+                      <span>
+                        {branch.name}
+                        <span className="text-xs text-muted-foreground"> — {branch.active ? "نشط" : "موقوف"} / توصيل {branch.deliveryEnabled ? "مفعّل" : "موقوف"} / استلام {branch.pickupEnabled ? "مفعّل" : "موقوف"}</span>
+                      </span>
+                    </label>
+                  ))}
+                  {branches.length > 0 && branches.every(branch => memberships.some(membership => membership.branchId === branch.id)) && (
+                    <p className="text-xs text-muted-foreground">جميع الفروع مضافة بالفعل.</p>
+                  )}
+                  {branches.length === 0 && <p className="text-xs text-muted-foreground">لا توجد فروع متاحة.</p>}
+                </div>
+                <Button size="sm" onClick={addMemberships} disabled={membershipsSaving || selectedBranchIds.length === 0}>
+                  {membershipsSaving && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                  إضافة الفروع المحددة
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

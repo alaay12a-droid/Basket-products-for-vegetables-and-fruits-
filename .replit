@@ -15,31 +15,7 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start Backend"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "artifacts/rawabi-driver: expo"
-
-[[workflows.workflow]]
-name = "Start Backend"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd /home/runner/workspace/artifacts/api-server && PORT=8080 node --enable-source-maps ./dist/index.mjs"
-
-[workflows.workflow.metadata]
-outputType = "console"
+runButton = "artifacts/rawabi-driver: expo"
 
 [[workflows.workflow]]
 name = "artifacts/rawabi-driver: expo"
@@ -55,8 +31,6 @@ args = "PORT=8099 pnpm --filter @workspace/rawabi-driver run dev"
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
-integrations = ["github:1.0.0"]
-
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
@@ -68,5 +42,27 @@ channel = "stable-25_05"
 
 [userenv.shared]
 ADMIN_USERNAME = "rawabi-mandi"
-VITE_API_BASE_URL = ""
-EXPO_PUBLIC_API_BASE_URL = "https://rawabi-mandi-e5rz.onrender.com"
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 80
+
+[[ports]]
+localPort = 8098
+externalPort = 3002
+
+[[ports]]
+localPort = 8099
+externalPort = 8099
+
+[[ports]]
+localPort = 23183
+externalPort = 3000
+
+[[ports]]
+localPort = 26249
+externalPort = 3001

@@ -58,9 +58,18 @@ interface MenuItem {
   additions?: { name: string; extraPrice: number; available: boolean }[];
   calories?: number | null;
   walkingMinutes?: number | null;
+  sortOrder: number;
 }
 
-const CATEGORIES = [
+interface MenuCategory {
+  id: string;
+  name: string;
+  nameEn?: string;
+  icon: string;
+  isCustom?: boolean;
+}
+
+const DEFAULT_CATEGORIES: MenuCategory[] = [
   { id: "chicken",  name: "الدجاج",           icon: "🍗" },
   { id: "meat",     name: "اللحوم",           icon: "🥩" },
   { id: "mains",    name: "الأطباق الرئيسية", icon: "🍽️" },
@@ -71,7 +80,8 @@ const CATEGORIES = [
   { id: "extras",   name: "إضافات",           icon: "✨" },
 ];
 
-const getCatMeta = (id: string) => CATEGORIES.find(c => c.id === id) ?? { id, name: id, icon: "🍽️" };
+const getCatMeta = (id: string, categories: MenuCategory[]) =>
+  categories.find(c => c.id === id) ?? { id, name: id, icon: "🍽️" };
 
 function defaultSizesForCategory(category: string): SizeOption[] {
   if (category === "drinks") {
@@ -119,6 +129,7 @@ const emptyForm = (): ItemForm => ({
 export default function MenuManagement() {
   const { toast } = useToast();
   const [items, setItems]         = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<MenuCategory[]>(DEFAULT_CATEGORIES);
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch]       = useState("");
@@ -136,6 +147,12 @@ export default function MenuManagement() {
   const [stockVal, setStockVal]         = useState("");
   const [stockSaving, setStockSaving]   = useState(false);
   const [uploading, setUploading]       = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [categoryError, setCategoryError] = useState("");
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
+  const [reorderingCategoryId, setReorderingCategoryId] = useState<string | null>(null);
   const imgFileRef                      = useRef<HTMLInputElement>(null);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,8 +173,12 @@ export default function MenuManagement() {
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true); else setRefreshing(true);
     try {
-      const data = await apiGet<MenuItem[]>("/menu");
+      const [data, categoryData] = await Promise.all([
+        apiGet<MenuItem[]>("/menu"),
+        apiGet<MenuCategory[]>("/menu-categories"),
+      ]);
       setItems(data);
+      setCategories(categoryData);
     } catch {
       toast({ title: "تعذّر تحميل القائمة", variant: "destructive" });
     } finally {
@@ -168,12 +189,96 @@ export default function MenuManagement() {
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = items.filter(item => {
-    const matchCat = catFilter === "all" || item.category === catFilter;
-    const q = search.trim().toLowerCase();
-    const matchSearch = !q || item.name.toLowerCase().includes(q) || (item.nameAr ?? "").includes(q);
-    return matchCat && matchSearch;
-  });
+  const filtered = items
+    .filter(item => {
+      const matchCat = catFilter === "all" || item.category === catFilter;
+      const q = search.trim().toLowerCase();
+      const matchSearch = !q || item.name.toLowerCase().includes(q) || (item.nameAr ?? "").includes(q);
+      return matchCat && matchSearch;
+    })
+    .sort((a, b) => {
+      const categoryOrder = categories.findIndex(category => category.id === a.category) -
+        categories.findIndex(category => category.id === b.category);
+      return categoryOrder || a.sortOrder - b.sortOrder;
+    });
+
+  const categoryItems = (categoryId: string) =>
+    items
+      .filter(item => item.category === categoryId)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const canReorderItems = catFilter !== "all" && search.trim() === "";
+
+  const openCategoryDialog = () => {
+    setCategoryName("");
+    setCategoryError("");
+    setCategoryDialogOpen(true);
+  };
+
+  const handleCategorySave = async () => {
+    const name = categoryName.trim();
+    if (!name) {
+      setCategoryError("اسم القسم مطلوب");
+      return;
+    }
+
+    setCategorySaving(true);
+    setCategoryError("");
+    try {
+      const created = await apiPost<MenuCategory>("/menu-categories", { name });
+      setCategories(prev => [...prev, created]);
+      setCategoryDialogOpen(false);
+      toast({ title: "تم إضافة القسم ✓" });
+    } catch (e: unknown) {
+      setCategoryError((e as { message?: string })?.message ?? "تعذّر إضافة القسم");
+    } finally {
+      setCategorySaving(false);
+    }
+  };
+
+  const moveCategory = async (categoryId: string, direction: -1 | 1) => {
+    const currentIndex = categories.findIndex(category => category.id === categoryId);
+    const nextIndex = currentIndex + direction;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= categories.length) return;
+
+    const nextCategories = [...categories];
+    [nextCategories[currentIndex], nextCategories[nextIndex]] = [nextCategories[nextIndex], nextCategories[currentIndex]];
+    setReorderingCategoryId(categoryId);
+    try {
+      const saved = await apiPut<MenuCategory[]>("/menu-categories/reorder", {
+        ids: nextCategories.map(category => category.id),
+      });
+      setCategories(saved);
+    } catch {
+      toast({ title: "تعذّر حفظ ترتيب الأقسام", variant: "destructive" });
+    } finally {
+      setReorderingCategoryId(null);
+    }
+  };
+
+  const moveItem = async (item: MenuItem, direction: -1 | 1) => {
+    if (!canReorderItems) return;
+    const currentItems = categoryItems(item.category);
+    const currentIndex = currentItems.findIndex(current => current.itemId === item.itemId);
+    const nextIndex = currentIndex + direction;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= currentItems.length) return;
+
+    const nextItems = [...currentItems];
+    [nextItems[currentIndex], nextItems[nextIndex]] = [nextItems[nextIndex], nextItems[currentIndex]];
+    setReorderingId(item.itemId);
+    try {
+      await apiPut("/menu/reorder", { itemIds: nextItems.map(current => current.itemId) });
+      const orderById = new Map(nextItems.map((current, index) => [current.itemId, index + 1]));
+      setItems(prev => prev.map(current => {
+        const sortOrder = orderById.get(current.itemId);
+        return sortOrder === undefined ? current : { ...current, sortOrder };
+      }));
+    } catch {
+      toast({ title: "تعذّر حفظ ترتيب الأصناف", variant: "destructive" });
+    } finally {
+      setReorderingId(null);
+    }
+  };
 
   const openAdd = () => {
     setForm(emptyForm());
@@ -495,6 +600,10 @@ export default function MenuManagement() {
           <Button variant="outline" size="icon" onClick={() => load(true)} disabled={refreshing}>
             <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
           </Button>
+          <Button variant="outline" onClick={openCategoryDialog} className="gap-2">
+            <Plus className="h-4 w-4" />
+            إضافة قسم
+          </Button>
           <Button onClick={openAdd} className="gap-2">
             <Plus className="h-4 w-4" />
             إضافة صنف
@@ -558,19 +667,45 @@ export default function MenuManagement() {
           >
             الكل ({items.length})
           </Button>
-          {CATEGORIES.map(cat => {
+          {categories.map((cat, categoryIndex) => {
             const count = items.filter(i => i.category === cat.id).length;
-            if (count === 0) return null;
             return (
-              <Button
-                key={cat.id}
-                variant={catFilter === cat.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCatFilter(cat.id)}
-                className="gap-1"
-              >
-                {cat.icon} {cat.name} ({count})
-              </Button>
+              <div key={cat.id} className="flex items-center gap-0.5">
+                <Button
+                  variant={catFilter === cat.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCatFilter(cat.id)}
+                  className="gap-1"
+                >
+                  {cat.icon} {cat.name} ({count})
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-7"
+                  onClick={() => moveCategory(cat.id, -1)}
+                  disabled={categoryIndex === 0 || reorderingCategoryId !== null}
+                  aria-label={`تحريك قسم ${cat.name} للأعلى`}
+                  title="تحريك القسم للأعلى"
+                >
+                  {reorderingCategoryId === cat.id
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <ChevronUp className="h-3.5 w-3.5" />}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-7"
+                  onClick={() => moveCategory(cat.id, 1)}
+                  disabled={categoryIndex === categories.length - 1 || reorderingCategoryId !== null}
+                  aria-label={`تحريك قسم ${cat.name} للأسفل`}
+                  title="تحريك القسم للأسفل"
+                >
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             );
           })}
         </div>
@@ -599,9 +734,11 @@ export default function MenuManagement() {
               </thead>
               <tbody>
                 {filtered.map((item, idx) => {
-                  const cat = getCatMeta(item.category);
+                  const cat = getCatMeta(item.category, categories);
                   const enabledSizes = (item.sizes ?? []).filter(s => s.enabled);
                   const optionGroups = item.options ?? [];
+                  const orderedCategoryItems = canReorderItems ? categoryItems(item.category) : [];
+                  const orderIndex = orderedCategoryItems.findIndex(current => current.itemId === item.itemId);
                   return (
                     <tr
                       key={item.itemId}
@@ -720,6 +857,34 @@ export default function MenuManagement() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
+                          {canReorderItems && (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => moveItem(item, -1)}
+                                disabled={orderIndex <= 0 || reorderingId !== null}
+                                aria-label={`تحريك ${item.name} للأعلى`}
+                                title="تحريك الصنف للأعلى"
+                              >
+                                {reorderingId === item.itemId
+                                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  : <ChevronUp className="h-3.5 w-3.5" />}
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => moveItem(item, 1)}
+                                disabled={orderIndex < 0 || orderIndex === orderedCategoryItems.length - 1 || reorderingId !== null}
+                                aria-label={`تحريك ${item.name} للأسفل`}
+                                title="تحريك الصنف للأسفل"
+                              >
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(item)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
@@ -741,6 +906,38 @@ export default function MenuManagement() {
           </div>
         </div>
       )}
+
+      {/* Add category dialog */}
+      <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>إضافة قسم جديد</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="category-name">اسم القسم</Label>
+            <Input
+              id="category-name"
+              value={categoryName}
+              onChange={event => setCategoryName(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === "Enter" && !categorySaving) handleCategorySave();
+              }}
+              placeholder="مثال: المقبلات"
+              autoFocus
+            />
+            {categoryError && <p className="text-sm text-destructive">{categoryError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCategoryDialogOpen(false)} disabled={categorySaving}>
+              إلغاء
+            </Button>
+            <Button onClick={handleCategorySave} disabled={categorySaving}>
+              {categorySaving && <Loader2 className="h-4 w-4 animate-spin" />}
+              حفظ القسم
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -793,7 +990,7 @@ export default function MenuManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map(cat => (
+                    {categories.map(cat => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.icon} {cat.name}
                       </SelectItem>

@@ -48,7 +48,7 @@ app.get(["/dashboard", "/dashboard/", "/dashboard/*splat"], (_req, res) => {
 });
 
 // ── Root landing page — referral deep link fallback ──────────────────────────
-// Handles: https://rawabi-mandi-e5rz.onrender.com?ref=REFxxxxxx
+// Handles referral links on this project's own root URL.
 // Also handles any unmatched path so WhatsApp/browsers don't show a white screen.
 app.get(["/", "/invite", "/ref"], (req: Request, res: Response) => {
   const ref = (req.query.ref as string | undefined) ?? (req.query.code as string | undefined);

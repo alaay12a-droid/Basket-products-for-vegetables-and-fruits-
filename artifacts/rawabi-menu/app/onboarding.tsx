@@ -51,7 +51,7 @@ async function reverseGeocodeArabic(lat: number, lng: number): Promise<string> {
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ar`,
-      { headers: { "User-Agent": "RawabiAlMandi/1.0" } }
+      { headers: { "User-Agent": "SallatAlKhodar/1.0" } }
     );
     const data = await res.json();
     const a = data?.address ?? {};
@@ -283,8 +283,8 @@ export default function OnboardingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.brand}>
-          <Text style={styles.brandTitle}>روابي المندي</Text>
-          <Text style={styles.brandSub}>للمذاق فن وأصول</Text>
+          <Text style={styles.brandTitle}>منتجات السلة للخضار والفواكه</Text>
+          <Text style={styles.brandSub}>خضار طازجة كل يوم</Text>
         </View>
 
         <View style={styles.dots}>
@@ -304,7 +304,7 @@ export default function OnboardingScreen() {
           <View style={[styles.cardAccent, { backgroundColor: C.gold }]} />
 
           <Image
-            source={require("@/assets/images/rawabi_logo.jpg")}
+            source={require("@/assets/images/sallat-alkhodar-logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />

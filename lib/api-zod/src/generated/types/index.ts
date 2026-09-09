@@ -22,6 +22,8 @@ export * from "./listOrdersStatus";
 export * from "./liveRevenueData";
 export * from "./menuItem";
 export * from "./menuItemUpdate";
+export * from "./menuTemplateSetting";
+export * from "./menuTemplateSettingMenuTemplate";
 export * from "./monthlyBreakdown";
 export * from "./order";
 export * from "./orderItem";

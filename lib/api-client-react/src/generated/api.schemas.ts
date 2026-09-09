@@ -172,6 +172,18 @@ export interface RevenueData {
   topItems: TopItem[];
 }
 
+export type MenuTemplateSettingMenuTemplate =
+  (typeof MenuTemplateSettingMenuTemplate)[keyof typeof MenuTemplateSettingMenuTemplate];
+
+export const MenuTemplateSettingMenuTemplate = {
+  classic: "classic",
+  modern: "modern",
+} as const;
+
+export interface MenuTemplateSetting {
+  menuTemplate: MenuTemplateSettingMenuTemplate;
+}
+
 export interface SizeOption {
   name: string;
   price: number;

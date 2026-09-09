@@ -18,6 +18,7 @@ import AuthDiagnostics from "@/pages/auth-diagnostics";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import DriverRankings from "@/pages/driver-rankings";
 import Branches from "@/pages/branches";
+import Users from "@/pages/users";
 import { setBaseUrl } from "@workspace/api-client-react";
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
@@ -71,6 +72,9 @@ function Router() {
       </Route>
       <Route path="/branches">
         <Layout><Branches /></Layout>
+      </Route>
+      <Route path="/users">
+        <Layout><Users /></Layout>
       </Route>
       <Route component={NotFound} />
     </Switch>

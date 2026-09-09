@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, jsonb, timestamp, boolean, pgEnum, real } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, jsonb, timestamp, boolean, pgEnum, real, uniqueIndex } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 export const orderStatusEnum = pgEnum("order_status", [
@@ -30,6 +30,12 @@ export const ordersTable = pgTable("orders", {
   customerPushToken: text("customer_push_token"),
   branchId: integer("branch_id"),
   branchName: text("branch_name"),
+  deliveryLat: real("delivery_lat"),
+  deliveryLng: real("delivery_lng"),
+  deliveryZoneId: integer("delivery_zone_id"),
+  branchAssignmentMethod: text("branch_assignment_method"),
+  branchDistanceKm: real("branch_distance_km"),
+  branchAssignedAt: timestamp("branch_assigned_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -260,6 +266,7 @@ export const deliveryZonesTable = pgTable("delivery_zones", {
   minOrder: integer("min_order").notNull().default(0),
   enabled: boolean("enabled").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
+  branchId: integer("branch_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -315,6 +322,35 @@ export const branchesTable = pgTable("branches", {
   active:    boolean("active").notNull().default(true),
   lat:       real("lat"),
   lng:       real("lng"),
+  deliveryEnabled: boolean("delivery_enabled").notNull().default(true),
+  pickupEnabled: boolean("pickup_enabled").notNull().default(true),
+  weeklyOperatingHours: jsonb("weekly_operating_hours"),
+  deliveryCapacity: integer("delivery_capacity"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 export type Branch = typeof branchesTable.$inferSelect;
+
+export const branchProductAvailabilityTable = pgTable("branch_product_availability", {
+  id: serial("id").primaryKey(),
+  branchId: integer("branch_id").notNull().references(() => branchesTable.id, { onDelete: "cascade" }),
+  itemId: text("item_id").notNull().references(() => menuItemsTable.itemId, { onDelete: "cascade" }),
+  available: boolean("available").notNull(),
+}, (table) => [uniqueIndex("branch_product_availability_branch_item_unique").on(table.branchId, table.itemId)]);
+export type BranchProductAvailability = typeof branchProductAvailabilityTable.$inferSelect;
+
+export const driverBranchMembershipsTable = pgTable("driver_branch_memberships", {
+  id: serial("id").primaryKey(),
+  driverId: integer("driver_id").notNull().references(() => deliveryDriversTable.id, { onDelete: "cascade" }),
+  branchId: integer("branch_id").notNull().references(() => branchesTable.id, { onDelete: "cascade" }),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+export type DriverBranchMembership = typeof driverBranchMembershipsTable.$inferSelect;
+
+export const dashboardUserBranchesTable = pgTable("dashboard_user_branches", {
+  id: serial("id").primaryKey(),
+  dashboardUserId: integer("dashboard_user_id").notNull().references(() => dashboardUsersTable.id, { onDelete: "cascade" }),
+  branchId: integer("branch_id").notNull().references(() => branchesTable.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+export type DashboardUserBranch = typeof dashboardUserBranchesTable.$inferSelect;

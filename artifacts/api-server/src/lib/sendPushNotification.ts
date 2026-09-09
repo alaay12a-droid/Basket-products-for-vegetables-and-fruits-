@@ -57,7 +57,7 @@ async function sendViaFCM(fcmTokens: string[], msg: PushMessage): Promise<FCMRes
         const code = r.error?.code ?? "";
         if (code === "messaging/mismatched-credential") {
           logger.error(
-            { code, hint: "FIREBASE_SERVICE_ACCOUNT project does not match google-services.json — update credentials" },
+            { code, hint: "This project's Firebase credential does not match the mobile app configuration" },
             "FCM SENDER_ID_MISMATCH — wrong Firebase project on server",
           );
         } else {

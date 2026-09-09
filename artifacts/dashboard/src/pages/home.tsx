@@ -1,10 +1,13 @@
-import { useGetRevenue, useListOrders, getGetRevenueQueryKey, getListOrdersQueryKey } from "@workspace/api-client-react";
+import { useGetRevenue, useListOrders, getDashboardMeQueryKey, getGetRevenueQueryKey, getListOrdersQueryKey, useDashboardMe } from "@workspace/api-client-react";
 import { formatCurrency, formatEasternNumber } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
-import { ListOrdered, Users, UtensilsCrossed, BarChart2, ChevronLeft, ShoppingBag, Banknote, TrendingUp, Bell, Monitor, Settings2, ShieldCheck, Star, GitBranch } from "lucide-react";
+import { ListOrdered, Users, UtensilsCrossed, BarChart2, ChevronLeft, ShoppingBag, Banknote, TrendingUp, Bell, Monitor, Settings2, ShieldCheck, Star, GitBranch, UserCog } from "lucide-react";
 
 export default function Home() {
+  const { data: currentUser } = useDashboardMe({
+    query: { retry: false, queryKey: getDashboardMeQueryKey() },
+  });
   const { data: revenue, isLoading: isRevenueLoading } = useGetRevenue({
     query: { queryKey: getGetRevenueQueryKey() }
   });
@@ -165,7 +168,18 @@ export default function Home() {
       badge: null,
       badgeColor: "",
     },
-  ];
+    ...(currentUser?.role === "admin" ? [{
+      href: "/users",
+      icon: UserCog,
+      title: "المستخدمون",
+      desc: "إدارة حسابات المشرفين وموظفي الفروع وصلاحياتهم",
+      accent: "from-indigo-500 to-indigo-600",
+      bg: "bg-indigo-50 hover:bg-indigo-100 border-indigo-200",
+      iconBg: "bg-indigo-600",
+      badge: null,
+      badgeColor: "",
+    }] : []),
+  ].filter(card => card.href !== "/branches" || currentUser?.role === "admin");
 
   return (
     <div className="space-y-8">

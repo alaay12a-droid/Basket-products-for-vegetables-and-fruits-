@@ -2,23 +2,15 @@
 - [Global sound settings architecture](global-sounds.md) — sounds pushed to /settings/sounds server-side; AppConfigContext loads on startup and writes to AsyncStorage so useAppSound picks them up without any hook changes
 - [Production deploy flow](production-deploy-flow.md) — user must click Republish in Replit UI then Approve DB migrations; suggest_deploy only shows the button, cannot trigger programmatically
 - [Dashboard auth architecture](dashboard-auth.md) — JWT httpOnly cookie at /api/dashboard/auth/*; admin seeded on server start via env vars; dashboard_users table created via executeSql (not drizzle push, which is interactive)
-- [EAS build in Replit agent](eas-build-replit.md) — use EAS_PROJECT_ROOT=$(pwd) from artifact dir; /tmp standalone fails (OOM on npm install); EAS_NO_VCS=1 alone causes 269MB (git root archived)
-- [reanimated v4 EAS build fixes](reanimated-v4-eas.md) — SDK54 requires worklets package + correct peer versions; yarn doesn't auto-install peers
 - [OpenAPI TS2308 collision rule](openapi-ts2308.md) — body component names must be entity-shaped (NoteInput not CreateNoteBody) to avoid Orval collision; queryKey required in all query options or TS fails
 - [Mobile artifact deployment fix](deploy-healthcheck.md) — remove [services.production] from mobile artifact.toml or Replit deployment crashes with ERR_PNPM_RECURSIVE_RUN_FIRST_
 - [rawabi-driver missing types](rawabi-driver-types.md) — must have @types/react in devDependencies; without it gets 36 TS errors (TS7016/7006/2769) because Expo doesn't bundle @types/react automatically unlike rawabi-menu
 - [Image uploads use base64-in-DB](image-uploads-base64.md) — GCS/Firebase billing blocked; menu/driver photos stored as compressed base64 data URLs in text columns instead
 - [Driver background-location disclosure gate](driver-location-disclosure.md) — gate must live inside startGPS itself since permission requests are triggered by a useEffect, not direct user tap
-- [EAS FCM V1 SenderId mismatch diagnosis](eas-fcm-sender-mismatch.md) — push works in Expo Go but fails in prod APK if EAS's FCM V1 credential project differs from google-services.json's project
-- [EAS iOS PKCS12 format](eas-ios-pkcs12-format.md) — use OpenSSL legacy (3DES+SHA-1) NOT Python cryptography; also: credentialsSource at top-level, ascAppId must be numeric (6792793006)
-- [iOS push — Expo fallback fix](ios-push-expo-fallback.md) — APNs token stored as fcmToken caused row deletion; fix: null fcmToken only + skip getDevicePushTokenAsync on iOS
-- [iOS Expo Push Credentials missing](ios-expo-push-credentials.md) — credentialsSource:local does NOT upload APNs key to Expo Push Service; must upload separately via GraphQL API
-- [iOS push APNs key missing](ios-push-apns-key.md) — pushKey must be in credentials.json (keyP8Path+keyId+teamId) or Expo Push Service has no APNs creds; key exists at certs/AuthKey_L3432Q48N5.p8
-- [iOS TestFlight APNs environment](ios-push-apns-key.md) — BadEnvironmentKeyInToken means the Expo remote Push Key is wrong for production; assigning a Production APNs key fixes delivery without a new build
 - [Auto-assign driver GPS source](auto-assign-gps.md) — driver GPS is per-assignment only; added last_lat/lng/location_at to delivery_drivers, updated on every PUT /orders/:id/driver-location; staleness limit 15 min
 - [Migration ALTER TABLE rule](migration-alter-table-rule.md) — new columns on existing tables MUST have ALTER TABLE ADD COLUMN IF NOT EXISTS in index.ts; CREATE TABLE IF NOT EXISTS is a no-op for existing tables
-- [EAS iOS channel required for OTA](eas-ios-channel-ota.md) — production iOS profile in eas.json MUST have channel:"production" or OTA updates never reach devices; omitting it silently breaks all OTA delivery
 - [Order customization persistence](order-customization-persistence.md) — size/options must remain structured order data; a formatted item name is compatibility display only
 - [Variant pricing authority](variant-pricing-authority.md) — configured sizes use explicit prices; legacy size-specific products never derive prices from editable sibling rows
-- [Publish branch divergence](publish-branch-divergence.md) — Replit Publish may create a local commit line that diverges from GitHub main; verify refs before blaming stale Expo/Render output
-- [Production database identity](production-database-identity.md) — the intended production dataset is Rawabi Al Mandi; “Al Bait Al Shami” indicates the wrong database
+- [Production database identity](production-database-identity.md) — the intended production dataset is سلة الخضار; “Al Bait Al Shami” indicates the wrong database
+- [Delivery eligibility locking](delivery-eligibility-locking.md) — all branch/zone/product eligibility mutations share sorted advisory locks; key 0 represents an unassigned zone
+- [Project independence](project-independence.md) — never copy external repository, deployment, database, Expo/EAS, Firebase, or provider identities into this project

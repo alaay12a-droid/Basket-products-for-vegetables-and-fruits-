@@ -1,16 +1,15 @@
 {
   "expo": {
-    "name": "روابي المندي",
+    "name": "منتجات السلة للخضار والفواكه",
     "slug": "rawabi-menu",
-    "owner": "021837ala",
     "version": "1.4.3",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/sallat-alkhodar-logo.png",
     "scheme": "rawabi-menu",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/icon.png",
+      "image": "./assets/images/sallat-alkhodar-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#0F0A05"
     },
@@ -29,9 +28,8 @@
     "android": {
       "package": "com.rwabi.almndi",
       "versionCode": 35,
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive_icon.png",
+        "foregroundImage": "./assets/images/sallat-alkhodar-logo.png",
         "backgroundColor": "#0F0A05"
       },
       "permissions": [
@@ -49,7 +47,7 @@
       "ios"
     ],
     "web": {
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/sallat-alkhodar-logo.png"
     },
     "plugins": [
       "expo-router",
@@ -64,7 +62,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/notification_icon.png",
+          "icon": "./assets/images/sallat-alkhodar-logo.png",
           "color": "#E8920C",
           "defaultChannel": "orders",
           "sounds": [
@@ -78,17 +76,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "eas": {
-        "projectId": "75492716-d1d5-4871-bfd9-18c7ef3982c7"
-      }
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/75492716-d1d5-4871-bfd9-18c7ef3982c7"
     }
   }
 }

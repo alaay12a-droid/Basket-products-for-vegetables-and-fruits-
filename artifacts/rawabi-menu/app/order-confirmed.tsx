@@ -30,7 +30,7 @@ const F = {
   extra:   "Cairo_800ExtraBold",
 };
 
-type OrderStatus = "pending" | "preparing" | "ready" | "done";
+type OrderStatus = "pending" | "preparing" | "ready" | "done" | "cancelled";
 type DriverStatus = "assigned" | "picked_up" | "delivered";
 
 interface Order {
@@ -204,8 +204,8 @@ function StatusDone({ colors, onReturn, isEn, isDelivery }: { colors: ReturnType
       </Text>
       <Text style={[styles.statusDesc, { color: colors.mutedForeground, fontFamily: F.regular }]}>
         {isEn
-          ? "Thank you for choosing Rawabi Al-Mandi 🍗\nEnjoy your meal!"
-          : "شكراً لاختيارك روابي المندي 🍗\nنتمنى لك وجبة شهية!"}
+          ? "Thank you for choosing منتجات السلة للخضار والفواكه 🥬\nEnjoy your fresh order!"
+          : "شكراً لاختيارك منتجات السلة للخضار والفواكه 🥬\nنتمنى لك طلبًا طازجًا!"}
       </Text>
       <TouchableOpacity
         onPress={onReturn}

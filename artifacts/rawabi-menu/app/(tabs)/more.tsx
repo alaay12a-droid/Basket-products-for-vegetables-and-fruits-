@@ -234,7 +234,7 @@ export default function MoreScreen() {
       label: t("aboutUs"),
       action: () =>
         Alert.alert(
-          "روابي المندي",
+          "منتجات السلة للخضار والفواكه",
           `${info.tagline}\n\n${info.location}\nهاتف: ${info.phone}`
         ),
     },
@@ -357,7 +357,6 @@ export default function MoreScreen() {
               <TouchableOpacity key={i} onPress={() => Linking.openURL(s.url).catch(() => {})} style={styles.socialItem}>
                 <Image source={s.image} style={styles.socialLogo} resizeMode="cover" />
                 <Text style={[styles.socialLabel, { color: colors.foreground, fontFamily: F.bold }]}>{s.label}</Text>
-                <Text style={[styles.socialHandle, { color: colors.mutedForeground, fontFamily: F.regular }]}>@rawabi-mandi</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -392,7 +391,7 @@ export default function MoreScreen() {
         </View>
 
         <Text style={[styles.version, { color: colors.mutedForeground, fontFamily: F.regular }]}>
-          روابي المندي • نسخة 1.0
+          منتجات السلة للخضار والفواكه • نسخة 1.0
         </Text>
 
         {/* ── بواسطة ── */}

@@ -106,7 +106,9 @@ function NotificationSetup() {
   return null;
 }
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL ?? "";
+const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+  : "";
 
 function isNewer(latest: string, current: string): boolean {
   const p = (v: string) => v.split(".").map(Number);
@@ -140,7 +142,7 @@ function UpdateChecker() {
         <View style={updateStyles.card}>
           <Text style={updateStyles.title}>🎉 يوجد تحديث جديد</Text>
           <Text style={updateStyles.body}>
-            يتوفر إصدار جديد من تطبيق روابي المندي يحتوي على تحسينات وميزات جديدة.
+            يتوفر إصدار جديد من تطبيق منتجات السلة للخضار والفواكه يحتوي على تحسينات وميزات جديدة.
           </Text>
           {update.downloadUrl ? (
             <TouchableOpacity

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, menuItemsTable } from "@workspace/db";
-import { eq, asc, sql } from "drizzle-orm";
+import { db, menuItemsTable, appSettingsTable } from "@workspace/db";
+import { eq, asc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { ObjectStorageService } from "../lib/objectStorage";
@@ -8,6 +8,111 @@ import { ObjectStorageService } from "../lib/objectStorage";
 const objectStorageService = new ObjectStorageService();
 
 const router = Router();
+
+const MENU_CATEGORIES_SETTING_KEY = "menu_categories";
+
+type MenuCategoryConfig = {
+  id: string;
+  name: string;
+  nameEn: string;
+  icon: string;
+  isCustom?: boolean;
+};
+
+const DEFAULT_MENU_CATEGORIES: MenuCategoryConfig[] = [
+  { id: "chicken",  name: "الدجاج",           nameEn: "Chicken",     icon: "🍗" },
+  { id: "meat",     name: "اللحوم",           nameEn: "Meat",        icon: "🥩" },
+  { id: "mains",    name: "الأطباق الرئيسية", nameEn: "Main Dishes", icon: "🍽️" },
+  { id: "sides",    name: "الإيدامات",        nameEn: "Sides",       icon: "🥘" },
+  { id: "salads",   name: "السلطات",          nameEn: "Salads",      icon: "🥗" },
+  { id: "desserts", name: "الحلويات",         nameEn: "Desserts",    icon: "🍮" },
+  { id: "drinks",   name: "المشروبات",        nameEn: "Drinks",      icon: "🥤" },
+  { id: "extras",   name: "إضافات",           nameEn: "Extras",      icon: "✨" },
+];
+
+function normalizeMenuCategories(value: unknown): MenuCategoryConfig[] {
+  if (!Array.isArray(value)) return DEFAULT_MENU_CATEGORIES;
+
+  const seen = new Set<string>();
+  const stored = value.filter((category): category is Partial<MenuCategoryConfig> =>
+    typeof category === "object" && category !== null &&
+    typeof (category as Partial<MenuCategoryConfig>).id === "string" &&
+    typeof (category as Partial<MenuCategoryConfig>).name === "string" &&
+    ((category as Partial<MenuCategoryConfig>).name?.trim().length ?? 0) > 0
+  );
+
+  const categories: MenuCategoryConfig[] = [];
+  for (const category of stored) {
+    if (seen.has(category.id!)) continue;
+    const defaultCategory = DEFAULT_MENU_CATEGORIES.find(item => item.id === category.id);
+    categories.push({
+      id: category.id!,
+      name: category.name!.trim(),
+      nameEn: typeof category.nameEn === "string" && category.nameEn.trim()
+        ? category.nameEn.trim()
+        : category.name!.trim(),
+      icon: typeof category.icon === "string" && category.icon.trim() ? category.icon : "🍽️",
+      ...(defaultCategory ? {} : { isCustom: true }),
+    });
+    seen.add(category.id!);
+  }
+
+  // Keep legacy/default sections available if the settings record predates them.
+  for (const category of DEFAULT_MENU_CATEGORIES) {
+    if (!seen.has(category.id)) categories.push(category);
+  }
+
+  return categories;
+}
+
+async function getMenuCategories(): Promise<MenuCategoryConfig[]> {
+  const [row] = await db
+    .select({ value: appSettingsTable.value })
+    .from(appSettingsTable)
+    .where(eq(appSettingsTable.key, MENU_CATEGORIES_SETTING_KEY))
+    .limit(1);
+  let categories = [...DEFAULT_MENU_CATEGORIES];
+  if (row) {
+    try {
+      categories = [...normalizeMenuCategories(JSON.parse(row.value))];
+    } catch {
+      categories = [...DEFAULT_MENU_CATEGORIES];
+    }
+  }
+
+  // Preserve any legacy category already used by an item even if it predates
+  // the configurable category list.
+  const existingCategories = await db
+    .select({ id: menuItemsTable.category })
+    .from(menuItemsTable)
+    .groupBy(menuItemsTable.category);
+  const configuredIds = new Set(categories.map(category => category.id));
+  for (const existing of existingCategories) {
+    if (configuredIds.has(existing.id)) continue;
+    categories.push({
+      id: existing.id,
+      name: existing.id,
+      nameEn: existing.id,
+      icon: "🍽️",
+      isCustom: true,
+    });
+  }
+
+  return categories;
+}
+
+async function saveMenuCategories(categories: MenuCategoryConfig[]) {
+  await db
+    .insert(appSettingsTable)
+    .values({
+      key: MENU_CATEGORIES_SETTING_KEY,
+      value: JSON.stringify(categories),
+    })
+    .onConflictDoUpdate({
+      target: appSettingsTable.key,
+      set: { value: JSON.stringify(categories), updatedAt: new Date() },
+    });
+}
 
 const INITIAL_ITEMS = [
   { itemId: "c1",   name: "مندي دجاج حبة كاملة مع الرز",    nameEn: "Whole Chicken Mandi with Rice",       category: "chicken",  price: 4400,   imageKey: "chicken_mandi_new",  sortOrder: 1  },
@@ -147,6 +252,120 @@ router.get("/menu", async (req, res) => {
     .from(menuItemsTable)
     .orderBy(asc(menuItemsTable.category), asc(menuItemsTable.sortOrder));
   res.json(items);
+});
+
+router.get("/menu-categories", async (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json(await getMenuCategories());
+});
+
+const reorderItemsSchema = z.object({
+  itemIds: z.array(z.string().min(1)).min(1),
+});
+
+router.put("/menu/reorder", async (req, res) => {
+  const parsed = reorderItemsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "ترتيب الأصناف غير صحيح" });
+    return;
+  }
+
+  const itemIds = [...new Set(parsed.data.itemIds)];
+  if (itemIds.length !== parsed.data.itemIds.length) {
+    res.status(400).json({ error: "لا يمكن تكرار الصنف في الترتيب" });
+    return;
+  }
+
+  const existingItems = await db
+    .select({ itemId: menuItemsTable.itemId, category: menuItemsTable.category })
+    .from(menuItemsTable)
+    .where(inArray(menuItemsTable.itemId, itemIds));
+
+  if (existingItems.length !== itemIds.length || new Set(existingItems.map(item => item.category)).size !== 1) {
+    res.status(400).json({ error: "يجب ترتيب أصناف القسم نفسه فقط" });
+    return;
+  }
+
+  const category = existingItems[0].category;
+  const allCategoryItems = await db
+    .select({ itemId: menuItemsTable.itemId })
+    .from(menuItemsTable)
+    .where(eq(menuItemsTable.category, category));
+  if (allCategoryItems.length !== itemIds.length) {
+    res.status(409).json({ error: "تم تحديث القسم، أعد تحميل القائمة وحاول مرة أخرى" });
+    return;
+  }
+
+  await db.transaction(async tx => {
+    for (const [index, itemId] of itemIds.entries()) {
+      await tx
+        .update(menuItemsTable)
+        .set({ sortOrder: index + 1 })
+        .where(eq(menuItemsTable.itemId, itemId));
+    }
+  });
+
+  res.json({ ok: true });
+});
+
+const createCategorySchema = z.object({
+  name: z.string().trim().min(1).max(80),
+});
+
+router.post("/menu-categories", async (req, res) => {
+  const parsed = createCategorySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "اسم القسم غير صحيح" });
+    return;
+  }
+
+  const categories = await getMenuCategories();
+  if (categories.some(category => category.name.localeCompare(parsed.data.name, undefined, { sensitivity: "accent" }) === 0)) {
+    res.status(409).json({ error: "يوجد قسم بهذا الاسم بالفعل" });
+    return;
+  }
+
+  const category: MenuCategoryConfig = {
+    id: `custom-${randomUUID()}`,
+    name: parsed.data.name,
+    nameEn: parsed.data.name,
+    icon: "🍽️",
+    isCustom: true,
+  };
+  const updatedCategories = [...categories, category];
+  await saveMenuCategories(updatedCategories);
+  res.status(201).json(category);
+});
+
+const reorderCategoriesSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
+});
+
+router.put("/menu-categories/reorder", async (req, res) => {
+  const parsed = reorderCategoriesSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "ترتيب الأقسام غير صحيح" });
+    return;
+  }
+
+  const categories = await getMenuCategories();
+  const knownIds = new Set(categories.map(category => category.id));
+  const requestedIds = [...new Set(parsed.data.ids)];
+  if (
+    requestedIds.length !== parsed.data.ids.length ||
+    requestedIds.some(id => !knownIds.has(id))
+  ) {
+    res.status(400).json({ error: "الأقسام المحددة غير صحيحة" });
+    return;
+  }
+
+  const requestedSet = new Set(requestedIds);
+  const reordered = [
+    ...requestedIds.map(id => categories.find(category => category.id === id)!),
+    ...categories.filter(category => !requestedSet.has(category.id)),
+  ];
+  await saveMenuCategories(reordered);
+  res.json(reordered);
 });
 
 router.post("/menu", async (req, res) => {

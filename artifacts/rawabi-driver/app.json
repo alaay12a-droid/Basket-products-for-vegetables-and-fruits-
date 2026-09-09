@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "روابي - مندوب",
+    "name": "منتجات السلة للخضار والفواكه - مندوب",
     "slug": "rawabi-driver",
     "version": "1.2.0",
     "orientation": "portrait",
@@ -29,7 +29,6 @@
     "android": {
       "package": "com.rwabi.driver",
       "versionCode": 30,
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive_icon.png",
         "backgroundColor": "#0F0A05"
@@ -68,12 +67,8 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "021837ala",
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "0c32b5e4-7c57-4c5a-b07e-57e5fd04043e"
-      }
+      "router": {}
     }
   }
 }

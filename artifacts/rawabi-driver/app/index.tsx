@@ -14,10 +14,11 @@ import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LocationDisclosureModal } from "@/components/LocationDisclosureModal";
 
-const DRIVER_PROJECT_ID = "0c32b5e4-7c57-4c5a-b07e-57e5fd04043e";
+const DRIVER_PROJECT_ID = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
 
 async function registerDriverPushToken(driverId: number): Promise<void> {
   try {
+    if (!DRIVER_PROJECT_ID) return;
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== "granted") return;
 
@@ -57,9 +58,11 @@ const C = {
 } as const;
 
 // ── API helpers ───────────────────────────────────────────────────────────────
-const PRODUCTION_API = "https://rawabi-mandi-e5rz.onrender.com";
+const projectApiBase = process.env.EXPO_PUBLIC_DOMAIN
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+  : "";
 export const API_BASE: string =
-  (process.env.EXPO_PUBLIC_API_BASE_URL as string | undefined) ?? PRODUCTION_API;
+  projectApiBase;
 
 async function apiPost<T>(path: string, body: unknown): Promise<T> {
   const url = `${API_BASE}/api${path}`;
@@ -208,7 +211,7 @@ function LoginScreen({ onLogin }: { onLogin: (driver: Driver) => void }) {
           بوابة المناديب
         </Text>
         <Text style={{ color: colors.mutedForeground, fontFamily: F.regular, fontSize: 14, textAlign: "center" }}>
-          روابي المندي — دخول المناديب
+          منتجات السلة للخضار والفواكه — دخول المناديب
         </Text>
 
         <View style={{ width: "100%", gap: 12 }}>
@@ -548,7 +551,7 @@ function DriverHome({ driver, onLogout }: { driver: Driver; onLogout: () => void
         distanceInterval: 20,
         pausesUpdatesAutomatically: false,
         foregroundService: {
-          notificationTitle: "روابي المندي",
+          notificationTitle: "منتجات السلة للخضار والفواكه",
           notificationBody: "يتم إرسال موقعك للعميل أثناء التوصيل",
           notificationColor: "#E8920C",
         },

@@ -7,7 +7,7 @@ import { apiPost } from "@/constants/api";
 export const TOKEN_KEY = "@rawabi_customer_push_token";
 export const PUSH_DIAGNOSTICS_KEY = "@rawabi_push_diagnostics";
 
-export const PROJECT_ID = "75492716-d1d5-4871-bfd9-18c7ef3982c7";
+export const PROJECT_ID = process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? "";
 
 export type PushDiagnosticStepId = "permission" | "apns" | "expo" | "post";
 export type PushDiagnosticStatus = "idle" | "pending" | "success" | "error" | "skipped";
@@ -158,6 +158,7 @@ export async function runPushDiagnostics(
   await setStep("expo", "pending", "جارٍ استخراج Expo Push Token");
   let expoToken: string;
   try {
+    if (!PROJECT_ID) throw new Error("لم يتم ربط التطبيق بمشروع إشعارات مستقل بعد");
     const result = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
     expoToken = result.data;
     report.tokenPreview = maskPushToken(expoToken);
@@ -170,16 +171,16 @@ export async function runPushDiagnostics(
     return report;
   }
 
-  await setStep("post", "pending", "جارٍ إرسال POST إلى Render");
+  await setStep("post", "pending", "جارٍ إرسال POST إلى خادم المشروع");
   try {
     await apiPost("/push-tokens", {
       token: expoToken,
       role: "customer",
     });
-    await setStep("post", "success", "تم قبول التوكن من Render", "POST /api/push-tokens — HTTP 2xx");
+    await setStep("post", "success", "تم قبول التوكن من خادم المشروع", "POST /api/push-tokens — HTTP 2xx");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await setStep("post", "error", "فشل إرسال التوكن إلى Render", message);
+    await setStep("post", "error", "فشل إرسال التوكن إلى خادم المشروع", message);
   }
 
   return report;
@@ -202,6 +203,7 @@ try {
 
 export async function registerCustomerNotifications(): Promise<string | null> {
   if (Platform.OS === "web") return null;
+  if (!PROJECT_ID) return null;
 
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();

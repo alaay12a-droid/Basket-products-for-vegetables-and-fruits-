@@ -18,10 +18,10 @@ export function buildReferralPage(ref: string | undefined): string {
     ? `intent://onboarding?ref=${encodeURIComponent(code)}#Intent;scheme=rawabi-menu;package=com.rwabi.almndi;S.browser_fallback_url=${encodeURIComponent(androidUrl)};end`
     : `intent://#Intent;scheme=rawabi-menu;package=com.rwabi.almndi;S.browser_fallback_url=${encodeURIComponent(androidUrl)};end`;
 
-  const title = hasCode ? "دعوة للانضمام لروابي المندي 🎁" : "روابي المندي — أشهى مندي في تبوك";
+  const title = hasCode ? "دعوة للانضمام إلى منتجات السلة للخضار والفواكه 🎁" : "منتجات السلة للخضار والفواكه — خضار طازجة في تبوك";
   const metaDesc = hasCode
-    ? `صديقك يدعوك للانضمام إلى تطبيق روابي المندي، استخدم كود ${code} للحصول على المكافأة`
-    : "اطلب أشهى مندي في تبوك من تطبيق روابي المندي";
+    ? `صديقك يدعوك للانضمام إلى تطبيق منتجات السلة للخضار والفواكه، استخدم كود ${code} للحصول على المكافأة`
+    : "اطلب خضارك الطازجة في تبوك من تطبيق منتجات السلة للخضار والفواكه";
 
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -32,7 +32,7 @@ export function buildReferralPage(ref: string | undefined): string {
   <meta name="description" content="${metaDesc}"/>
   <meta property="og:title" content="${title}"/>
   <meta property="og:description" content="${metaDesc}"/>
-  <meta property="og:image" content="https://rawabi-mandi-e5rz.onrender.com/dashboard/opengraph.jpg"/>
+  <meta property="og:image" content="/dashboard/opengraph.jpg"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
   <style>
@@ -282,7 +282,7 @@ export function buildReferralPage(ref: string | undefined): string {
     <!-- Logo -->
     <div class="logo-wrap">
       <div>
-        <div class="logo-text">روابي المندي</div>
+        <div class="logo-text">منتجات السلة للخضار والفواكه</div>
         <div class="logo-sub">تبوك — Tabuk</div>
       </div>
       <div class="logo-icon">🍖</div>
@@ -298,10 +298,10 @@ export function buildReferralPage(ref: string | undefined): string {
     <div class="no-code-banner">📲</div>
 
     <!-- Headline -->
-    <div class="headline">${hasCode ? "حمّل التطبيق وسجّل الآن" : "روابي المندي"}</div>
+    <div class="headline">${hasCode ? "حمّل التطبيق وسجّل الآن" : "منتجات السلة للخضار والفواكه"}</div>
     <div class="sub">${hasCode
-      ? "أشهى مندي في تبوك يصلك على باب البيت"
-      : "اطلب أشهى مندي في تبوك مباشرة من هاتفك"
+      ? "خضار طازجة في تبوك تصلك إلى باب البيت"
+      : "اطلب خضارك الطازجة مباشرة من هاتفك"
     }</div>
 
     <!-- Referral code box -->
@@ -347,7 +347,7 @@ export function buildReferralPage(ref: string | undefined): string {
     </div>
   </div>
 
-  <footer>روابي المندي &copy; ${new Date().getFullYear()}</footer>
+  <footer>منتجات السلة للخضار والفواكه &copy; ${new Date().getFullYear()}</footer>
 
   <script>
     (function () {

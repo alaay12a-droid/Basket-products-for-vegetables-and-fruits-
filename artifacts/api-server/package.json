@@ -9,7 +9,10 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:chicken-sizes": "node --experimental-strip-types scripts/test-explicit-chicken-sizes.mts"
+    "test:chicken-sizes": "node --experimental-strip-types scripts/test-explicit-chicken-sizes.mts",
+    "test:branch-resolver": "tsx scripts/test-branch-resolver.mts",
+    "test:order-branch-assignment": "tsx scripts/test-order-branch-assignment.mts",
+    "test:driver-dispatch": "tsx scripts/test-driver-dispatch.mts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.19.0",

@@ -1,19 +1,18 @@
 import { Platform } from "react-native";
 
-const PRODUCTION_API = "https://rawabi-mandi-e5rz.onrender.com";
+const projectApiBase = process.env.EXPO_PUBLIC_DOMAIN
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+  : "";
 
 export const API_BASE =
-  (process.env.EXPO_PUBLIC_API_BASE_URL as string | undefined) ||
-  (Platform.OS === "web" ? "" : PRODUCTION_API);
+  Platform.OS === "web" ? "" : projectApiBase;
 
 // Always an absolute URL — used when saving storage URLs to the DB so the
 // APK (which cannot resolve relative URLs) can load images correctly.
-export const STORAGE_BASE_URL =
-  (process.env.EXPO_PUBLIC_API_BASE_URL as string | undefined) ||
-  PRODUCTION_API;
+export const STORAGE_BASE_URL = projectApiBase;
 
 // Log API base on startup so it's visible in logcat / Metro
-console.log(`[API] BASE_URL = "${API_BASE}" | EXPO_PUBLIC_API_BASE_URL = "${process.env.EXPO_PUBLIC_API_BASE_URL ?? "(not set)"}"`);
+console.log(`[API] BASE_URL = "${API_BASE}"`);
 
 function logReq(method: string, url: string, status: number) {
   if (status >= 400) {

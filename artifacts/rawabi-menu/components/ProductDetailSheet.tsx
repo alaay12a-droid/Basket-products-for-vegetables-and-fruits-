@@ -108,30 +108,26 @@ export function ProductDetailSheet({ item, menuItems = EMPTY_MENU_ITEMS, visible
       const defaults: Record<string, string> = {};
       for (const g of (item.options ?? [])) {
         const available = g.choices.filter(c => c.available);
-        if (available.length > 0) {
+        if (g.required && available.length > 0) {
           defaults[g.groupName] = available[0].name;
         }
       }
       setSelectedOptions(defaults);
-      // Auto-select first DB rice type / addition
-      const dbRt = (item.riceTypes ?? []).filter(r => r.available);
-      setDbRiceTypeName(dbRt.length > 0 ? dbRt[0].name : "");
-      const dbAdd = (item.additions ?? []).filter(a => a.available);
-      setDbAdditionName(dbAdd.length > 0 ? dbAdd[0].name : "");
+      // Dashboard-configured rice types and additions are optional by default.
+      setDbRiceTypeName("");
+      setDbAdditionName("");
     }
   }, [visible, item?.id, menuItems]);
 
   if (!item) return null;
 
   const showCustomization = itemNeedsCustomization(item);
-  // Use DB-driven rice types if defined, else fall back to hardcoded
-  const showRiceOptions = hasDbRiceTypes || (showCustomization && !item.name.includes("مضغوط"));
-  const selectedRice = !hasDbRiceTypes && showRiceOptions ? RICE_OPTIONS[riceIdx] : null;
-  const selectedDbRice = hasDbRiceTypes ? dbRiceTypes.find(r => r.name === dbRiceTypeName) ?? dbRiceTypes[0] : null;
-  // Use DB-driven additions if defined, else fall back to hardcoded
-  const showAddons = hasDbAdditions || showCustomization;
-  const selectedAddon = !hasDbAdditions && showCustomization ? ADDON_OPTIONS[addonIdx] : null;
-  const selectedDbAddition = hasDbAdditions ? dbAdditions.find(a => a.name === dbAdditionName) ?? dbAdditions[0] : null;
+  const showRiceOptions = hasDbRiceTypes;
+  const selectedRice = null as { label: string; extra: number } | null;
+  const selectedDbRice = dbRiceTypes.find(r => r.name === dbRiceTypeName) ?? null;
+  const showAddons = hasDbAdditions;
+  const selectedAddon = null as { label: string; extra: number } | null;
+  const selectedDbAddition = dbAdditions.find(a => a.name === dbAdditionName) ?? null;
 
   const selectedDbSize = hasDbSizes ? (enabledDbSizes[dbSizeIdx] ?? enabledDbSizes[0]) : null;
   const selectedLinkedChickenSize = hasLinkedChickenSizes

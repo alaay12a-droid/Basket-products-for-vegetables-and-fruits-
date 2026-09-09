@@ -1,9 +1,16 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { ordersTable } from "@workspace/db/schema";
-import { eq, gte, lt, and, sql, ne } from "drizzle-orm";
+import { eq, gte, lt, and, sql, ne, inArray, isNotNull } from "drizzle-orm";
+import { requireDashboardUser, type DashboardActor } from "./dashboard-auth.js";
 
 const router = Router();
+
+function branchOrderFilter(actor: DashboardActor) {
+  if (actor.role === "admin") return undefined;
+  if (actor.branchIds.length === 0) return sql`false`;
+  return and(isNotNull(ordersTable.branchId), inArray(ordersTable.branchId, actor.branchIds));
+}
 
 const TZ_OFFSET_MS = 3 * 60 * 60 * 1000;
 
@@ -21,7 +28,7 @@ function calcTax(gross: number): number {
   return +(gross * VAT_RATE / (1 + VAT_RATE)).toFixed(2);
 }
 
-const aggregate = async (from: Date, to: Date) => {
+const aggregate = async (from: Date, to: Date, branchFilter: ReturnType<typeof branchOrderFilter>) => {
   const doneRows = await db
     .select({
       totalRevenue:    sql<number>`coalesce(sum(${ordersTable.totalPrice}), 0)`,
@@ -33,7 +40,7 @@ const aggregate = async (from: Date, to: Date) => {
       onlineRevenue:   sql<number>`coalesce(sum(case when ${ordersTable.paymentMethod} != 'cash' then ${ordersTable.totalPrice} else 0 end), 0)`,
     })
     .from(ordersTable)
-    .where(and(gte(ordersTable.createdAt, from), lt(ordersTable.createdAt, to), eq(ordersTable.status, "done")));
+    .where(and(gte(ordersTable.createdAt, from), lt(ordersTable.createdAt, to), eq(ordersTable.status, "done"), branchFilter));
 
   const cancelRows = await db
     .select({
@@ -41,7 +48,7 @@ const aggregate = async (from: Date, to: Date) => {
       cancelRevenue: sql<number>`coalesce(sum(${ordersTable.totalPrice}), 0)`,
     })
     .from(ordersTable)
-    .where(and(gte(ordersTable.createdAt, from), lt(ordersTable.createdAt, to), eq(ordersTable.status, "cancelled")));
+    .where(and(gte(ordersTable.createdAt, from), lt(ordersTable.createdAt, to), eq(ordersTable.status, "cancelled"), branchFilter));
 
   const pendingRows = await db
     .select({ pendingCount: sql<number>`count(*)` })
@@ -52,6 +59,7 @@ const aggregate = async (from: Date, to: Date) => {
         lt(ordersTable.createdAt, to),
         ne(ordersTable.status, "done"),
         ne(ordersTable.status, "cancelled"),
+        branchFilter,
       )
     );
 
@@ -82,7 +90,8 @@ const aggregate = async (from: Date, to: Date) => {
   };
 };
 
-router.get("/revenue", async (_req, res) => {
+router.get("/revenue", requireDashboardUser, async (_req, res) => {
+  const branchFilter = branchOrderFilter(res.locals.dashboardActor as DashboardActor);
   const nl = nowLocal();
   const y = nl.getUTCFullYear();
   const m = nl.getUTCMonth();
@@ -110,7 +119,7 @@ router.get("/revenue", async (_req, res) => {
     const dd = dayLocal.getUTCDate();
     const from = toLocalMidnight(dy, dm, dd);
     const to   = toLocalMidnight(dy, dm, dd + 1);
-    const r = await aggregate(from, to);
+    const r = await aggregate(from, to, branchFilter);
     const label = `${String(dd).padStart(2, "0")}/${String(dm + 1).padStart(2, "0")}`;
     dailyBreakdown.push({
       date: label, total: r.totalRevenue, delivery: r.deliveryRevenue, items: r.itemsRevenue,
@@ -131,7 +140,7 @@ router.get("/revenue", async (_req, res) => {
   for (let mi = 0; mi < 12; mi++) {
     const from = toLocalMidnight(y, mi, 1);
     const to   = toLocalMidnight(y, mi + 1, 1);
-    const r = await aggregate(from, to);
+    const r = await aggregate(from, to, branchFilter);
     monthlyBreakdown.push({
       month: arabicMonths[mi], total: r.totalRevenue, delivery: r.deliveryRevenue, items: r.itemsRevenue,
       orders: r.orderCount, tax: r.taxAmount, net: r.netRevenue,
@@ -144,7 +153,7 @@ router.get("/revenue", async (_req, res) => {
   const topItemsRaw = await db
     .select({ items: ordersTable.items })
     .from(ordersTable)
-    .where(and(gte(ordersTable.createdAt, yearStart), lt(ordersTable.createdAt, nextYearStart), eq(ordersTable.status, "done")));
+    .where(and(gte(ordersTable.createdAt, yearStart), lt(ordersTable.createdAt, nextYearStart), eq(ordersTable.status, "done"), branchFilter));
 
   const itemMap = new Map<string, { name: string; qty: number; revenue: number }>();
   for (const row of topItemsRaw) {
@@ -162,17 +171,18 @@ router.get("/revenue", async (_req, res) => {
     .slice(0, 10);
 
   const [today, week, month, year] = await Promise.all([
-    aggregate(todayStart, tomorrowStart),
-    aggregate(weekStart, tomorrowStart),
-    aggregate(monthStart, nextMonthStart),
-    aggregate(yearStart, nextYearStart),
+    aggregate(todayStart, tomorrowStart, branchFilter),
+    aggregate(weekStart, tomorrowStart, branchFilter),
+    aggregate(monthStart, nextMonthStart, branchFilter),
+    aggregate(yearStart, nextYearStart, branchFilter),
   ]);
 
   res.json({ today, week, month, year, dailyBreakdown, monthlyBreakdown, topItems });
 });
 
 // ── GET /revenue/live — last-hour, last-30min, today extras ──────────────────
-router.get("/revenue/live", async (_req, res) => {
+router.get("/revenue/live", requireDashboardUser, async (_req, res) => {
+  const branchFilter = branchOrderFilter(res.locals.dashboardActor as DashboardActor);
   const now = new Date();
   const oneHourAgo    = new Date(now.getTime() - 60 * 60 * 1000);
   const thirtyMinsAgo = new Date(now.getTime() - 30 * 60 * 1000);
@@ -183,22 +193,22 @@ router.get("/revenue/live", async (_req, res) => {
   const tomorrowStart = toLocalMidnight(y, m, d + 1);
 
   const [lastHour, last30min] = await Promise.all([
-    aggregate(oneHourAgo, now),
-    aggregate(thirtyMinsAgo, now),
+    aggregate(oneHourAgo, now, branchFilter),
+    aggregate(thirtyMinsAgo, now, branchFilter),
   ]);
 
   // unique customers today (non-cancelled)
   const phones = await db
     .select({ phone: ordersTable.customerPhone })
     .from(ordersTable)
-    .where(and(gte(ordersTable.createdAt, todayStart), lt(ordersTable.createdAt, tomorrowStart), ne(ordersTable.status, "cancelled")));
+    .where(and(gte(ordersTable.createdAt, todayStart), lt(ordersTable.createdAt, tomorrowStart), ne(ordersTable.status, "cancelled"), branchFilter));
   const uniqueCustomerCount = new Set(phones.map(r => r.phone)).size;
 
   // total items sold today (done orders)
   const doneItemRows = await db
     .select({ items: ordersTable.items })
     .from(ordersTable)
-    .where(and(gte(ordersTable.createdAt, todayStart), lt(ordersTable.createdAt, tomorrowStart), eq(ordersTable.status, "done")));
+    .where(and(gte(ordersTable.createdAt, todayStart), lt(ordersTable.createdAt, tomorrowStart), eq(ordersTable.status, "done"), branchFilter));
   let totalItemsSold = 0;
   for (const row of doneItemRows) {
     for (const it of (row.items as Array<{ quantity: number }>)) totalItemsSold += it.quantity;
@@ -208,13 +218,13 @@ router.get("/revenue/live", async (_req, res) => {
   const discountRows = await db
     .select({ total: sql<number>`coalesce(sum(${ordersTable.discountAmount}), 0)` })
     .from(ordersTable)
-    .where(and(gte(ordersTable.createdAt, todayStart), lt(ordersTable.createdAt, tomorrowStart), ne(ordersTable.status, "cancelled")));
+    .where(and(gte(ordersTable.createdAt, todayStart), lt(ordersTable.createdAt, tomorrowStart), ne(ordersTable.status, "cancelled"), branchFilter));
   const totalDiscounts = Number(discountRows[0]?.total ?? 0) / 100;
 
   res.json({ lastHour, last30min, uniqueCustomerCount, totalItemsSold, totalDiscounts });
 });
 
-router.get("/revenue/range", async (req, res) => {
+router.get("/revenue/range", requireDashboardUser, async (req, res) => {
   const { from, to } = req.query as { from?: string; to?: string };
   if (!from || !to) { res.status(400).json({ error: "from and to required (YYYY-MM-DD)" }); return; }
   const [fy, fm, fd] = from.split("-").map(Number);
@@ -222,7 +232,8 @@ router.get("/revenue/range", async (req, res) => {
   if (!fy || !fm || !fd || !ty || !tm || !td) { res.status(400).json({ error: "invalid date format" }); return; }
   const fromDate = toLocalMidnight(fy, fm - 1, fd);
   const toDate   = toLocalMidnight(ty, tm - 1, td + 1);
-  const data = await aggregate(fromDate, toDate);
+  const branchFilter = branchOrderFilter(res.locals.dashboardActor as DashboardActor);
+  const data = await aggregate(fromDate, toDate, branchFilter);
   res.json(data);
 });
 

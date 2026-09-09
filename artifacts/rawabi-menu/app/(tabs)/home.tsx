@@ -8,7 +8,7 @@ import {
   Linking,
   StatusBar,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -26,6 +26,7 @@ import { BannerCarousel } from "@/components/BannerCarousel";
 import { CartBar } from "@/components/CartBar";
 import { useCartState } from "@/context/CartContext";
 import type { MenuItem } from "@/constants/menu";
+import { useMenuTemplate } from "@/hooks/useMenuTemplate";
 
 const F = {
   regular: "Cairo_400Regular",
@@ -35,7 +36,7 @@ const F = {
 };
 
 const BRANCH_ADDRESS = "تبوك — حي الروضة";
-const BRANCH_MAPS_URL = "https://maps.google.com/?q=تبوك+حي+الروضة+روابي+المندي";
+const BRANCH_MAPS_URL = "https://maps.google.com/?q=تبوك+حي+الروضة";
 
 type OrderMode = "delivery" | "pickup";
 type RawItem = MenuItem & { available?: boolean; nameEn?: string; descriptionEn?: string; stock?: number | null };
@@ -49,7 +50,7 @@ type ListEntry =
 
 // ── HomeItemRow: zero context subscriptions — quantity passed as prop ─────
 const HomeItemRow = React.memo(function HomeItemRow({
-  item, quantity, isEn, whatsapp, isFavoriteFn, onToggleFav, onSelect,
+  item, quantity, isEn, whatsapp, isFavoriteFn, onToggleFav, onSelect, modern,
 }: {
   item: RawItem;
   quantity: number;
@@ -58,6 +59,7 @@ const HomeItemRow = React.memo(function HomeItemRow({
   isFavoriteFn: (id: string) => boolean;
   onToggleFav: (id: string) => void;
   onSelect: (item: RawItem) => void;
+  modern: boolean;
 }) {
   const isFav = isFavoriteFn(item.id);
   const handleToggle = useCallback(() => onToggleFav(item.id), [onToggleFav, item.id]);
@@ -72,6 +74,7 @@ const HomeItemRow = React.memo(function HomeItemRow({
         isFavorite={isFav}
         onToggleFavorite={handleToggle}
         whatsapp={whatsapp}
+        modern={modern}
       />
     </View>
   );
@@ -89,6 +92,27 @@ export default function HomeScreen() {
   const { categories, refresh: refreshMenu } = useMenu();
   const { banners, refresh: refreshBanners } = useBanners();
   const { items: cartItems } = useCartState();
+  const { menuTemplate } = useMenuTemplate();
+  const isModern = menuTemplate === "modern";
+  const visual = isModern
+    ? {
+        background: colors.isLight ? "#F8FAF7" : colors.background,
+        card: colors.isLight ? "#FFFFFF" : colors.card,
+        foreground: colors.isLight ? "#17231D" : colors.foreground,
+        muted: colors.isLight ? "#66736B" : colors.mutedForeground,
+        primary: "#0F3D2E",
+        accent: "#1E7A44",
+        border: colors.isLight ? "#DDE7E0" : colors.border,
+      }
+    : {
+        background: colors.background,
+        card: colors.card,
+        foreground: colors.foreground,
+        muted: colors.mutedForeground,
+        primary: colors.primary,
+        accent: colors.gold,
+        border: colors.border,
+      };
 
   // qtyMap: parent is the only CartContext subscriber — rows get quantity as prop
   const qtyMap = useMemo(() => {
@@ -109,7 +133,7 @@ export default function HomeScreen() {
   const handleSelectItem = useCallback((item: RawItem) => setSelectedItem(item), []);
   const handleCloseDetail = useCallback(() => setSelectedItem(null), []);
   const searchRef = useRef<TextInput>(null);
-  const listRef = useRef<FlashList<ListEntry>>(null);
+  const listRef = useRef<FlashListRef<ListEntry>>(null);
 
   useFocusEffect(useCallback(() => { refreshMenu(); }, [refreshMenu]));
   useEffect(() => { refreshBanners(); }, [refreshBanners]);
@@ -180,8 +204,8 @@ export default function HomeScreen() {
     if (item._t === "favHeader") {
       return (
         <View style={[styles.sectionHeader, { paddingTop: 18 }]}>
-          <Feather name="heart" size={14} color="#C8171A" />
-          <Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: F.bold }]}>
+          <Feather name="heart" size={14} color={isModern ? visual.accent : "#C8171A"} />
+          <Text style={[styles.sectionTitle, { color: visual.foreground, fontFamily: F.bold }]}>
             المفضلة
           </Text>
         </View>
@@ -191,10 +215,10 @@ export default function HomeScreen() {
       return (
         <View style={[styles.sectionHeader, { paddingTop: 18 }]}>
           <Text style={{ fontSize: 18 }}>{item.icon}</Text>
-          <Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: F.bold }]}>
+          <Text style={[styles.sectionTitle, { color: visual.foreground, fontFamily: F.bold }]}>
             {item.name}
           </Text>
-          <Text style={[styles.sectionCount, { color: colors.mutedForeground, fontFamily: F.regular }]}>
+          <Text style={[styles.sectionCount, { color: visual.muted, fontFamily: F.regular }]}>
             {item.count} صنف
           </Text>
         </View>
@@ -211,9 +235,10 @@ export default function HomeScreen() {
         isFavoriteFn={isFavoriteFn}
         onToggleFav={toggleFavorite}
         onSelect={handleSelectItem}
+        modern={isModern}
       />
     );
-  }, [colors, isEn, info.whatsapp, isFavoriteFn, toggleFavorite, qtyMapRef, handleSelectItem]);
+  }, [colors, isEn, info.whatsapp, isFavoriteFn, toggleFavorite, qtyMapRef, handleSelectItem, isModern, visual.accent, visual.foreground, visual.muted]);
 
   const keyExtractor = useCallback((item: ListEntry, i: number) => {
     if (item._t === "favHeader") return "fav-header";
@@ -239,59 +264,63 @@ export default function HomeScreen() {
   const searchEmpty = search.trim().length > 0 && listData.length === 0;
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={colors.isLight ? "dark-content" : "light-content"} backgroundColor={colors.background} />
+    <View style={[styles.root, { backgroundColor: visual.background }]}>
+      <StatusBar barStyle={colors.isLight ? "dark-content" : "light-content"} backgroundColor={visual.background} />
 
       {/* ── STICKY HEADER ── */}
-      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+      <View style={[
+        styles.header,
+        { paddingTop: insets.top + 8, backgroundColor: visual.background, borderBottomColor: visual.border },
+        isModern && styles.modernHeader,
+      ]}>
         {/* Row 1: icons left, greeting right */}
         <View style={styles.topRow}>
           <View style={styles.iconsLeft}>
             <TouchableOpacity
-              style={[styles.iconBtn, { backgroundColor: colors.card }]}
+              style={[styles.iconBtn, { backgroundColor: visual.card }, isModern && styles.modernIconBtn]}
               onPress={() => searchRef.current?.focus()}
             >
-              <Feather name="search" size={17} color={colors.gold} />
+              <Feather name="search" size={17} color={visual.accent} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.iconBtn, { backgroundColor: colors.card }]}
+              style={[styles.iconBtn, { backgroundColor: visual.card }, isModern && styles.modernIconBtn]}
               onPress={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
             >
-              <Feather name="heart" size={17} color={favorites.length > 0 ? "#C8171A" : colors.mutedForeground} />
+              <Feather name="heart" size={17} color={favorites.length > 0 ? (isModern ? visual.accent : "#C8171A") : visual.muted} />
               {favorites.length > 0 && (
-                <View style={[styles.favBadge, { backgroundColor: "#C8171A" }]}>
+                <View style={[styles.favBadge, { backgroundColor: isModern ? visual.accent : "#C8171A" }]}>
                   <Text style={styles.favBadgeText}>{favorites.length > 9 ? "9+" : favorites.length}</Text>
                 </View>
               )}
             </TouchableOpacity>
           </View>
           <View style={styles.greetBlock}>
-            <Text style={[styles.greetName, { color: colors.foreground, fontFamily: F.extra }]}>
-              {user?.name ? `مرحبا، ${user.name}` : "روابي المندي"}
+            <Text style={[styles.greetName, { color: visual.foreground, fontFamily: F.extra }]}>
+              {user?.name ? `مرحبا، ${user.name}` : "منتجات السلة للخضار والفواكه"}
             </Text>
-            <Text style={[styles.greetSub, { color: colors.gold, fontFamily: F.regular }]}>
+            <Text style={[styles.greetSub, { color: visual.accent, fontFamily: F.regular }]}>
               {greeting} 👋
             </Text>
           </View>
         </View>
 
         {/* Row 2: Delivery / Pickup toggle */}
-        <View style={[styles.toggleWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.toggleWrap, { backgroundColor: visual.card, borderColor: visual.border }, isModern && styles.modernToggleWrap]}>
           <TouchableOpacity
-            style={[styles.toggleBtn, orderMode === "pickup" && [styles.toggleActive, { backgroundColor: colors.primary }]]}
+            style={[styles.toggleBtn, orderMode === "pickup" && [styles.toggleActive, { backgroundColor: visual.primary }], isModern && styles.modernToggleBtn]}
             onPress={() => { setOrderMode("pickup"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
             activeOpacity={0.8}
           >
-            <Text style={[styles.toggleText, { fontFamily: F.bold, color: orderMode === "pickup" ? "#fff" : colors.mutedForeground }]}>
+            <Text style={[styles.toggleText, { fontFamily: F.bold, color: orderMode === "pickup" ? "#fff" : visual.muted }]}>
               استلام من الفرع
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleBtn, orderMode === "delivery" && [styles.toggleActive, { backgroundColor: colors.primary }]]}
+            style={[styles.toggleBtn, orderMode === "delivery" && [styles.toggleActive, { backgroundColor: visual.primary }], isModern && styles.modernToggleBtn]}
             onPress={() => { setOrderMode("delivery"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
             activeOpacity={0.8}
           >
-            <Text style={[styles.toggleText, { fontFamily: F.bold, color: orderMode === "delivery" ? "#fff" : colors.mutedForeground }]}>
+            <Text style={[styles.toggleText, { fontFamily: F.bold, color: orderMode === "delivery" ? "#fff" : visual.muted }]}>
               توصيل
             </Text>
           </TouchableOpacity>
@@ -299,40 +328,40 @@ export default function HomeScreen() {
 
         {/* Row 3: Location card */}
         <TouchableOpacity
-          style={[styles.locationCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[styles.locationCard, { backgroundColor: visual.card, borderColor: visual.border }, isModern && styles.modernCard]}
           onPress={handleLocationPress}
           activeOpacity={0.8}
         >
-          <Feather name="chevron-left" size={18} color={colors.mutedForeground} />
+          <Feather name="chevron-left" size={18} color={visual.muted} />
           <View style={styles.locationTextBlock}>
-            <Text style={[styles.locationLabel, { color: colors.gold, fontFamily: F.bold }]}>
+            <Text style={[styles.locationLabel, { color: visual.accent, fontFamily: F.bold }]}>
               {locationLabel}
             </Text>
-            <Text style={[styles.locationValue, { color: colors.foreground, fontFamily: F.regular }]} numberOfLines={1}>
+            <Text style={[styles.locationValue, { color: visual.foreground, fontFamily: F.regular }]} numberOfLines={1}>
               {locationText}
             </Text>
           </View>
-          <View style={[styles.locationDot, { backgroundColor: colors.primary }]}>
+          <View style={[styles.locationDot, { backgroundColor: visual.primary }]}>
             <Feather name="map-pin" size={15} color="#fff" />
           </View>
         </TouchableOpacity>
 
         {/* Row 4: Search bar */}
-        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: search ? colors.gold : colors.border }]}>
-          <Feather name="search" size={16} color={colors.mutedForeground} style={{ marginLeft: 10 }} />
+        <View style={[styles.searchBar, { backgroundColor: visual.card, borderColor: search ? visual.accent : visual.border }, isModern && styles.modernSearchBar]}>
+          <Feather name="search" size={16} color={visual.muted} style={{ marginLeft: 10 }} />
           <TextInput
             ref={searchRef}
             value={search}
             onChangeText={setSearch}
             placeholder="ابحث عن صنف..."
-            placeholderTextColor={colors.mutedForeground}
-            style={[styles.searchInput, { color: colors.foreground, fontFamily: F.regular }]}
+            placeholderTextColor={visual.muted}
+            style={[styles.searchInput, { color: visual.foreground, fontFamily: F.regular }]}
             textAlign="right"
             returnKeyType="search"
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch("")} style={{ paddingHorizontal: 10 }}>
-              <Feather name="x" size={15} color={colors.mutedForeground} />
+              <Feather name="x" size={15} color={visual.muted} />
             </TouchableOpacity>
           )}
         </View>
@@ -342,7 +371,7 @@ export default function HomeScreen() {
       {searchEmpty ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
           <Text style={{ fontSize: 40 }}>🔍</Text>
-          <Text style={{ fontFamily: F.regular, fontSize: 14, color: colors.mutedForeground, textAlign: "center" }}>
+          <Text style={{ fontFamily: F.regular, fontSize: 14, color: visual.muted, textAlign: "center" }}>
             لا توجد نتائج لـ "{search}"
           </Text>
         </View>
@@ -385,6 +414,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 10,
   },
+  modernHeader: {
+    paddingBottom: 16,
+    gap: 12,
+  },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -400,6 +433,10 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
+  },
+  modernIconBtn: {
+    borderWidth: 1,
+    borderColor: "#DDE7E0",
   },
   favBadge: {
     position: "absolute",
@@ -429,6 +466,14 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     height: 48,
   },
+  modernToggleWrap: {
+    height: 52,
+    borderRadius: 18,
+    padding: 2,
+  },
+  modernToggleBtn: {
+    borderRadius: 15,
+  },
   toggleBtn: {
     flex: 1,
     alignItems: "center",
@@ -453,6 +498,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     gap: 10,
   },
+  modernCard: {
+    borderRadius: 20,
+    shadowColor: "#0F3D2E",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
   locationTextBlock: {
     flex: 1,
     alignItems: "flex-end",
@@ -473,6 +526,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     height: 44,
+  },
+  modernSearchBar: {
+    height: 48,
+    borderRadius: 18,
   },
   searchInput: {
     flex: 1,

@@ -22,6 +22,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/cashier":           "لوحة الكاشير",
   "/admin":             "لوحة الإدارة",
   "/auth-diagnostics":  "تشخيص المصادقة",
+  "/branches":          "إدارة الفروع",
+  "/users":             "إدارة المستخدمين",
 };
 
 export function Layout({ children, fullWidth = false }: LayoutProps) {
@@ -78,7 +80,7 @@ export function Layout({ children, fullWidth = false }: LayoutProps) {
           <div className="flex items-center gap-2">
             <img
               src={`${import.meta.env.BASE_URL}logo.png`}
-              alt="روابي المندي"
+              alt="منتجات السلة للخضار والفواكه"
               className="h-9 w-auto object-contain"
             />
             {!isHome && (

@@ -6,9 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const RENDER_URL = "https://rawabi-mandi-e5rz.onrender.com";
 const LOCAL_API  = `${(import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ""}/api`;
-const RENDER_API = `${RENDER_URL}/api`;
+const RENDER_API = "/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Status = "idle" | "loading" | "ok" | "error";
@@ -90,7 +89,7 @@ export default function AuthDiagnostics() {
   // Connection checks
   const [checks, setChecks] = useState<ConnCheck[]>([
     { label: "الخادم المحلي (Preview)", status: "idle" },
-    { label: "خادم Render", status: "idle" },
+    { label: "خادم المشروع", status: "idle" },
     { label: "خدمة المصادقة (محلي)", status: "idle" },
   ]);
   const [checksRunning, setChecksRunning] = useState(false);
@@ -218,7 +217,7 @@ export default function AuthDiagnostics() {
     setChecksRunning(true);
     setChecks([
       { label: "الخادم المحلي (Preview)", status: "loading" },
-      { label: "خادم Render", status: "loading" },
+      { label: "خادم المشروع", status: "loading" },
       { label: "خدمة المصادقة (محلي)", status: "loading" },
     ]);
 
@@ -243,7 +242,7 @@ export default function AuthDiagnostics() {
 
     setChecks([
       { label: "الخادم المحلي (Preview)", ...local },
-      { label: "خادم Render", ...render },
+      { label: "خادم المشروع", ...render },
       { label: "خدمة المصادقة (محلي)", status: authStatus, code: auth.code, detail: authDetail },
     ]);
     setChecksRunning(false);
@@ -262,7 +261,7 @@ export default function AuthDiagnostics() {
     { label: "مسار الصفحة الحالي",        value: window.location.pathname },
     { label: "VITE_API_BASE_URL",          value: (import.meta.env.VITE_API_BASE_URL as string | undefined) || "(فارغ — مسارات نسبية)" },
     { label: "نقطة API المحلية",          value: LOCAL_API },
-    { label: "نقطة API على Render",       value: RENDER_API },
+    { label: "نقطة API لخادم المشروع",    value: RENDER_API },
     { label: "بيئة التشغيل (MODE)",        value: import.meta.env.MODE },
     { label: "Cookies مفعّلة",            value: navigator.cookieEnabled ? "نعم ✓" : "لا ✗" },
     { label: "المتصفح",                   value: navigator.userAgent.slice(0, 80) },
@@ -402,7 +401,7 @@ export default function AuthDiagnostics() {
               onClick={() => setTestEndpoint("render")}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${testEndpoint === "render" ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}
             >
-              Render (الإنتاج)
+              خادم المشروع
             </button>
             <button
               onClick={() => setTestEndpoint("local")}
@@ -551,27 +550,26 @@ export default function AuthDiagnostics() {
         <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-2">
           <p className="text-xs font-semibold text-amber-800 flex items-center gap-1.5">
             <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            لماذا يفشل اختبار Render من Preview؟
+            معلومات اختبار خادم المشروع
           </p>
           <ul className="text-xs text-amber-700 space-y-1.5 list-disc list-inside">
-            <li><strong>هذا طبيعي تماماً</strong> — عند الاختبار من Replit Preview إلى Render، المتصفح أو شبكة الجوال قد تمنع الطلب cross-origin مع credentials.</li>
-            <li>الإنتاج يعمل بشكل صحيح — السيرفر يرد بـ HTTP 200 على curl مباشرة.</li>
-            <li>للاختبار الحقيقي: افتح لوحة التحكم <strong>من Render مباشرة</strong> (نفس النطاق = لا CORS).</li>
-            <li>إذا فشل بـ 401 → بيانات الدخول خاطئة. إذا فشل بـ 502 → الخادم نائم (خطة مجانية، انتظر 30 ثانية).</li>
+            <li><strong>هذا الخادم تابع للمشروع الحالي</strong> ولا يستخدم عنوان خادم خارجي ثابت.</li>
+            <li>طلبات لوحة التحكم تستخدم المسار النسبي نفسه في المعاينة والنشر.</li>
+            <li>إذا فشل بـ 401 → بيانات الدخول خاطئة. إذا فشل بـ 502 → راجع حالة خادم المشروع.</li>
           </ul>
           <a
-            href="https://rawabi-mandi-e5rz.onrender.com/dashboard/auth-diagnostics"
+            href="/dashboard/auth-diagnostics"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-800 underline underline-offset-2 hover:text-amber-900 mt-1"
           >
-            ↗ افتح صفحة التشخيص على Render مباشرة
+            افتح صفحة التشخيص
           </a>
         </div>
 
         {/* Quick render test box */}
         <div className="mt-3 rounded-xl bg-blue-50 border border-blue-200 p-3 space-y-1.5">
-          <p className="text-xs font-semibold text-blue-800">بيانات الدخول على Render (الإنتاج)</p>
+          <p className="text-xs font-semibold text-blue-800">بيانات الدخول على خادم المشروع</p>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
               <p className="text-blue-600 mb-0.5">اسم المستخدم</p>
@@ -582,7 +580,7 @@ export default function AuthDiagnostics() {
               <code className="bg-white rounded px-2 py-1 block font-mono font-bold">Aa@123456</code>
             </div>
           </div>
-          <p className="text-[11px] text-blue-600">ملاحظة: اسم المستخدم على Render يختلف عن Preview (<code>rawabi-mandi</code>)</p>
+          <p className="text-[11px] text-blue-600">تُستخدم بيانات الدخول المضبوطة لهذا المشروع فقط.</p>
         </div>
       </SectionCard>
 

@@ -165,7 +165,7 @@ export default function Login() {
         <CardHeader className="space-y-3 text-center pt-8">
           <img
             src={`${import.meta.env.BASE_URL}logo.png`}
-            alt="روابي المندي"
+            alt="منتجات السلة للخضار والفواكه"
             className="mx-auto h-24 w-auto object-contain"
           />
           <CardTitle className="text-2xl font-bold">

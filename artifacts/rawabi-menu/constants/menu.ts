@@ -47,10 +47,10 @@ export interface MenuCategory {
 }
 
 export const RESTAURANT_INFO = {
-  name: "روابي المندي",
-  tagline: "للمذاق فن وأصول",
-  taglineEn: "A Fine Art of Taste",
-  nameEn: "Rawabi Al Mandi",
+  name: "منتجات السلة للخضار والفواكه",
+  tagline: "خضار طازجة كل يوم",
+  taglineEn: "Fresh vegetables every day",
+  nameEn: "منتجات السلة للخضار والفواكه",
   phone: "0530707042",
   whatsapp: "966530707042",
   location: "تبوك - حي الروضة",

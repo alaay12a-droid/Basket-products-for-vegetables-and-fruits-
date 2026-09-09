@@ -16,7 +16,7 @@ export function TabExport({ today, year, orders }: Props) {
   const now       = new Date();
   const dateStr   = now.toLocaleDateString("ar-SA", { timeZone: "Asia/Riyadh", year:"numeric", month:"2-digit", day:"2-digit" });
   const timeStr   = now.toLocaleTimeString("ar-SA", { timeZone: "Asia/Riyadh", hour:"2-digit", minute:"2-digit" });
-  const filename  = `تقرير_روابي_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  const filename  = `تقرير_سلة_الخضار_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
 
   function exportDailySummaryCSV() {
     downloadCSV([
@@ -125,7 +125,7 @@ export function TabExport({ today, year, orders }: Props) {
       <div className="rounded-2xl border bg-muted/20 p-5">
         <p className="text-xs text-muted-foreground mb-1">التقرير يشمل بيانات حتى</p>
         <p className="text-xl font-bold">{dateStr} الساعة {timeStr}</p>
-        <p className="text-sm text-muted-foreground mt-1">المطعم: روابي المندي للمذاق فن وأصول — تبوك</p>
+        <p className="text-sm text-muted-foreground mt-1">المتجر: منتجات السلة للخضار والفواكه — تبوك</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">

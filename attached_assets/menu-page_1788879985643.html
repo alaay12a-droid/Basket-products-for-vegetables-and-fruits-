@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سوق الخضار</title>
+<style>
+  :root {
+    --primary-dark: #0F3D2E;
+    --bg-page: #FFFFFF;
+    --surface: #F6F7F5;
+    --border: #E4E7E2;
+    --text-main: #1A1A1A;
+    --text-secondary: #6B7268;
+    --bg-success: #E3F3E7;
+    --text-success: #1E7A44;
+    --bg-danger: #FBE7E5;
+    --text-danger: #C2402F;
+    --bg-warning: #FBF1DD;
+    --text-warning: #A9781E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  /* Top delivery bar */
+  .top-bar {
+    background: var(--primary-dark);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+  }
+  .top-bar .label {
+    font-size: 12px;
+    color: #8FD9B8;
+    margin-bottom: 2px;
+  }
+  .top-bar .value {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* Search */
+  .search-wrap { padding: 14px 16px 8px; }
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 0 14px;
+    height: 42px;
+    border: 1px solid var(--border);
+  }
+  .search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    width: 100%;
+    font-family: inherit;
+    color: var(--text-main);
+  }
+  .search-box input::placeholder { color: var(--text-secondary); }
+
+  /* Categories */
+  .categories {
+    display: flex;
+    gap: 16px;
+    padding: 8px 16px 16px;
+    overflow-x: auto;
+  }
+  .category {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+  }
+  .category .icon-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .category span { font-size: 11px; color: var(--text-secondary); }
+
+  .section-title {
+    padding: 4px 16px 10px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* Product grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 16px 16px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    text-align: right;
+  }
+  .card .thumb {
+    height: 78px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+  }
+  .card .info { padding: 10px; }
+  .card .name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .card .qty { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
+  .card .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card .price { font-size: 13px; font-weight: 700; }
+  .card .add-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--primary-dark);
+    color: #fff;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+  }
+  .card .add-btn:active { opacity: 0.8; }
+
+  /* Cart bar */
+  .cart-bar {
+    margin: 0 16px 16px;
+    background: var(--primary-dark);
+    border-radius: 12px;
+    padding: 13px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+    width: calc(100% - 32px);
+    font-family: inherit;
+  }
+  .cart-bar .cart-label { font-size: 13px; }
+  .cart-bar .cart-total { font-size: 14px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="top-bar">
+    <div>
+      <div class="label">التوصيل خلال</div>
+      <div class="value">٢٥ دقيقة · بغداد، الكرادة</div>
+    </div>
+    <span>▾</span>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" placeholder="دور على خضرة، فاكهة...">
+    </div>
+  </div>
+
+  <div class="categories" id="categories">
+    <button class="category" data-cat="veg">
+      <div class="icon-circle" style="background: var(--bg-success); color: var(--text-success);">🥕</div>
+      <span>خضروات</span>
+    </button>
+    <button class="category" data-cat="fruit">
+      <div class="icon-circle" style="background: var(--bg-danger); color: var(--text-danger);">🍎</div>
+      <span>فواكه</span>
+    </button>
+    <button class="category" data-cat="herbs">
+      <div class="icon-circle" style="background: var(--bg-warning); color: var(--text-warning);">🌿</div>
+      <span>أعشاب</span>
+    </button>
+  </div>
+
+  <div class="section-title">الأكثر طلباً</div>
+
+  <div class="grid" id="product-grid">
+    <!-- Cards are rendered by JS from the PRODUCTS array below -->
+  </div>
+
+  <button class="cart-bar" id="cart-bar">
+    <span class="cart-label">عرض السلة</span>
+    <span class="cart-total" id="cart-total">٠ مواد · ٠ د.ع</span>
+  </button>
+
+</div>
+
+<script>
+  // Edit this array to change products — nothing else needs to change.
+  const PRODUCTS = [
+    { name: "جزر بلدي",   qty: "١ كيلو",  price: 1500, emoji: "🥕", bg: "var(--bg-success)" },
+    { name: "تفاح أحمر",  qty: "١ كيلو",  price: 2500, emoji: "🍎", bg: "var(--bg-danger)"  },
+    { name: "ليمون",      qty: "نص كيلو", price: 1000, emoji: "🍋", bg: "var(--bg-warning)" },
+    { name: "خيار",       qty: "١ كيلو",  price: 1200, emoji: "🥒", bg: "var(--bg-success)" }
+  ];
+
+  const cart = {}; // { productIndex: count }
+
+  function toArabicNumber(n) {
+    return n.toLocaleString('ar-IQ');
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('product-grid');
+    grid.innerHTML = PRODUCTS.map((p, i) => `
+      <div class="card">
+        <div class="thumb" style="background:${p.bg}">${p.emoji}</div>
+        <div class="info">
+          <div class="name">${p.name}</div>
+          <div class="qty">${p.qty}</div>
+          <div class="row">
+            <span class="price">${toArabicNumber(p.price)} د.ع</span>
+            <button class="add-btn" data-index="${i}">+</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    grid.querySelectorAll('.add-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = btn.dataset.index;
+        cart[i] = (cart[i] || 0) + 1;
+        updateCartBar();
+      });
+    });
+  }
+
+  function updateCartBar() {
+    let count = 0, total = 0;
+    Object.entries(cart).forEach(([i, qty]) => {
+      count += qty;
+      total += PRODUCTS[i].price * qty;
+    });
+    document.getElementById('cart-total').textContent =
+      `${toArabicNumber(count)} مواد · ${toArabicNumber(total)} د.ع`;
+  }
+
+  renderGrid();
+</script>
+
+</body>
+</html>

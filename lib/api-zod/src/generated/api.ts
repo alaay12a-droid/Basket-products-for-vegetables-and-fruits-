@@ -15,6 +15,36 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Get the active customer menu template
+ */
+export const getMenuTemplateResponseMenuTemplateDefault = `classic`;
+
+export const GetMenuTemplateResponse = zod.object({
+  menuTemplate: zod
+    .enum(["classic", "modern"])
+    .default(getMenuTemplateResponseMenuTemplateDefault),
+});
+
+/**
+ * @summary Update the active customer menu template
+ */
+export const updateMenuTemplateBodyMenuTemplateDefault = `classic`;
+
+export const UpdateMenuTemplateBody = zod.object({
+  menuTemplate: zod
+    .enum(["classic", "modern"])
+    .default(updateMenuTemplateBodyMenuTemplateDefault),
+});
+
+export const updateMenuTemplateResponseMenuTemplateDefault = `classic`;
+
+export const UpdateMenuTemplateResponse = zod.object({
+  menuTemplate: zod
+    .enum(["classic", "modern"])
+    .default(updateMenuTemplateResponseMenuTemplateDefault),
+});
+
+/**
  * @summary Login to dashboard
  */
 export const DashboardLoginBody = zod.object({

@@ -11,7 +11,7 @@ import {
 import { logger } from "./logger.js";
 
 // ── Storage backend ───────────────────────────────────────────────────────────
-// Uses the Firebase Admin service account (FIREBASE_SERVICE_ACCOUNT) directly
+// Uses a service account explicitly provisioned for this project.
 // via @google-cloud/storage's own credential handling. This is a portable
 // service-account key (works identically on Replit and on any other host,
 // e.g. Render) — unlike the old approach, which routed every signed-URL
@@ -28,10 +28,10 @@ interface FirebaseServiceAccount {
 }
 
 function getServiceAccount(): FirebaseServiceAccount {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  const raw = process.env.PROJECT_FIREBASE_SERVICE_ACCOUNT;
   if (!raw) {
     throw new Error(
-      "FIREBASE_SERVICE_ACCOUNT is not set. Image uploads require this secret " +
+      "PROJECT_FIREBASE_SERVICE_ACCOUNT is not set. Image uploads require this project's own secret " +
         "(same credential already used for push notifications) so the server can " +
         "authenticate with Firebase/Google Cloud Storage."
     );
@@ -39,7 +39,7 @@ function getServiceAccount(): FirebaseServiceAccount {
   try {
     return JSON.parse(raw) as FirebaseServiceAccount;
   } catch (err) {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT is not valid JSON — cannot initialize object storage");
+    throw new Error("PROJECT_FIREBASE_SERVICE_ACCOUNT is not valid JSON — cannot initialize object storage");
   }
 }
 

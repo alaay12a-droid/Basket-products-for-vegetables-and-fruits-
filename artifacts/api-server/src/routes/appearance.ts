@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db, appSettingsTable } from "@workspace/db";
-import { like } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 
 const router = Router();
+const MENU_TEMPLATE_KEY = "menu_template";
 
 const KEY_PREFIX = "appearance_";
 const DEFAULTS: Record<string, string> = {
@@ -16,6 +17,32 @@ const DEFAULTS: Record<string, string> = {
   appearance_cashierPin:             "Aa@000",
   appearance_adminPin:        "Aa@000",
 };
+
+router.get("/settings/menu-template", async (_req, res) => {
+  const [row] = await db
+    .select({ value: appSettingsTable.value })
+    .from(appSettingsTable)
+    .where(eq(appSettingsTable.key, MENU_TEMPLATE_KEY))
+    .limit(1);
+  const menuTemplate = row?.value === "modern" ? "modern" : "classic";
+  res.json({ menuTemplate });
+});
+
+router.put("/settings/menu-template", async (req, res) => {
+  const menuTemplate = req.body?.menuTemplate;
+  if (menuTemplate !== "classic" && menuTemplate !== "modern") {
+    res.status(400).json({ error: "menuTemplate must be classic or modern" });
+    return;
+  }
+  await db
+    .insert(appSettingsTable)
+    .values({ key: MENU_TEMPLATE_KEY, value: menuTemplate })
+    .onConflictDoUpdate({
+      target: appSettingsTable.key,
+      set: { value: menuTemplate, updatedAt: new Date() },
+    });
+  res.json({ menuTemplate });
+});
 
 // ── GET /settings/appearance ──────────────────────────────────────────────────
 router.get("/settings/appearance", async (_req, res) => {

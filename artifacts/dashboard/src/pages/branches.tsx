@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription as AlertDialogDesc, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, RefreshCw, Pencil, Trash2, MapPin, Phone, GitBranch } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Plus, RefreshCw, Pencil, Trash2, MapPin, Phone, GitBranch, Package } from "lucide-react";
 
 interface Branch {
   id: number;
@@ -20,8 +22,53 @@ interface Branch {
   active: boolean;
   lat: number | null;
   lng: number | null;
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
   createdAt: string;
+  weeklyOperatingHours: Record<string, null | "closed" | { open: string; close: string }> | null;
+  deliveryCapacity: number | null;
 }
+
+interface ProductAvailability {
+  itemId: string;
+  name: string;
+  globalAvailable: boolean;
+  override: boolean | null;
+  effective: boolean;
+}
+
+const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const DAY_NAMES: Record<string, string> = { sun: "الأحد", mon: "الإثنين", tue: "الثلاثاء", wed: "الأربعاء", thu: "الخميس", fri: "الجمعة", sat: "السبت" };
+
+const parseHours = (hoursMap: Record<string, null | "closed" | { open: string; close: string }> | null) => {
+  const result: Record<string, { isOpen: boolean; open: string; close: string }> = {};
+  for (const day of DAYS) {
+    if (hoursMap && hoursMap[day]) {
+      const val = hoursMap[day];
+      if (val === "closed") {
+        result[day] = { isOpen: false, open: "08:00", close: "23:59" };
+      } else if (typeof val === "object" && val !== null) {
+        result[day] = { isOpen: true, open: val.open || "08:00", close: val.close || "23:59" };
+      }
+    } else {
+      result[day] = { isOpen: true, open: "08:00", close: "23:59" };
+    }
+  }
+  return result;
+};
+
+const formatHours = (hours: Record<string, { isOpen: boolean; open: string; close: string }>, enabled: boolean) => {
+  if (!enabled) return null;
+  const result: Record<string, null | "closed" | { open: string; close: string }> = {};
+  for (const day of DAYS) {
+    if (!hours[day].isOpen) {
+      result[day] = "closed";
+    } else {
+      result[day] = { open: hours[day].open, close: hours[day].close };
+    }
+  }
+  return result;
+};
 
 interface BranchForm {
   id?: number;
@@ -32,10 +79,19 @@ interface BranchForm {
   active: boolean;
   lat: string;
   lng: string;
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
+  hoursEnabled: boolean;
+  hours: Record<string, { isOpen: boolean; open: string; close: string }>;
+  deliveryCapacity: string;
 }
 
 const emptyForm = (): BranchForm => ({
-  name: "", address: "", phone: "", mapsUrl: "", active: true, lat: "", lng: "",
+  name: "", address: "", phone: "", mapsUrl: "", active: false, lat: "", lng: "",
+  deliveryEnabled: false, pickupEnabled: false,
+  hoursEnabled: false,
+  hours: parseHours(null),
+  deliveryCapacity: "",
 });
 
 export default function Branches() {
@@ -50,6 +106,12 @@ export default function Branches() {
 
   const [deleteId, setDeleteId]     = useState<number | null>(null);
   const [deleting, setDeleting]     = useState(false);
+
+  const [productsOpen, setProductsOpen] = useState(false);
+  const [productsBranch, setProductsBranch] = useState<Branch | null>(null);
+  const [products, setProducts] = useState<ProductAvailability[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productUpdating, setProductUpdating] = useState<string | null>(null);
 
   // ── Load ───────────────────────────────────────────────────────────────────
   const load = async (quiet = false) => {
@@ -77,26 +139,93 @@ export default function Branches() {
       active: b.active,
       lat: b.lat != null ? String(b.lat) : "",
       lng: b.lng != null ? String(b.lng) : "",
+      deliveryEnabled: b.deliveryEnabled,
+      pickupEnabled: b.pickupEnabled,
+      hoursEnabled: b.weeklyOperatingHours != null,
+      hours: parseHours(b.weeklyOperatingHours),
+      deliveryCapacity: b.deliveryCapacity != null ? String(b.deliveryCapacity) : "",
     });
     setFormError("");
     setDialogOpen(true);
   };
 
+  const loadProducts = async (branchId: number) => {
+    setProductsLoading(true);
+    try {
+      const data = await apiGet<ProductAvailability[]>(`/branches/${branchId}/product-availability`);
+      setProducts(data);
+    } catch {
+      toast({ title: "خطأ", description: "تعذّر تحميل المنتجات", variant: "destructive" });
+    }
+    setProductsLoading(false);
+  };
+
+  const handleOpenProducts = (b: Branch) => {
+    setProductsBranch(b);
+    setProducts([]);
+    setProductsOpen(true);
+    loadProducts(b.id);
+  };
+
+  const updateProduct = async (itemId: string, availableStr: string) => {
+    if (!productsBranch) return;
+    const val = availableStr === "inherit" ? null : availableStr === "enabled";
+    setProductUpdating(itemId);
+    try {
+      await apiPut(`/branches/${productsBranch.id}/product-availability`, { itemId, available: val });
+      setProducts(prev => prev.map(p => {
+         if (p.itemId === itemId) {
+           const effective = p.globalAvailable && val !== false;
+           return { ...p, override: val, effective };
+         }
+         return p;
+      }));
+      toast({ title: "تم التحديث" });
+    } catch {
+      toast({ title: "خطأ", description: "تعذّر تحديث حالة المنتج", variant: "destructive" });
+    }
+    setProductUpdating(null);
+  };
+
   // ── Save ───────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!form.name.trim()) { setFormError("اسم الفرع مطلوب"); return; }
+    const hasLat = form.lat.trim() !== "";
+    const hasLng = form.lng.trim() !== "";
+    if (hasLat !== hasLng) {
+      setFormError("أدخل خط العرض وخط الطول معًا، أو اترك الحقلين فارغين");
+      return;
+    }
+    const latVal = hasLat ? Number(form.lat) : null;
+    const lngVal = hasLng ? Number(form.lng) : null;
+    if (
+      (latVal !== null && (!Number.isFinite(latVal) || latVal < -90 || latVal > 90))
+      || (lngVal !== null && (!Number.isFinite(lngVal) || lngVal < -180 || lngVal > 180))
+    ) {
+      setFormError("تحقق من الإحداثيات: Latitude بين -90 و90 وLongitude بين -180 و180");
+      return;
+    }
+
+    const deliveryCapVal = form.deliveryCapacity.trim() ? parseInt(form.deliveryCapacity, 10) : null;
+    if (deliveryCapVal !== null && (isNaN(deliveryCapVal) || deliveryCapVal < 1)) {
+       setFormError("الطاقة الاستيعابية يجب أن تكون رقماً صحيحاً أكبر من صفر");
+       return;
+    }
+
     setSaving(true);
     try {
-      const latVal = parseFloat(form.lat);
-      const lngVal = parseFloat(form.lng);
       const payload = {
         name:    form.name.trim(),
         address: form.address.trim() || null,
         phone:   form.phone.trim()   || null,
         mapsUrl: form.mapsUrl.trim() || null,
         active:  form.active,
-        lat:     !isNaN(latVal) ? latVal : null,
-        lng:     !isNaN(lngVal) ? lngVal : null,
+        lat: latVal,
+        lng: lngVal,
+        deliveryEnabled: form.deliveryEnabled,
+        pickupEnabled: form.pickupEnabled,
+        weeklyOperatingHours: formatHours(form.hours, form.hoursEnabled),
+        deliveryCapacity: deliveryCapVal,
       };
       if (form.id) {
         await apiPut(`/branches/${form.id}`, payload);
@@ -199,6 +328,14 @@ export default function Branches() {
                       {b.active ? "نشط" : "موقوف"}
                     </Badge>
                   </div>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    <Badge variant={b.deliveryEnabled ? "outline" : "secondary"} className="text-[11px]">
+                      التوصيل: {b.deliveryEnabled ? "مفعّل" : "موقوف"}
+                    </Badge>
+                    <Badge variant={b.pickupEnabled ? "outline" : "secondary"} className="text-[11px]">
+                      الاستلام: {b.pickupEnabled ? "مفعّل" : "موقوف"}
+                    </Badge>
+                  </div>
                   {b.address && (
                     <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
                       <MapPin className="w-3 h-3 shrink-0" />
@@ -237,6 +374,10 @@ export default function Branches() {
                   </Label>
                 </div>
                 <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleOpenProducts(b)}>
+                    <Package className="w-3.5 h-3.5 ml-1" />
+                    المنتجات
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => openEdit(b)}>
                     <Pencil className="w-3.5 h-3.5" />
                   </Button>
@@ -255,8 +396,11 @@ export default function Branches() {
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
             <DialogTitle>{form.id ? "تعديل الفرع" : "إضافة فرع جديد"}</DialogTitle>
+            <DialogDescription>
+              حدّث بيانات الفرع وخيارات الاستلام والتوصيل وساعات التشغيل.
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto px-1">
             <div className="space-y-1">
               <Label>اسم الفرع <span className="text-destructive">*</span></Label>
               <Input
@@ -291,15 +435,15 @@ export default function Branches() {
                 dir="ltr"
               />
             </div>
-            {/* Coordinates — needed for map marker and distance sorting */}
+            {/* Coordinates */}
             <div className="space-y-1">
               <Label className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
                 إحداثيات الموقع
-                <span className="text-muted-foreground text-xs font-normal mr-1">(اختياري — لعرض الخريطة وترتيب الفروع حسب المسافة)</span>
+                <span className="text-muted-foreground text-xs font-normal mr-1">(اختياري)</span>
               </Label>
               <p className="text-xs text-muted-foreground">
-                افتح الموقع على Google Maps ← اضغط على النقطة ← انسخ الإحداثيات من الأسفل (مثال: 28.3835, 36.5662)
+                افتح الموقع على Google Maps ← اضغط على النقطة ← انسخ الإحداثيات
               </p>
               <div className="flex gap-2">
                 <div className="flex-1 space-y-1">
@@ -311,6 +455,8 @@ export default function Branches() {
                     dir="ltr"
                     type="number"
                     step="any"
+                    min="-90"
+                    max="90"
                   />
                 </div>
                 <div className="flex-1 space-y-1">
@@ -322,10 +468,84 @@ export default function Branches() {
                     dir="ltr"
                     type="number"
                     step="any"
+                    min="-180"
+                    max="180"
                   />
                 </div>
               </div>
             </div>
+
+            <Separator />
+
+            {/* Capacity */}
+            <div className="space-y-1">
+              <Label>الطاقة الاستيعابية للتوصيل <span className="text-muted-foreground font-normal">(اختياري)</span></Label>
+              <Input
+                placeholder="مثال: 5 (طلبات في نفس الوقت)"
+                value={form.deliveryCapacity}
+                onChange={e => setForm(f => ({ ...f, deliveryCapacity: e.target.value }))}
+                type="number"
+                min="1"
+                dir="ltr"
+                className="text-right"
+              />
+            </div>
+
+            {/* Hours */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="form-hours-enabled"
+                  checked={form.hoursEnabled}
+                  onCheckedChange={v => setForm(f => ({ ...f, hoursEnabled: v }))}
+                />
+                <Label htmlFor="form-hours-enabled" className="cursor-pointer">تخصيص أوقات العمل</Label>
+              </div>
+              {form.hoursEnabled && (
+                <div className="space-y-2 border rounded-md p-3 bg-muted/20">
+                  {DAYS.map(day => {
+                     const h = form.hours[day];
+                     const isOvernight = h.isOpen && h.close < h.open;
+                     return (
+                       <div key={day} className="flex items-center gap-2 text-sm">
+                         <span className="w-16 font-medium shrink-0">{DAY_NAMES[day]}</span>
+                         <Select
+                           value={h.isOpen ? "open" : "closed"}
+                           onValueChange={v => setForm(f => ({ ...f, hours: { ...f.hours, [day]: { ...h, isOpen: v === "open" } } }))}
+                         >
+                           <SelectTrigger className="w-24 h-8 shrink-0"><SelectValue /></SelectTrigger>
+                           <SelectContent>
+                             <SelectItem value="open">مفتوح</SelectItem>
+                             <SelectItem value="closed">مغلق</SelectItem>
+                           </SelectContent>
+                         </Select>
+                         {h.isOpen && (
+                           <div className="flex items-center gap-2 flex-1 min-w-0">
+                             <Input
+                               type="time"
+                               value={h.open}
+                               onChange={e => setForm(f => ({ ...f, hours: { ...f.hours, [day]: { ...h, open: e.target.value } } }))}
+                               className="h-8 w-24 dir-ltr shrink-0"
+                             />
+                             <span className="text-muted-foreground">-</span>
+                             <Input
+                               type="time"
+                               value={h.close}
+                               onChange={e => setForm(f => ({ ...f, hours: { ...f.hours, [day]: { ...h, close: e.target.value } } }))}
+                               className="h-8 w-24 dir-ltr shrink-0"
+                             />
+                             {isOvernight && <Badge variant="outline" className="text-[10px] whitespace-nowrap">لليوم التالي</Badge>}
+                           </div>
+                         )}
+                       </div>
+                     );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
             <div className="flex items-center gap-2">
               <Switch
                 id="form-active"
@@ -334,9 +554,25 @@ export default function Branches() {
               />
               <Label htmlFor="form-active">نشط (مرئي للعملاء)</Label>
             </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="form-delivery-enabled"
+                checked={form.deliveryEnabled}
+                onCheckedChange={v => setForm(f => ({ ...f, deliveryEnabled: v }))}
+              />
+              <Label htmlFor="form-delivery-enabled">التوصيل مفعّل</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="form-pickup-enabled"
+                checked={form.pickupEnabled}
+                onCheckedChange={v => setForm(f => ({ ...f, pickupEnabled: v }))}
+              />
+              <Label htmlFor="form-pickup-enabled">الاستلام من الفرع مفعّل</Label>
+            </div>
             {formError && <p className="text-destructive text-sm">{formError}</p>}
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 pt-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>إلغاء</Button>
             <Button onClick={handleSave} disabled={saving} className="bg-teal-600 hover:bg-teal-700">
               {saving ? "جارٍ الحفظ…" : form.id ? "حفظ التعديلات" : "إضافة الفرع"}
@@ -350,9 +586,9 @@ export default function Branches() {
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
             <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDesc>
               سيتم حذف الفرع نهائياً. لا يمكن التراجع عن هذا الإجراء.
-            </AlertDialogDescription>
+            </AlertDialogDesc>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>إلغاء</AlertDialogCancel>
@@ -366,6 +602,68 @@ export default function Branches() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Products availability dialog */}
+      <Dialog open={productsOpen} onOpenChange={setProductsOpen}>
+        <DialogContent className="sm:max-w-xl max-h-[85vh] flex flex-col" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>توفر المنتجات: {productsBranch?.name}</DialogTitle>
+            <DialogDescription>
+              تخصيص توفر المنتجات في هذا الفرع. إذا كان المنتج موقوفاً عاماً، فلن تتمكن من تفعيله هنا.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto pr-1 mt-2">
+            {productsLoading ? (
+               <div className="space-y-3">
+                 {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+               </div>
+            ) : products.length === 0 ? (
+               <div className="text-center py-12 text-muted-foreground">لا توجد منتجات</div>
+            ) : (
+               <div className="space-y-2">
+                 {products.map(p => {
+                   const val = p.override === null ? "inherit" : p.override ? "enabled" : "disabled";
+                   const isDisabledGlobally = !p.globalAvailable;
+                   return (
+                     <div key={p.itemId} className="flex items-center justify-between p-3 border rounded-lg bg-card">
+                       <div>
+                         <div className="font-medium text-sm">{p.name}</div>
+                         <div className="text-xs mt-1 flex gap-1.5 items-center">
+                           <Badge variant={p.globalAvailable ? "outline" : "secondary"} className="text-[10px] py-0 h-5">
+                             العام: {p.globalAvailable ? "متاح" : "غير متاح"}
+                           </Badge>
+                           <Badge variant={p.effective ? "default" : "secondary"} className={`text-[10px] py-0 h-5 ${p.effective ? "bg-green-600 hover:bg-green-600 border-green-600" : ""}`}>
+                             الفعلي: {p.effective ? "متاح" : "غير متاح"}
+                           </Badge>
+                         </div>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         {productUpdating === p.itemId && <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />}
+                         <Select
+                           value={val}
+                           onValueChange={(v) => updateProduct(p.itemId, v)}
+                           disabled={productUpdating === p.itemId}
+                         >
+                           <SelectTrigger className="w-32 h-8 text-xs">
+                             <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent>
+                             <SelectItem value="inherit" className="text-xs">وراثة العام</SelectItem>
+                             {(!isDisabledGlobally || val === "enabled") && (
+                               <SelectItem value="enabled" disabled={isDisabledGlobally} className="text-xs">متاح للفرع</SelectItem>
+                             )}
+                             <SelectItem value="disabled" className="text-xs">إيقاف للفرع</SelectItem>
+                           </SelectContent>
+                         </Select>
+                       </div>
+                     </div>
+                   )
+                 })}
+               </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

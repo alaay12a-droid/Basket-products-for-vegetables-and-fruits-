@@ -31,10 +31,17 @@ interface Props {
   isFavorite: boolean;
   onToggleFavorite: () => void;
   whatsapp: string;
+  modern?: boolean;
 }
 
-function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, onToggleFavorite, whatsapp }: Props) {
+function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, onToggleFavorite, whatsapp, modern = false }: Props) {
   const colors = useColors();
+  const cardColor = modern && colors.isLight ? "#FFFFFF" : colors.card;
+  const borderColor = modern && colors.isLight ? "#DDE7E0" : colors.border;
+  const primaryColor = modern ? "#0F3D2E" : colors.primary;
+  const accentColor = modern ? "#1E7A44" : colors.gold;
+  const foregroundColor = modern && colors.isLight ? "#17231D" : colors.foreground;
+  const mutedColor = modern && colors.isLight ? "#66736B" : colors.mutedForeground;
   const { addItem, updateQuantity } = useCartActions();
 
   const inCart = quantity > 0;
@@ -94,8 +101,8 @@ function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, o
       style={[
         styles.card,
         {
-          backgroundColor: isUnavailable ? (colors.isLight ? "#F5F0EA" : "#1A1008") : colors.card,
-          borderColor: inCart ? colors.gold : colors.border,
+          backgroundColor: isUnavailable ? (colors.isLight ? (modern ? "#F3F6F3" : "#F5F0EA") : "#1A1008") : cardColor,
+          borderColor: inCart ? accentColor : borderColor,
           borderWidth: inCart ? 1.5 : 0.8,
           opacity: isUnavailable ? 0.7 : 1,
         },
@@ -131,22 +138,22 @@ function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, o
         <View style={[styles.infoBlock, { alignItems: isEn ? "flex-start" : "flex-end" }]}>
           <View style={{ flexDirection: isEn ? "row" : "row-reverse", alignItems: "flex-start", justifyContent: "space-between", width: "100%" }}>
             <Text
-              style={[styles.name, { color: colors.foreground, fontFamily: F.bold, textAlign: isEn ? "left" : "right", flex: 1 }]}
+              style={[styles.name, { color: foregroundColor, fontFamily: F.bold, textAlign: isEn ? "left" : "right", flex: 1 }]}
               numberOfLines={2}
             >
               {displayName}
             </Text>
             <TouchableOpacity
               onPress={handleToggleFav}
-              style={[styles.heartBtn, { backgroundColor: faved ? "#C8171A22" : "transparent" }]}
+              style={[styles.heartBtn, { backgroundColor: faved ? (modern ? "#1E7A4422" : "#C8171A22") : "transparent" }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Feather name="heart" size={14} color={faved ? "#C8171A" : colors.mutedForeground} />
+              <Feather name="heart" size={14} color={faved ? (modern ? accentColor : "#C8171A") : mutedColor} />
             </TouchableOpacity>
           </View>
           {displayDesc ? (
             <Text
-              style={[styles.desc, { color: colors.mutedForeground, fontFamily: F.regular, textAlign: isEn ? "left" : "right" }]}
+              style={[styles.desc, { color: mutedColor, fontFamily: F.regular, textAlign: isEn ? "left" : "right" }]}
               numberOfLines={2}
             >
               {displayDesc}
@@ -169,7 +176,7 @@ function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, o
             ) : quantity === 0 ? (
               <TouchableOpacity
                 onPress={handleAdd}
-                style={[styles.addBtn, { backgroundColor: atStockLimit ? (colors.isLight ? "#E0D0C0" : "#3A2A1A") : colors.primary }]}
+                style={[styles.addBtn, { backgroundColor: atStockLimit ? (colors.isLight ? "#E0D0C0" : "#3A2A1A") : primaryColor }]}
                 activeOpacity={atStockLimit ? 1 : 0.8}
                 disabled={atStockLimit}
               >
@@ -179,12 +186,12 @@ function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, o
               <View style={styles.qtyGroup}>
                 <TouchableOpacity
                   onPress={handleAdd}
-                  style={[styles.qtyRound, { backgroundColor: atStockLimit ? (colors.isLight ? "#E0D0C0" : "#2A1A0A") : colors.primary }]}
+                  style={[styles.qtyRound, { backgroundColor: atStockLimit ? (colors.isLight ? "#E0D0C0" : "#2A1A0A") : primaryColor }]}
                   disabled={atStockLimit}
                 >
                   <Feather name="plus" size={13} color={atStockLimit ? colors.mutedForeground : "#fff"} />
                 </TouchableOpacity>
-                <View style={[styles.qtyNumBox, { backgroundColor: colors.gold }]}>
+                <View style={[styles.qtyNumBox, { backgroundColor: accentColor }]}>
                   <Text style={[styles.qtyNumText, { fontFamily: F.extra }]}>{quantity}</Text>
                 </View>
               </View>
@@ -192,12 +199,12 @@ function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, o
               <View style={styles.qtyGroup}>
                 <TouchableOpacity
                   onPress={handleAdd}
-                  style={[styles.qtyRound, { backgroundColor: atStockLimit ? (colors.isLight ? "#E0D0C0" : "#2A1A0A") : colors.primary }]}
+                  style={[styles.qtyRound, { backgroundColor: atStockLimit ? (colors.isLight ? "#E0D0C0" : "#2A1A0A") : primaryColor }]}
                   disabled={atStockLimit}
                 >
                   <Feather name="plus" size={13} color={atStockLimit ? colors.mutedForeground : "#fff"} />
                 </TouchableOpacity>
-                <View style={[styles.qtyNumBox, { backgroundColor: colors.gold }]}>
+                <View style={[styles.qtyNumBox, { backgroundColor: accentColor }]}>
                   <Text style={[styles.qtyNumText, { fontFamily: F.extra }]}>{quantity}</Text>
                 </View>
                 <TouchableOpacity
@@ -218,10 +225,10 @@ function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, o
                 </View>
               ) : (
                 <>
-                  <Text style={[styles.price, { color: inCart ? colors.gold : colors.accent, fontFamily: F.extra }]}>
+                  <Text style={[styles.price, { color: modern ? accentColor : (inCart ? colors.gold : colors.accent), fontFamily: F.extra }]}>
                     {priceStr}
                   </Text>
-                  <Text style={[styles.currency, { color: colors.mutedForeground, fontFamily: F.semi }]}>
+                  <Text style={[styles.currency, { color: mutedColor, fontFamily: F.semi }]}>
                     {isEn ? "SAR" : "ر.س"}
                   </Text>
                 </>

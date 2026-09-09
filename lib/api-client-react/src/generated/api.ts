@@ -29,6 +29,7 @@ import type {
   LiveRevenueData,
   MenuItem,
   MenuItemUpdate,
+  MenuTemplateSetting,
   Order,
   OrderStatusUpdate,
   RevenueData,
@@ -118,6 +119,167 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get the active customer menu template
+ */
+export const getGetMenuTemplateUrl = () => {
+  return `/api/settings/menu-template`;
+};
+
+export const getMenuTemplate = async (
+  options?: RequestInit,
+): Promise<MenuTemplateSetting> => {
+  return customFetch<MenuTemplateSetting>(getGetMenuTemplateUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMenuTemplateQueryKey = () => {
+  return [`/api/settings/menu-template`] as const;
+};
+
+export const getGetMenuTemplateQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMenuTemplate>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMenuTemplate>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMenuTemplateQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMenuTemplate>>> = ({
+    signal,
+  }) => getMenuTemplate({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMenuTemplate>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMenuTemplateQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMenuTemplate>>
+>;
+export type GetMenuTemplateQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get the active customer menu template
+ */
+
+export function useGetMenuTemplate<
+  TData = Awaited<ReturnType<typeof getMenuTemplate>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMenuTemplate>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMenuTemplateQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update the active customer menu template
+ */
+export const getUpdateMenuTemplateUrl = () => {
+  return `/api/settings/menu-template`;
+};
+
+export const updateMenuTemplate = async (
+  menuTemplateSetting: MenuTemplateSetting,
+  options?: RequestInit,
+): Promise<MenuTemplateSetting> => {
+  return customFetch<MenuTemplateSetting>(getUpdateMenuTemplateUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(menuTemplateSetting),
+  });
+};
+
+export const getUpdateMenuTemplateMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMenuTemplate>>,
+    TError,
+    { data: BodyType<MenuTemplateSetting> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMenuTemplate>>,
+  TError,
+  { data: BodyType<MenuTemplateSetting> },
+  TContext
+> => {
+  const mutationKey = ["updateMenuTemplate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMenuTemplate>>,
+    { data: BodyType<MenuTemplateSetting> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateMenuTemplate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMenuTemplateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMenuTemplate>>
+>;
+export type UpdateMenuTemplateMutationBody = BodyType<MenuTemplateSetting>;
+export type UpdateMenuTemplateMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update the active customer menu template
+ */
+export const useUpdateMenuTemplate = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMenuTemplate>>,
+    TError,
+    { data: BodyType<MenuTemplateSetting> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMenuTemplate>>,
+  TError,
+  { data: BodyType<MenuTemplateSetting> },
+  TContext
+> => {
+  return useMutation(getUpdateMenuTemplateMutationOptions(options));
+};
 
 /**
  * @summary Login to dashboard

@@ -5,8 +5,8 @@ import { like } from "drizzle-orm";
 const router = Router();
 
 const DEFAULTS: Record<string, string> = {
-  txt_name:             "روابي المندي",
-  txt_name_en:          "Rawabi Al Mandi",
+  txt_name:             "منتجات السلة للخضار والفواكه",
+  txt_name_en:          "Sallat Al Khodar",
   txt_tagline:          "للمذاق فن وأصول",
   txt_tagline_en:       "A Fine Art of Taste",
   txt_phone:            "0530707042",

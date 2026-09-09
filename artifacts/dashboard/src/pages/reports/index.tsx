@@ -54,7 +54,7 @@ export default function ReportsPage() {
       <div className="hidden print:block border-b pb-4 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">روابي المندي للمذاق فن وأصول</h1>
+            <h1 className="text-2xl font-bold">منتجات السلة للخضار والفواكه</h1>
             <p className="text-sm text-gray-500">تبوك — حي الروضة | 0530707042</p>
           </div>
           <div className="text-xs text-gray-500 text-left">
@@ -193,7 +193,7 @@ export default function ReportsPage() {
 
       {/* ── Print Footer ── */}
       <div className="hidden print:block border-t mt-8 pt-4 text-center text-xs text-gray-400 px-4">
-        <p>روابي المندي للمذاق فن وأصول — جميع المبالغ بالريال السعودي شاملة ضريبة القيمة المضافة 15%</p>
+        <p>منتجات السلة للخضار والفواكه — جميع المبالغ بالريال السعودي شاملة ضريبة القيمة المضافة 15%</p>
         <p>طُبع بتاريخ {dateAR} الساعة {timeAR}</p>
       </div>
     </div>

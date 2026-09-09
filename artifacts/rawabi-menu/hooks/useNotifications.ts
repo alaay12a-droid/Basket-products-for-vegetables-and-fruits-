@@ -3,7 +3,7 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { apiPost } from "@/constants/api";
 
-const PROJECT_ID = "75492716-d1d5-4871-bfd9-18c7ef3982c7";
+const PROJECT_ID = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
 
 // Must be wrapped in try/catch — throws in Expo Go and some emulators
 try {
@@ -22,6 +22,7 @@ try {
 
 async function registerForPushNotifications(): Promise<void> {
   if (Platform.OS === "web") return;
+  if (!PROJECT_ID) return;
 
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();

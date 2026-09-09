@@ -44,6 +44,8 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { apiGet } from "@/constants/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useUser } from "@/context/UserContext";
+import ModernMenuScreen from "@/components/ModernMenuScreen";
+import { useMenuTemplate } from "@/hooks/useMenuTemplate";
 import {
   OCCASION_KEY,
   OCCASION_THEMES,
@@ -103,7 +105,7 @@ type MenuListItem =
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
-const logo = require("@/assets/images/logo.png");
+const logo = require("@/assets/images/sallat-alkhodar-logo.png");
 const deliveryCar = require("@/assets/images/delivery_car.jpg");
 const dhabihaImg = require("@/assets/images/dhabiha.png");
 const dhabihaPoster = require("@/assets/images/dhabiha_poster.jpg");
@@ -127,6 +129,11 @@ function getTimeGreeting() {
 }
 
 export default function MenuScreen() {
+  const { menuTemplate } = useMenuTemplate();
+  return menuTemplate === "modern" ? <ModernMenuScreen /> : <ClassicMenuScreen />;
+}
+
+function ClassicMenuScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();

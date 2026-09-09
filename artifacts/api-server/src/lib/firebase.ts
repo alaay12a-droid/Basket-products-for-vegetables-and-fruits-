@@ -7,9 +7,9 @@ let _messaging: Messaging | null = null;
 export function getFCMMessaging(): Messaging | null {
   if (_messaging) return _messaging;
 
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  const raw = process.env.PROJECT_FIREBASE_SERVICE_ACCOUNT;
   if (!raw) {
-    logger.warn("FIREBASE_SERVICE_ACCOUNT not set — FCM disabled");
+    logger.warn("PROJECT_FIREBASE_SERVICE_ACCOUNT not set — FCM disabled");
     return null;
   }
 
