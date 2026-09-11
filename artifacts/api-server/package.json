@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "export NODE_ENV=development && pnpm run start",
     "dev:fresh": "export NODE_ENV=development && pnpm run build && pnpm run start",
-    "build": "node ./build.mjs",
+    "build": "NODE_ENV=production pnpm --filter @workspace/dashboard run build && node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:bootstrap": "node scripts/bootstrap-empty-database.mjs",
     "test:chicken-sizes": "node --experimental-strip-types scripts/test-explicit-chicken-sizes.mts",
     "test:branch-resolver": "tsx scripts/test-branch-resolver.mts",
     "test:order-branch-assignment": "tsx scripts/test-order-branch-assignment.mts",
