@@ -265,15 +265,25 @@ router.post("/drivers/:driverId/branches", requireDashboardAdmin, async (req, re
     return;
   }
 
-  const [membership] = await db
+  const [existingMembership] = await db
+    .update(driverBranchMembershipsTable)
+    .set({ active: true })
+    .where(and(
+      eq(driverBranchMembershipsTable.driverId, driverId),
+      eq(driverBranchMembershipsTable.branchId, parsed.data.branchId),
+    ))
+    .returning();
+
+  if (existingMembership) {
+    res.json(existingMembership);
+    return;
+  }
+
+  const [createdMembership] = await db
     .insert(driverBranchMembershipsTable)
     .values({ driverId, branchId: parsed.data.branchId, active: true })
-    .onConflictDoUpdate({
-      target: [driverBranchMembershipsTable.driverId, driverBranchMembershipsTable.branchId],
-      set: { active: true },
-    })
     .returning();
-  res.status(201).json(membership);
+  res.status(201).json(createdMembership);
 });
 
 // ── PUT /drivers/:driverId/branches/:branchId ─────────────────────────────────
@@ -1522,7 +1532,7 @@ router.get("/map/:orderId", async (req, res) => {
   const orderId = parseInt(req.params.orderId);
   if (isNaN(orderId)) { res.status(400).send("معرّف غير صحيح"); return; }
 
-  // Restaurant location — منتجات السلة للخضار والفواكه، تبوك حي الروضة
+  // Restaurant location — منتجات السلة للخضار والفواكه، تبوك حي الصفا
   const RESTAURANT_LAT = 28.410769;
   const RESTAURANT_LNG = 36.532353;
 
