@@ -35,6 +35,7 @@ interface Order {
   customerAddress: string | null; items: OrderItem[]; totalPrice: number; deliveryFee: number;
   discountCode: string | null; discountAmount: number | null; orderType: OrderType;
   status: OrderStatus; paymentMethod: string; notes: string | null; createdAt: string;
+  branchId: number | null;
 }
 interface Driver { id: number; name: string; phone: string; photoUrl: string | null; active: boolean; isOnline: boolean; }
 interface Assignment { driverId: number; driverName: string; status: string; }
@@ -390,6 +391,7 @@ export default function Orders() {
   const [driversEnabled, setDriversEnabled] = useState(false);
   const [assignments, setAssignments]       = useState<Record<number, Assignment>>({});
   const [assigningOrder, setAssigningOrder] = useState<Order | null>(null);
+  const [assignableDrivers, setAssignableDrivers] = useState<Driver[]>([]);
 
   const [activeAssignments, setActiveAssignments] = useState<ActiveAssignment[]>([]);
   const [activeLoading, setActiveLoading]         = useState(false);
@@ -512,6 +514,18 @@ export default function Orders() {
       alert(error instanceof Error ? error.message : "تعذّر تعيين المندوب");
     }
   }, [fetchDriversData]);
+
+  const openAssignDriver = useCallback(async (order: Order) => {
+    setAssignableDrivers([]);
+    setAssigningOrder(order);
+    if (order.branchId === null) return;
+    try {
+      const eligibleDrivers = await apiGet<Driver[]>(`/drivers?branchId=${order.branchId}`);
+      setAssignableDrivers(eligibleDrivers);
+    } catch {
+      setAssignableDrivers([]);
+    }
+  }, []);
 
   const unassignDriver = useCallback(async (orderId: number) => {
     try {
@@ -822,7 +836,7 @@ export default function Orders() {
             </div>
             {!driverPickedUp && !["done","cancelled"].includes(order.status) && (
               <button
-                onClick={e => { e.stopPropagation(); setAssigningOrder(order); }}
+                onClick={e => { e.stopPropagation(); void openAssignDriver(order); }}
                 style={{ background: "none", border: `1px solid ${C.blue}55`, borderRadius: 6, padding: "3px 8px", color: C.blue, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
               >
                 تغيير
@@ -887,7 +901,7 @@ export default function Orders() {
                   {!driverPickedUp && aRow.status === "assigned" && <span style={{ fontSize: 11, opacity: 0.8 }}>— بانتظار الاستلام</span>}
                   {!driverPickedUp && !["done","cancelled"].includes(order.status) && (
                     <button
-                      onClick={() => setAssigningOrder(order)}
+                      onClick={() => void openAssignDriver(order)}
                       style={{ marginRight: "auto", background: "none", border: `1px solid ${C.blue}55`, borderRadius: 6, padding: "2px 8px", color: C.blue, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
                     >
                       تغيير
@@ -942,7 +956,7 @@ export default function Orders() {
                       </div>
                     ) : (
                       <button
-                        onClick={() => setAssigningOrder(order)}
+                        onClick={() => void openAssignDriver(order)}
                         style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "11px", color: CLR_READY, fontWeight: 700, fontSize: 13, cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "inherit" }}
                       >
                         🛵 تعيين مندوب للتوصيل
@@ -1891,12 +1905,12 @@ export default function Orders() {
               </div>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-              {drivers.filter(d => d.isOnline).length === 0 ? (
+              {assignableDrivers.length === 0 ? (
                 <div style={{ textAlign: "center", padding: 32, color: C.muted }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>🛵</div>
                   <div>لا يوجد مناديب متصلون</div>
                 </div>
-              ) : drivers.filter(d => d.isOnline).map(d => {
+              ) : assignableDrivers.map(d => {
                 const activeCount = activeAssignments.filter(a => a.driverId === d.id).length;
                 const isAvailable = activeCount === 0;
                 return (

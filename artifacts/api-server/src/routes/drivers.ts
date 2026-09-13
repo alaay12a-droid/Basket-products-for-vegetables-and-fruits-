@@ -95,6 +95,40 @@ const driverSchema = z.object({
 // ── GET /drivers ──────────────────────────────────────────────────────────────
 router.get("/drivers", async (req, res) => {
   const actor = await resolveOptionalDashboardActor(req);
+  const requestedBranchId = req.query.branchId === undefined
+    ? null
+    : Number(req.query.branchId);
+
+  if (requestedBranchId !== null) {
+    if (!Number.isInteger(requestedBranchId) || requestedBranchId <= 0) {
+      res.status(400).json({ error: "معرّف الفرع غير صحيح" });
+      return;
+    }
+    if (actor && actor.role !== "admin" && !actor.branchIds.includes(requestedBranchId)) {
+      res.status(403).json({ error: "غير مصرح لهذا الفرع" });
+      return;
+    }
+
+    const drivers = await db
+      .select({ driver: deliveryDriversTable })
+      .from(deliveryDriversTable)
+      .innerJoin(
+        driverBranchMembershipsTable,
+        and(
+          eq(driverBranchMembershipsTable.driverId, deliveryDriversTable.id),
+          eq(driverBranchMembershipsTable.branchId, requestedBranchId),
+          eq(driverBranchMembershipsTable.active, true),
+        ),
+      )
+      .where(and(
+        eq(deliveryDriversTable.active, true),
+        eq(deliveryDriversTable.isOnline, true),
+      ))
+      .orderBy(desc(deliveryDriversTable.createdAt));
+    res.json(drivers.map(({ driver }) => driver));
+    return;
+  }
+
   if (!actor || actor.role === "admin") {
     const drivers = await db.select().from(deliveryDriversTable).orderBy(desc(deliveryDriversTable.createdAt));
     res.json(drivers);

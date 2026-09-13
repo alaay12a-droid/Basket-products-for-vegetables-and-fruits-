@@ -26,7 +26,7 @@ interface Order {
   items: OrderItem[]; totalPrice: number; deliveryFee: number | null;
   discountCode: string | null; discountAmount: number | null;
   status: OrderStatus; paymentMethod: string; notes: string | null;
-  createdAt: string;
+  createdAt: string; branchId: number | null;
 }
 
 interface Driver { id: number; name: string; phone: string; active: boolean; isOnline: boolean; }
@@ -113,6 +113,7 @@ export default function Cashier() {
   const [showStockModal, setShowStockModal] = useState(false);
   const [showDriversMgmt, setShowDriversMgmt] = useState(false);
   const [assigningOrderId, setAssigningOrderId] = useState<number | null>(null);
+  const [assignableDrivers, setAssignableDrivers] = useState<Driver[]>([]);
   const [trackingOrderId, setTrackingOrderId] = useState<number | null>(null);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const [drvDetailDriver, setDrvDetailDriver] = useState<Driver | null>(null);
@@ -366,6 +367,18 @@ export default function Cashier() {
     }
   };
 
+  const openAssignDriver = async (order: Order) => {
+    setAssignableDrivers([]);
+    setAssigningOrderId(order.id);
+    if (order.branchId === null) return;
+    try {
+      const eligibleDrivers = await apiGet<Driver[]>(`/drivers?branchId=${order.branchId}`);
+      setAssignableDrivers(eligibleDrivers);
+    } catch {
+      setAssignableDrivers([]);
+    }
+  };
+
   const handleConfirmDelivery = async (orderId: number) => {
     try {
       await apiPatch(`/orders/${orderId}/status`, { status: "done" });
@@ -511,14 +524,14 @@ export default function Cashier() {
           </button>
         )}
         {isActive && !assignmentInfo && order.status !== "pending" && !(!order.customerAddress || order.customerAddress.trim() === "") && (
-          <button onClick={() => setAssigningOrderId(order.id)}
+          <button onClick={() => void openAssignDriver(order)}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-3 rounded-xl flex items-center gap-1 transition-colors">
             <Truck className="h-4 w-4" /> تعيين مندوب
           </button>
         )}
         {assignmentInfo && (
           <>
-            <button onClick={() => setAssigningOrderId(order.id)}
+            <button onClick={() => void openAssignDriver(order)}
               className="bg-amber-500/10 border border-amber-500/30 text-amber-600 text-sm font-bold py-2 px-3 rounded-xl flex items-center gap-1 hover:bg-amber-500/20 transition-colors">
               <Truck className="h-4 w-4" /> {assignmentInfo.driverName}
             </button>
@@ -1081,7 +1094,7 @@ export default function Cashier() {
             <DialogTitle>🛵 تعيين مندوب</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            {drivers.filter(d => d.active && d.isOnline).map(d => (
+            {assignableDrivers.map(d => (
               <button key={d.id} onClick={() => assigningOrderId && handleAssignDriver(assigningOrderId, d.id)}
                 className="w-full flex items-center gap-3 p-3 bg-card border border-border rounded-xl hover:border-amber-500/50 hover:bg-amber-500/5 transition-colors text-right">
                 <div className="relative h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center text-lg">
@@ -1094,7 +1107,7 @@ export default function Cashier() {
                 </div>
               </button>
             ))}
-            {drivers.filter(d => d.active && d.isOnline).length === 0 && (
+            {assignableDrivers.length === 0 && (
               <p className="text-center text-muted-foreground text-sm py-4">لا يوجد مناديب متاحون الآن</p>
             )}
             {drivers.filter(d => d.active && !d.isOnline).length > 0 && (
