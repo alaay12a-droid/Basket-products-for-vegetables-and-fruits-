@@ -2,7 +2,7 @@
   "expo": {
     "name": "منتجات السلة للخضار والفواكه - مندوب",
     "slug": "basket-products-",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/images/adaptive_icon.png",
     "scheme": "rawabi-driver",
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.basket.products.driver",
-      "versionCode": 30,
+      "versionCode": 31,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive_icon.png",
         "backgroundColor": "#0F0A05"

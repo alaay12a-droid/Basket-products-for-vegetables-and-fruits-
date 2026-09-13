@@ -16,29 +16,84 @@ import { LocationDisclosureModal } from "@/components/LocationDisclosureModal";
 
 const DRIVER_PROJECT_ID = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
 
-async function registerDriverPushToken(driverId: number): Promise<void> {
-  try {
-    if (!DRIVER_PROJECT_ID) return;
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== "granted") return;
+interface DriverPushRegistrationResponse {
+  ok?: boolean;
+  persisted?: boolean;
+  hasFcmToken?: boolean;
+  error?: string;
+}
 
-    const expoTokenData = await Notifications.getExpoPushTokenAsync({ projectId: DRIVER_PROJECT_ID });
-    const expoToken = expoTokenData.data;
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-    let fcmToken: string | undefined;
-    if (Platform.OS === "android") {
-      try {
+async function registerDriverPushToken(driverId: number): Promise<DriverPushRegistrationResponse> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("orders", {
+          name: "طلبات جديدة",
+          importance: Notifications.AndroidImportance.MAX,
+          sound: "notification_loop.wav",
+          vibrationPattern: [0, 300, 150, 300, 150, 300],
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+          bypassDnd: true,
+        });
+      }
+
+      const existingPermission = await Notifications.getPermissionsAsync();
+      const permission = existingPermission.status === "granted"
+        ? existingPermission
+        : await Notifications.requestPermissionsAsync();
+      if (permission.status !== "granted") {
+        throw new Error("Notification permission is not granted");
+      }
+
+      let fcmToken: string | undefined;
+      if (Platform.OS === "android") {
         const raw = await Notifications.getDevicePushTokenAsync();
-        if (raw?.data) fcmToken = raw.data as string;
-      } catch {}
-    }
+        if (typeof raw?.data === "string" && raw.data.trim()) {
+          fcmToken = raw.data;
+        }
+      }
 
-    await fetch(`${API_BASE}/api/push-tokens`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: expoToken, fcmToken, role: "driver", driverId }),
-    });
-  } catch {}
+      let expoToken: string | undefined;
+      if (DRIVER_PROJECT_ID) {
+        try {
+          expoToken = (await Notifications.getExpoPushTokenAsync({
+            projectId: DRIVER_PROJECT_ID,
+          })).data;
+        } catch (error) {
+          console.warn("Driver Expo push token registration failed; using native token", error);
+        }
+      }
+
+      if (!expoToken && !fcmToken) {
+        throw new Error("No Expo or native push token is available");
+      }
+
+      const response = await fetch(`${API_BASE}/api/push-tokens`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: expoToken ?? `fcm:${fcmToken}`,
+          fcmToken,
+          role: "driver",
+          driverId,
+        }),
+      });
+      const result = await response.json() as DriverPushRegistrationResponse;
+      if (!response.ok || !result.persisted || (Platform.OS === "android" && !result.hasFcmToken)) {
+        throw new Error(result.error ?? `Push token was not persisted (${response.status})`);
+      }
+      return result;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 3) await wait(attempt * 1500);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Driver push registration failed");
 }
 
 const LOCATION_DISCLOSURE_KEY = "driver_location_disclosure_accepted_v1";
@@ -310,6 +365,9 @@ function DriverHome({ driver, onLogout }: { driver: Driver; onLogout: () => void
       // When going online, send current GPS so auto-assign can find this driver.
       // Fire-and-forget — don't block the toggle if location fails.
       if (result.isOnline) {
+        registerDriverPushToken(driver.id).catch((error) => {
+          console.warn("Driver push token refresh failed", error);
+        });
         (async () => {
           try {
             const { status } = await Location.requestForegroundPermissionsAsync();
@@ -345,7 +403,9 @@ function DriverHome({ driver, onLogout }: { driver: Driver; onLogout: () => void
   }, [driver.id, onLogout, togglingOnline]);
 
   useEffect(() => {
-    registerDriverPushToken(driver.id).catch(() => {});
+    registerDriverPushToken(driver.id).catch((error) => {
+      console.warn("Driver push token registration failed", error);
+    });
   }, [driver.id]);
 
   useEffect(() => {

@@ -78,6 +78,34 @@ router.post("/push-tokens", async (req, res) => {
   }
 });
 
+router.get("/push-tokens/driver/:driverId/status", async (req, res) => {
+  const driverId = Number(req.params.driverId);
+  if (!Number.isInteger(driverId) || driverId <= 0) {
+    res.status(400).json({ error: "معرّف المندوب غير صحيح" });
+    return;
+  }
+
+  const rows = await db
+    .select({
+      token: pushTokensTable.token,
+      fcmToken: pushTokensTable.fcmToken,
+      createdAt: pushTokensTable.createdAt,
+      lastActiveAt: pushTokensTable.lastActiveAt,
+    })
+    .from(pushTokensTable)
+    .where(and(eq(pushTokensTable.role, "driver"), eq(pushTokensTable.driverId, driverId)))
+    .orderBy(desc(pushTokensTable.createdAt));
+
+  res.json({
+    registered: rows.length > 0,
+    tokenCount: rows.length,
+    expoTokenCount: rows.filter((row) => row.token.startsWith("ExponentPushToken[")).length,
+    fcmTokenCount: rows.filter((row) => Boolean(row.fcmToken)).length,
+    latestCreatedAt: rows[0]?.createdAt ?? null,
+    latestActiveAt: rows[0]?.lastActiveAt ?? null,
+  });
+});
+
 const heartbeatSchema = z.object({
   token: z.string().min(1),
   name: z.string().optional(),
