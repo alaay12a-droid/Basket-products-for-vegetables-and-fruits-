@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "منتجات السلة للخضار والفواكه - مندوب",
-    "slug": "basket-products-",
+    "slug": "basket-products-driver",
     "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/images/adaptive_icon.png",
@@ -71,7 +71,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "b445091a-537c-453e-a757-a6b87a0174e3"
+        "projectId": "8376ab2c-7599-490b-af51-4f652afc0a52"
       }
     },
     "owner": "021837ala"

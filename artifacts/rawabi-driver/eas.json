@@ -11,7 +11,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_EAS_PROJECT_ID": "b445091a-537c-453e-a757-a6b87a0174e3",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "8376ab2c-7599-490b-af51-4f652afc0a52",
         "EXPO_PUBLIC_DOMAIN": "basket-products-api.onrender.com"
       }
     },
@@ -22,7 +22,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_EAS_PROJECT_ID": "b445091a-537c-453e-a757-a6b87a0174e3",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "8376ab2c-7599-490b-af51-4f652afc0a52",
         "EXPO_PUBLIC_DOMAIN": "basket-products-api.onrender.com"
       }
     }
