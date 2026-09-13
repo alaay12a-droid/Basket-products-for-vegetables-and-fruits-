@@ -29,6 +29,7 @@
     "android": {
       "package": "com.basket.products.driver",
       "versionCode": 31,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive_icon.png",
         "backgroundColor": "#0F0A05"

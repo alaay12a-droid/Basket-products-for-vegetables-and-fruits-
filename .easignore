@@ -21,6 +21,7 @@ artifacts/api-server/
 **/google-play-service-account.json
 **/google-services.json
 !artifacts/rawabi-menu/google-services.json
+!artifacts/rawabi-driver/google-services.json
 **/*.pem
 **/*.p8
 **/*.p12
