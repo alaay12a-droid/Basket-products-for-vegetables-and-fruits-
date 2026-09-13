@@ -32,7 +32,7 @@ export default function TabLayout() {
           paddingBottom: pb,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: config.menuTemplate === "modern" ? "#0F3D2E" : config.accentColor,
+        tabBarActiveTintColor: colors.isModern ? colors.primary : config.accentColor,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarLabelStyle: {
           fontFamily: "Cairo_700Bold",
@@ -76,7 +76,7 @@ export default function TabLayout() {
             <Feather name="shopping-bag" size={size - 2} color={color} />
           ),
           tabBarBadge: activeCount > 0 ? activeCount : undefined,
-          tabBarBadgeStyle: { backgroundColor: "#E8920C", color: "#fff", fontSize: 10, fontFamily: "Cairo_700Bold" },
+          tabBarBadgeStyle: { backgroundColor: colors.isModern ? colors.accent : "#E8920C", color: "#fff", fontSize: 10, fontFamily: "Cairo_700Bold" },
         }}
       />
       <Tabs.Screen

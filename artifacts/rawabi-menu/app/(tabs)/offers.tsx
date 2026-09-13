@@ -37,7 +37,7 @@ export default function OffersScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={colors.isModern && colors.isLight ? "dark-content" : "light-content"} />
 
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.card, paddingTop: topInset + 8, borderBottomColor: colors.border }]}>
@@ -67,7 +67,7 @@ export default function OffersScreen() {
             </Text>
             {activeCodes.length > 0 && (
               <View style={[styles.badge, { backgroundColor: colors.gold }]}>
-                <Text style={{ color: "#1A0A00", fontFamily: F.bold, fontSize: 10 }}>{activeCodes.length}</Text>
+                <Text style={{ color: colors.isModern ? colors.background : "#1A0A00", fontFamily: F.bold, fontSize: 10 }}>{activeCodes.length}</Text>
               </View>
             )}
           </View>
@@ -147,13 +147,13 @@ export default function OffersScreen() {
             {activeCodes.map((dc) => (
               <View key={dc.id} style={[styles.codeCard, { backgroundColor: colors.card, borderColor: colors.gold }]}>
                 <View style={styles.codeTop}>
-                  <View style={[styles.codeBadge, { backgroundColor: "#2A1A08", borderColor: colors.gold }]}>
+                  <View style={[styles.codeBadge, { backgroundColor: colors.isModern ? colors.surface : "#2A1A08", borderColor: colors.gold }]}>
                     <Text style={{ color: colors.gold, fontFamily: F.extra, fontSize: 18, letterSpacing: 2 }}>
                       {dc.code}
                     </Text>
                   </View>
                   <View style={[styles.discountBadge, { backgroundColor: colors.gold }]}>
-                    <Text style={{ color: "#1A0A00", fontFamily: F.extra, fontSize: 15 }}>
+                    <Text style={{ color: colors.isModern ? colors.background : "#1A0A00", fontFamily: F.extra, fontSize: 15 }}>
                       {dc.type === "percentage"
                         ? isEn ? `${dc.value}% OFF` : `${dc.value}% خصم`
                         : isEn ? `${dc.value} SAR OFF` : `خصم ${dc.value} ر.س`}

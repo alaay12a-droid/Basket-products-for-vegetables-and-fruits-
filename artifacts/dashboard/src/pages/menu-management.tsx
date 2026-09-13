@@ -1134,7 +1134,7 @@ export default function MenuManagement() {
               </div>
               {form.riceTypes.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-2 border rounded-lg border-dashed">
-                  لا توجد أنواع — مثال: أرز بشاور أبيض، أرز مندي
+                  أضف أي نوع أرز وحدد الاسم والسعر
                 </p>
               ) : (
                 <div className="rounded-lg border divide-y">
@@ -1146,11 +1146,11 @@ export default function MenuManagement() {
                       </button>
                       <Switch checked={rt.available} onCheckedChange={v => updateRiceType(idx, "available", v)} className="scale-75 shrink-0" />
                       <Input value={rt.name} onChange={e => updateRiceType(idx, "name", e.target.value)}
-                        placeholder="مثال: أرز بشاور أبيض" className="h-8 text-sm flex-1 min-w-[80px]" />
+                        placeholder="اسم نوع الأرز" className="h-8 text-sm flex-1 min-w-[80px]" />
                       <div className="flex items-center gap-1 shrink-0">
                         <span className="text-xs text-muted-foreground">+</span>
                         <Input value={rt.extraPrice} onChange={e => updateRiceType(idx, "extraPrice", e.target.value)}
-                          placeholder="0" dir="ltr" type="number" min="0" step="any" className="h-8 text-sm w-20" />
+                          placeholder="السعر" dir="ltr" type="number" min="0" step="any" className="h-8 text-sm w-20" />
                         <span className="text-xs text-muted-foreground">ر.س</span>
                       </div>
                     </div>

@@ -756,7 +756,7 @@ function ClassicMenuScreen() {
               <Text style={[styles.deliverySubtitle, { color: colors.foreground, fontFamily: F.bold }]}>
                 {isEn ? "We deliver to your door" : "نوصل طلبك لباب بيتك"}
               </Text>
-              <TouchableOpacity onPress={() => Linking.openURL("https://maps.app.goo.gl/DiAZzzLKBAmGNv19A")}>
+              <TouchableOpacity onPress={() => Linking.openURL("https://maps.app.goo.gl/TbXbK6mUehYzpwVS9?g_st=ac")}>
                 <Text style={[styles.deliveryLocation, { color: colors.mutedForeground, fontFamily: F.semi }]}>
                   📍 {isEn ? info.locationEn : info.deliveryArea}
                 </Text>

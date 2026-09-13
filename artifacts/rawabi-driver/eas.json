@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 18.11.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "internal": {
+      "distribution": "internal",
+      "environment": "development",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "b445091a-537c-453e-a757-a6b87a0174e3",
+        "EXPO_PUBLIC_DOMAIN": "basket-products-api.onrender.com"
+      }
+    },
+    "production": {
+      "distribution": "internal",
+      "environment": "production",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "b445091a-537c-453e-a757-a6b87a0174e3",
+        "EXPO_PUBLIC_DOMAIN": "basket-products-api.onrender.com"
+      }
+    }
+  }
+}

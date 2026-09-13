@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.rwabi.driver'
+    namespace 'com.basket.products.driver'
     defaultConfig {
-        applicationId 'com.rwabi.driver'
+        applicationId 'com.basket.products.driver'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 30

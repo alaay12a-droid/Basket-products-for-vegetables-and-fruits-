@@ -48,16 +48,16 @@ export interface MenuCategory {
 
 export const RESTAURANT_INFO = {
   name: "منتجات السلة للخضار والفواكه",
-  tagline: "خضار طازجة كل يوم",
-  taglineEn: "Fresh vegetables every day",
-  nameEn: "منتجات السلة للخضار والفواكه",
-  phone: "0530707042",
-  whatsapp: "966530707042",
-  location: "تبوك - حي الروضة",
-  locationEn: "Tabuk - Al-Rawdah District",
-  instagram: "@rwabi-almndi",
-  dhabihaPhone: "0531555268",
-  dhabihaWhatsapp: "966531555268",
+  tagline: "خضار وفواكه طازجة كل يوم",
+  taglineEn: "Fresh vegetables and fruits every day",
+  nameEn: "Basket Vegetables and Fruits",
+  phone: "0596548325",
+  whatsapp: "966596548325",
+  location: "تبوك - حي الصفا",
+  locationEn: "Tabuk - Al Safa District",
+  instagram: "",
+  dhabihaPhone: "",
+  dhabihaWhatsapp: "",
 };
 
 export const FOOD_IMAGES: Record<string, any> = {

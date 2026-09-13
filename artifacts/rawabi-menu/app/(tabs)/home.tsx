@@ -28,6 +28,8 @@ import { useCartState } from "@/context/CartContext";
 import type { MenuItem } from "@/constants/menu";
 import { useMenuTemplate } from "@/hooks/useMenuTemplate";
 
+import { modernTokens } from "@/constants/modernTokens";
+
 const F = {
   regular: "Cairo_400Regular",
   semi: "Cairo_600SemiBold",
@@ -35,8 +37,8 @@ const F = {
   extra: "Cairo_800ExtraBold",
 };
 
-const BRANCH_ADDRESS = "تبوك — حي الروضة";
-const BRANCH_MAPS_URL = "https://maps.google.com/?q=تبوك+حي+الروضة";
+const BRANCH_ADDRESS = "تبوك — حي الصفا";
+const BRANCH_MAPS_URL = "https://maps.app.goo.gl/TbXbK6mUehYzpwVS9?g_st=ac";
 
 type OrderMode = "delivery" | "pickup";
 type RawItem = MenuItem & { available?: boolean; nameEn?: string; descriptionEn?: string; stock?: number | null };
@@ -100,8 +102,8 @@ export default function HomeScreen() {
         card: colors.isLight ? "#FFFFFF" : colors.card,
         foreground: colors.isLight ? "#17231D" : colors.foreground,
         muted: colors.isLight ? "#66736B" : colors.mutedForeground,
-        primary: "#0F3D2E",
-        accent: "#1E7A44",
+        primary: modernTokens.colors.primary,
+        accent: modernTokens.colors.successText,
         border: colors.isLight ? "#DDE7E0" : colors.border,
       }
     : {
@@ -500,7 +502,7 @@ const styles = StyleSheet.create({
   },
   modernCard: {
     borderRadius: 20,
-    shadowColor: "#0F3D2E",
+    shadowColor: modernTokens.colors.primary,
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },

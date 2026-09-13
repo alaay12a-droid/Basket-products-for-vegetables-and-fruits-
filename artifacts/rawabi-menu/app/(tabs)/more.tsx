@@ -16,8 +16,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-const snapchatLogo = require("@/assets/images/snapchat.jpg");
-const tiktokLogo = require("@/assets/images/tiktok.jpg");
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -38,13 +36,6 @@ const F = {
   bold: "Cairo_700Bold",
   extra: "Cairo_800ExtraBold",
 };
-
-interface SocialLink { image: any; label: string; url: string; }
-
-const SOCIAL_LINKS: SocialLink[] = [
-  { image: snapchatLogo, label: "سناب شات", url: `https://www.snapchat.com/add/rwabi-almndi?share_id=3Bq3Hx1Ah3o&locale=ar-AE` },
-  { image: tiktokLogo,   label: "تيك توك",   url: `https://www.tiktok.com/@rwabialmndi?_r=1&_t=ZS-95zIV9lsc6R` },
-];
 
 interface MenuItem { icon: string; label: string; action: () => void; danger?: boolean; highlight?: boolean; }
 
@@ -227,7 +218,7 @@ export default function MoreScreen() {
     {
       icon: "map-pin",
       label: `${t("location")} — ${info.location}`,
-      action: () => Linking.openURL("https://maps.app.goo.gl/DiAZzzLKBAmGNv19A"),
+      action: () => Linking.openURL("https://maps.app.goo.gl/TbXbK6mUehYzpwVS9?g_st=ac"),
     },
     {
       icon: "info",
@@ -268,7 +259,7 @@ export default function MoreScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={colors.isModern && colors.isLight ? "dark-content" : "light-content"} />
 
       <View style={[styles.header, { backgroundColor: colors.card, paddingTop: topInset + 8, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground, fontFamily: F.extra }]}>
@@ -305,7 +296,7 @@ export default function MoreScreen() {
         {user && (
           <TouchableOpacity
             onPress={() => router.push("/wallet")}
-            style={[styles.walletCard, { backgroundColor: "#2A1A0A", borderColor: colors.gold + "60" }]}
+            style={[styles.walletCard, { backgroundColor: colors.isModern ? colors.surface : "#2A1A0A", borderColor: colors.gold + "60" }]}
             activeOpacity={0.85}
           >
             <Feather name="chevron-left" size={18} color={colors.mutedForeground} />
@@ -323,16 +314,16 @@ export default function MoreScreen() {
         {user && (
           <TouchableOpacity
             onPress={() => router.push("/referral" as any)}
-            style={[styles.walletCard, { backgroundColor: "#0A1F0A", borderColor: "#4CAF5060" }]}
+            style={[styles.walletCard, { backgroundColor: colors.isModern ? colors.surface : "#0A1F0A", borderColor: colors.isModern ? colors.success + "60" : "#4CAF5060" }]}
             activeOpacity={0.85}
           >
             <Feather name="chevron-left" size={18} color={colors.mutedForeground} />
             <View style={{ flex: 1, alignItems: "flex-end", gap: 3 }}>
-              <Text style={{ fontSize: 17, color: "#4CAF50", fontFamily: F.bold }}>برنامج الإحالة 🎁</Text>
+              <Text style={{ fontSize: 17, color: colors.isModern ? colors.success : "#4CAF50", fontFamily: F.bold }}>برنامج الإحالة 🎁</Text>
               <Text style={{ fontSize: 12, color: colors.mutedForeground, fontFamily: F.regular }}>شارك التطبيق واكسب مكافآت</Text>
             </View>
-            <View style={[styles.walletIcon, { backgroundColor: "#4CAF5022" }]}>
-              <Feather name="users" size={24} color="#4CAF50" />
+            <View style={[styles.walletIcon, { backgroundColor: colors.isModern ? colors.success + "22" : "#4CAF5022" }]}>
+              <Feather name="users" size={24} color={colors.isModern ? colors.success : "#4CAF50"} />
             </View>
           </TouchableOpacity>
         )}
@@ -349,19 +340,6 @@ export default function MoreScreen() {
           </View>
         )}
 
-        {/* Social */}
-        <View style={[styles.socialCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground, fontFamily: F.semi }]}>{t("contactUs")}</Text>
-          <View style={styles.socialRow}>
-            {SOCIAL_LINKS.map((s, i) => (
-              <TouchableOpacity key={i} onPress={() => Linking.openURL(s.url).catch(() => {})} style={styles.socialItem}>
-                <Image source={s.image} style={styles.socialLogo} resizeMode="cover" />
-                <Text style={[styles.socialLabel, { color: colors.foreground, fontFamily: F.bold }]}>{s.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
         {/* Menu items */}
         <View style={[styles.menuCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {menuItems.map((item, i) => (
@@ -371,15 +349,15 @@ export default function MoreScreen() {
                   <Feather
                     name={item.icon as any}
                     size={18}
-                    color={item.danger ? colors.destructive : item.highlight ? "#64B5F6" : colors.gold}
+                    color={item.danger ? colors.destructive : item.highlight ? (colors.isModern ? colors.info : "#64B5F6") : colors.gold}
                   />
                   {item.highlight && unreadTotal > 0 && (
-                    <View style={{ position: "absolute", top: -5, right: -5, backgroundColor: "#E53935", borderRadius: 8, minWidth: 14, height: 14, alignItems: "center", justifyContent: "center", paddingHorizontal: 2 }}>
+                    <View style={{ position: "absolute", top: -5, right: -5, backgroundColor: (colors.isModern ? colors.danger : "#E53935"), borderRadius: 8, minWidth: 14, height: 14, alignItems: "center", justifyContent: "center", paddingHorizontal: 2 }}>
                       <Text style={{ color: "#fff", fontSize: 8, fontFamily: F.bold }}>{unreadTotal > 9 ? "9+" : unreadTotal}</Text>
                     </View>
                   )}
                 </View>
-                <Text style={[styles.menuLabel, { color: item.danger ? colors.destructive : item.highlight ? "#64B5F6" : colors.foreground, fontFamily: F.semi }]}>
+                <Text style={[styles.menuLabel, { color: item.danger ? colors.destructive : item.highlight ? (colors.isModern ? colors.info : "#64B5F6") : colors.foreground, fontFamily: F.semi }]}>
                   {item.label}
                   {item.highlight && unreadTotal > 0 ? `  •  ${unreadTotal} ${isEn ? "new" : "جديدة"}` : ""}
                 </Text>
@@ -420,7 +398,7 @@ export default function MoreScreen() {
           <View style={{ flex: 1, backgroundColor: colors.background }}>
 
             {/* Header */}
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: topInset + 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: "#0D1F30" }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: topInset + 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: (colors.isModern ? colors.background : "#0D1F30") }}>
               <TouchableOpacity
                 onPress={() => {
                   if (chatOrderId && myOrders.length > 1) {
@@ -501,12 +479,12 @@ export default function MoreScreen() {
                     const time = new Date(msg.createdAt).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
                     return (
                       <View key={msg.id} style={{ alignItems: isMe ? "flex-end" : "flex-start" }}>
-                        <View style={{ maxWidth: "80%", backgroundColor: isMe ? "#2A1800" : colors.secondary, borderRadius: 18, borderTopRightRadius: isMe ? 4 : 18, borderTopLeftRadius: isMe ? 18 : 4, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: isMe ? colors.gold + "55" : colors.border }}>
+                        <View style={{ maxWidth: "80%", backgroundColor: isMe ? (colors.isModern ? colors.surface : "#2A1800") : colors.secondary, borderRadius: 18, borderTopRightRadius: isMe ? 4 : 18, borderTopLeftRadius: isMe ? 18 : 4, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: isMe ? colors.gold + "55" : colors.border }}>
                           <Text style={{ color: isMe ? colors.gold : colors.foreground, fontFamily: F.semi, fontSize: 14, textAlign: isMe ? "right" : "left" }}>{msg.text}</Text>
                           <Text style={{ color: colors.mutedForeground, fontFamily: F.regular, fontSize: 10, marginTop: 4, textAlign: isMe ? "right" : "left" }}>
                             {time}{isMe ? (isEn ? " • You" : " • أنت") : (isEn ? " • Cashier" : " • الكاشير")}
                             {!isMe && msg.readAt === null && (
-                              <Text style={{ color: "#64B5F6" }}>{isEn ? " • New" : " • جديدة"}</Text>
+                              <Text style={{ color: (colors.isModern ? colors.info : "#64B5F6") }}>{isEn ? " • New" : " • جديدة"}</Text>
                             )}
                           </Text>
                         </View>
@@ -523,8 +501,8 @@ export default function MoreScreen() {
                     style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: chatInput.trim() ? colors.gold : colors.secondary, alignItems: "center", justifyContent: "center" }}
                   >
                     {chatSending
-                      ? <ActivityIndicator size="small" color="#1A0A00" />
-                      : <Feather name="send" size={18} color={chatInput.trim() ? "#1A0A00" : colors.mutedForeground} />}
+                      ? <ActivityIndicator size="small" color={(colors.isModern ? colors.background : "#1A0A00")} />
+                      : <Feather name="send" size={18} color={chatInput.trim() ? (colors.isModern ? colors.background : "#1A0A00") : colors.mutedForeground} />}
                   </TouchableOpacity>
                   <TextInput
                     value={chatInput}
@@ -555,13 +533,7 @@ const styles = StyleSheet.create({
   profileInfo: { flex: 1, alignItems: "flex-end" },
   profileName: { fontSize: 17 },
   profilePhone: { fontSize: 14, marginTop: 2 },
-  socialCard: { marginHorizontal: 16, marginBottom: 12, borderRadius: 14, borderWidth: 1, padding: 16, gap: 12 },
   sectionLabel: { fontSize: 13, textAlign: "right" },
-  socialRow: { flexDirection: "row-reverse", gap: 20 },
-  socialItem: { alignItems: "center", gap: 6 },
-  socialLogo: { width: 64, height: 64, borderRadius: 16 },
-  socialLabel: { fontSize: 13 },
-  socialHandle: { fontSize: 11 },
   menuCard: { marginHorizontal: 16, borderRadius: 14, borderWidth: 1, overflow: "hidden" },
   menuRow: { flexDirection: "row-reverse", alignItems: "center", paddingHorizontal: 16, paddingVertical: 15, gap: 12 },
   menuLabel: { flex: 1, fontSize: 15, textAlign: "right" },

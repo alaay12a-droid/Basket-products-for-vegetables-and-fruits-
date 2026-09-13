@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "منتجات السلة للخضار والفواكه - مندوب",
-    "slug": "rawabi-driver",
+    "slug": "basket-products-",
     "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/adaptive_icon.png",
@@ -27,7 +27,7 @@
       }
     },
     "android": {
-      "package": "com.rwabi.driver",
+      "package": "com.basket.products.driver",
       "versionCode": 30,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive_icon.png",
@@ -68,7 +68,11 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
-    }
+      "router": {},
+      "eas": {
+        "projectId": "b445091a-537c-453e-a757-a6b87a0174e3"
+      }
+    },
+    "owner": "021837ala"
   }
 }

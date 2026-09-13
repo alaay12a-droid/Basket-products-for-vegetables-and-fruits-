@@ -6,17 +6,17 @@ export function buildReferralPage(ref: string | undefined): string {
   const code = (ref ?? "").toUpperCase().trim();
   const hasCode = code.startsWith("REF") && code.length > 3;
 
-  const iosUrl = "https://apps.apple.com/app/id6792793006";
-  const androidUrl = "https://play.google.com/store/apps/details?id=com.rwabi.almndi";
+  const iosUrl = "/";
+  const androidUrl = "https://play.google.com/store/apps/details?id=com.basket.products";
 
   // Deep link into onboarding screen with the ref param
   const iosDeepLink = hasCode
-    ? `rawabi-menu://onboarding?ref=${encodeURIComponent(code)}`
-    : `rawabi-menu://`;
+    ? `basket-products://onboarding?ref=${encodeURIComponent(code)}`
+    : `basket-products://`;
   // Android intent URL — falls back to Play Store if not installed
   const androidDeepLink = hasCode
-    ? `intent://onboarding?ref=${encodeURIComponent(code)}#Intent;scheme=rawabi-menu;package=com.rwabi.almndi;S.browser_fallback_url=${encodeURIComponent(androidUrl)};end`
-    : `intent://#Intent;scheme=rawabi-menu;package=com.rwabi.almndi;S.browser_fallback_url=${encodeURIComponent(androidUrl)};end`;
+    ? `intent://onboarding?ref=${encodeURIComponent(code)}#Intent;scheme=basket-products;package=com.basket.products;S.browser_fallback_url=${encodeURIComponent(androidUrl)};end`
+    : `intent://#Intent;scheme=basket-products;package=com.basket.products;S.browser_fallback_url=${encodeURIComponent(androidUrl)};end`;
 
   const title = hasCode ? "دعوة للانضمام إلى منتجات السلة للخضار والفواكه 🎁" : "منتجات السلة للخضار والفواكه — خضار طازجة في تبوك";
   const metaDesc = hasCode

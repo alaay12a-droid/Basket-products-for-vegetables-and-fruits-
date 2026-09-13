@@ -5063,7 +5063,7 @@ ${kpiBlock}${payBlock}${sumBlock}
               <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>اسم المنطقة *</Text>
               <TextInput
                 value={zoneFormName} onChangeText={setZoneFormName}
-                placeholder="مثال: حي الروضة، وسط المدينة..."
+                placeholder="مثال: حي الصفا، وسط المدينة..."
                 placeholderTextColor={colors.mutedForeground}
                 style={[styles.input, { backgroundColor: colors.secondary, color: colors.foreground, borderColor: colors.border, fontFamily: F.regular }]}
               />

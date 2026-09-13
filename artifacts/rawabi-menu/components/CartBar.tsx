@@ -6,6 +6,8 @@ import * as Haptics from "expo-haptics";
 import { useCart } from "@/context/CartContext";
 import { useMenuTemplate } from "@/hooks/useMenuTemplate";
 
+import { modernTokens } from "@/constants/modernTokens";
+
 const F = {
   bold: "Cairo_700Bold",
   extra: "Cairo_800ExtraBold",
@@ -34,8 +36,8 @@ export function CartBar() {
         styles.fab,
         {
           bottom: Platform.OS === "web" ? 88 : 108,
-          backgroundColor: modern ? "#0F3D2E" : "#C8171A",
-          shadowColor: modern ? "#0F3D2E" : "#C8171A",
+          backgroundColor: modern ? modernTokens.colors.primary : "#C8171A",
+          shadowColor: modern ? modernTokens.colors.primary : "#C8171A",
           borderRadius: modern ? 18 : 22,
         },
       ]}

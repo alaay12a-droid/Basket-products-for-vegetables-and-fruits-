@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { apiPut } from "@/constants/api";
 import {
   useAppConfig,
   DEFAULT_CONFIG,
@@ -366,6 +367,16 @@ export default function AppSettingsScreen() {
     );
   };
 
+  const selectMenuTemplate = async (menuTemplate: "classic" | "modern") => {
+    if (config.menuTemplate === menuTemplate) return;
+    try {
+      await apiPut("/settings/menu-template", { menuTemplate });
+      await update({ menuTemplate });
+    } catch {
+      Alert.alert("تعذّر تغيير الواجهة", "تحقق من الاتصال وحاول مرة أخرى.");
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={colors.isLight ? "dark-content" : "light-content"} />
@@ -394,6 +405,72 @@ export default function AppSettingsScreen() {
       >
         {/* Live Preview */}
         <PreviewCard config={config} />
+
+        {/* ── Menu Template ── */}
+        <View style={{ gap: 8, marginHorizontal: 16 }}>
+          <SectionHeader title="شكل واجهة التطبيق" icon="▦" />
+        </View>
+        <SectionCard>
+          <Text style={[styles.colorHint, { color: colors.mutedForeground, fontFamily: F.regular }]}>
+            اختر الشكل البصري الذي يظهر للعملاء في كامل التطبيق
+          </Text>
+          <View style={styles.templateGrid}>
+            {([
+              {
+                key: "modern" as const,
+                title: "حديث",
+                subtitle: "واجهة الخضار الرسمية",
+                icon: "grid" as const,
+              },
+              {
+                key: "classic" as const,
+                title: "كلاسيكي",
+                subtitle: "التصميم القديم",
+                icon: "list" as const,
+              },
+            ]).map((option) => {
+              const selected = config.menuTemplate === option.key;
+              return (
+                <TouchableOpacity
+                  key={option.key}
+                  onPress={() => selectMenuTemplate(option.key)}
+                  activeOpacity={0.82}
+                  style={[
+                    styles.templateOption,
+                    {
+                      backgroundColor: selected ? colors.secondary : colors.surface,
+                      borderColor: selected ? colors.primary : colors.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.templateIcon,
+                      { backgroundColor: selected ? colors.primary : colors.card },
+                    ]}
+                  >
+                    <Feather
+                      name={option.icon}
+                      size={21}
+                      color={selected ? "#FFFFFF" : colors.mutedForeground}
+                    />
+                  </View>
+                  <Text style={{ color: colors.foreground, fontFamily: F.bold, fontSize: 15 }}>
+                    {option.title}
+                  </Text>
+                  <Text style={{ color: colors.mutedForeground, fontFamily: F.regular, fontSize: 11 }}>
+                    {option.subtitle}
+                  </Text>
+                  {selected && (
+                    <View style={[styles.templateCheck, { backgroundColor: colors.primary }]}>
+                      <Feather name="check" size={12} color="#FFFFFF" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </SectionCard>
 
         {/* ── Colors: Accent ── */}
         <View style={{ gap: 8, marginHorizontal: 16 }}>
@@ -557,6 +634,39 @@ const styles = StyleSheet.create({
   headerSide: { width: 36, alignItems: "center" },
   headerTitle: { fontSize: 18, textAlign: "center" },
   colorHint: { fontSize: 12, textAlign: "right", marginBottom: 10 },
+  templateGrid: {
+    flexDirection: "row-reverse",
+    gap: 10,
+  },
+  templateOption: {
+    flex: 1,
+    minHeight: 128,
+    borderWidth: 2,
+    borderRadius: 14,
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    position: "relative",
+  },
+  templateIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 3,
+  },
+  templateCheck: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   colorGrid: {
     flexDirection: "row-reverse",
     flexWrap: "wrap",

@@ -616,7 +616,7 @@ export default function CheckoutScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={colors.isModern && colors.isLight ? "dark-content" : "light-content"} />
 
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.card, paddingTop: topInset + 10, borderBottomColor: colors.border }]}>
@@ -659,7 +659,7 @@ export default function CheckoutScreen() {
                   +{previewDeliveryFeeStr} {isEn ? "SAR" : "ر.س"}
                 </Text>
               ) : (
-                <Text style={{ color: orderType === "delivery" ? "#ccffcc" : "#4CAF50", fontFamily: F.semi, fontSize: 12 }}>
+                <Text style={{ color: orderType === "delivery" ? "#ccffcc" : (colors.isModern ? colors.success : "#4CAF50"), fontFamily: F.semi, fontSize: 12 }}>
                   {isEn ? "Free" : "مجاني"}
                 </Text>
               )}
@@ -673,15 +673,15 @@ export default function CheckoutScreen() {
               activeOpacity={0.8}
               style={[
                 styles.orderTypeBtn,
-                orderType === "pickup" && { backgroundColor: "#1A4A1A", borderColor: "#4CAF50" },
+                orderType === "pickup" && { backgroundColor: (colors.isModern ? colors.successBg : "#1A4A1A"), borderColor: (colors.isModern ? colors.success : "#4CAF50") },
                 orderType !== "pickup" && { backgroundColor: colors.secondary, borderColor: colors.border },
               ]}
             >
               <Text style={{ fontSize: 22 }}>🏪</Text>
-              <Text style={[styles.orderTypeBtnLabel, { color: orderType === "pickup" ? "#4CAF50" : colors.foreground, fontFamily: F.bold }]}>
+              <Text style={[styles.orderTypeBtnLabel, { color: orderType === "pickup" ? (colors.isModern ? colors.success : "#4CAF50") : colors.foreground, fontFamily: F.bold }]}>
                 {isEn ? "Pickup" : "استلام"}
               </Text>
-              <Text style={{ color: orderType === "pickup" ? "#90EE90" : "#4CAF50", fontFamily: F.semi, fontSize: 12 }}>
+              <Text style={{ color: orderType === "pickup" ? "#90EE90" : (colors.isModern ? colors.success : "#4CAF50"), fontFamily: F.semi, fontSize: 12 }}>
                 {isEn ? "No fee" : "بدون رسوم"}
               </Text>
             </TouchableOpacity>
@@ -695,7 +695,7 @@ export default function CheckoutScreen() {
             onPress={() => branches.length > 0 && setBranchModalVisible(true)}
             style={[styles.listCard, dyn.card, {
               backgroundColor: colors.card,
-              borderColor: selectedBranch ? "#4CAF50" : (branches.length === 0 ? colors.border : colors.primary + "60"),
+              borderColor: selectedBranch ? (colors.isModern ? colors.success : "#4CAF50") : (branches.length === 0 ? colors.border : colors.primary + "60"),
               padding: 14,
               flexDirection: "row-reverse",
               alignItems: "center",
@@ -710,7 +710,7 @@ export default function CheckoutScreen() {
                 </Text>
               ) : selectedBranch ? (
                 <>
-                  <Text style={{ color: "#4CAF50", fontFamily: F.bold, fontSize: 14, textAlign: "right" }}>
+                  <Text style={{ color: (colors.isModern ? colors.success : "#4CAF50"), fontFamily: F.bold, fontSize: 14, textAlign: "right" }}>
                     {selectedBranch.name}
                   </Text>
                   {selectedBranch.address ? (
@@ -746,7 +746,7 @@ export default function CheckoutScreen() {
                 <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
                   <Text style={{ fontSize: 18 }}>✅</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: "#4CAF50", fontFamily: F.bold, fontSize: 13, textAlign: "right" }}>
+                    <Text style={{ color: (colors.isModern ? colors.success : "#4CAF50"), fontFamily: F.bold, fontSize: 13, textAlign: "right" }}>
                       {zoneCheckResult.zone.name}
                     </Text>
                     <Text style={{ color: colors.mutedForeground, fontFamily: F.regular, fontSize: 12, textAlign: "right" }}>
@@ -760,7 +760,7 @@ export default function CheckoutScreen() {
               ) : (
                 <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
                   <Text style={{ fontSize: 18 }}>⚠️</Text>
-                  <Text style={{ color: "#E57373", fontFamily: F.bold, fontSize: 13, flex: 1, textAlign: "right" }}>
+                  <Text style={{ color: (colors.isModern ? colors.danger : "#E57373"), fontFamily: F.bold, fontSize: 13, flex: 1, textAlign: "right" }}>
                     موقعك خارج نطاق التوصيل — جرّب موقعاً آخر أو اختر استلام من الفرع
                   </Text>
                 </View>
@@ -827,10 +827,10 @@ export default function CheckoutScreen() {
                   <View style={{ flexDirection: "row", gap: 8 }}>
                     <TouchableOpacity
                       onPress={() => setLocationUrl(null)}
-                      style={[styles.locActionBtn, { backgroundColor: "#3A1A1A" }]}
+                      style={[styles.locActionBtn, { backgroundColor: (colors.isModern ? colors.dangerBg : "#3A1A1A") }]}
                     >
-                      <Feather name="x" size={13} color="#E57373" />
-                      <Text style={{ color: "#E57373", fontFamily: F.bold, fontSize: 12 }}>
+                      <Feather name="x" size={13} color={(colors.isModern ? colors.danger : "#E57373")} />
+                      <Text style={{ color: (colors.isModern ? colors.danger : "#E57373"), fontFamily: F.bold, fontSize: 12 }}>
                         {isEn ? "Remove" : "إزالة"}
                       </Text>
                     </TouchableOpacity>
@@ -842,33 +842,33 @@ export default function CheckoutScreen() {
                         setManualLng(cln);
                         setMapPickerVisible(true);
                       }}
-                      style={[styles.locActionBtn, { backgroundColor: "#1A1A3A" }]}
+                      style={[styles.locActionBtn, { backgroundColor: colors.isModern ? colors.purpleBg : "#1A1A3A" }]}
                     >
-                      <Feather name="map" size={13} color="#CE93D8" />
-                      <Text style={{ color: "#CE93D8", fontFamily: F.bold, fontSize: 12 }}>
+                      <Feather name="map" size={13} color={colors.isModern ? colors.purple : "#CE93D8"} />
+                      <Text style={{ color: colors.isModern ? colors.purple : "#CE93D8", fontFamily: F.bold, fontSize: 12 }}>
                         {isEn ? "Adjust" : "تعديل"}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => Linking.openURL(locationUrl)}
-                      style={[styles.locActionBtn, { backgroundColor: "#1A2A3A" }]}
+                      style={[styles.locActionBtn, { backgroundColor: colors.isModern ? colors.infoBg : "#1A2A3A" }]}
                     >
-                      <Feather name="external-link" size={13} color="#64B5F6" />
-                      <Text style={{ color: "#64B5F6", fontFamily: F.bold, fontSize: 12 }}>
+                      <Feather name="external-link" size={13} color={colors.isModern ? colors.info : "#64B5F6"} />
+                      <Text style={{ color: colors.isModern ? colors.info : "#64B5F6", fontFamily: F.bold, fontSize: 12 }}>
                         {isEn ? "View" : "عرض"}
                       </Text>
                     </TouchableOpacity>
                   </View>
                   <View style={styles.rowLeft}>
-                    <Feather name="map-pin" size={16} color="#4CAF50" />
+                    <Feather name="map-pin" size={16} color={(colors.isModern ? colors.success : "#4CAF50")} />
                     <Text style={[styles.rowLabel, dyn.lbl, { color: colors.mutedForeground, fontFamily: F.regular }]}>
                       {isEn ? "Location" : "الموقع"}
                     </Text>
                   </View>
                 </View>
-                <View style={[styles.locConfirmed, { backgroundColor: "#1A3A1A" }]}>
-                  <Feather name="check-circle" size={14} color="#4CAF50" />
-                  <Text style={{ color: "#4CAF50", fontFamily: F.semi, fontSize: 13 }}>
+                <View style={[styles.locConfirmed, { backgroundColor: (colors.isModern ? colors.successBg : "#1A3A1A") }]}>
+                  <Feather name="check-circle" size={14} color={(colors.isModern ? colors.success : "#4CAF50")} />
+                  <Text style={{ color: (colors.isModern ? colors.success : "#4CAF50"), fontFamily: F.semi, fontSize: 13 }}>
                     {isEn ? "Location confirmed ✓" : "تم تحديد موقعك ✓"}
                   </Text>
                 </View>
@@ -880,13 +880,13 @@ export default function CheckoutScreen() {
                     <TouchableOpacity
                       onPress={handleGetLocation}
                       disabled={locationLoading}
-                      style={[styles.locActionBtn, { backgroundColor: "#1A2A1A", opacity: locationLoading ? 0.6 : 1 }]}
+                      style={[styles.locActionBtn, { backgroundColor: colors.isModern ? colors.successBg : "#1A2A1A", opacity: locationLoading ? 0.6 : 1 }]}
                       activeOpacity={0.7}
                     >
                       {locationLoading
-                        ? <ActivityIndicator size="small" color="#81C784" />
-                        : <Feather name="crosshair" size={13} color="#81C784" />}
-                      <Text style={{ color: "#81C784", fontFamily: F.bold, fontSize: 12 }}>
+                        ? <ActivityIndicator size="small" color={colors.isModern ? colors.success : "#81C784"} />
+                        : <Feather name="crosshair" size={13} color={colors.isModern ? colors.success : "#81C784"} />}
+                      <Text style={{ color: colors.isModern ? colors.success : "#81C784", fontFamily: F.bold, fontSize: 12 }}>
                         {isEn ? "Auto" : "تلقائي"}
                       </Text>
                     </TouchableOpacity>
@@ -896,11 +896,11 @@ export default function CheckoutScreen() {
                         setManualLng(user?.lng);
                         setMapPickerVisible(true);
                       }}
-                      style={[styles.locActionBtn, { backgroundColor: "#1A1A3A" }]}
+                      style={[styles.locActionBtn, { backgroundColor: colors.isModern ? colors.purpleBg : "#1A1A3A" }]}
                       activeOpacity={0.7}
                     >
-                      <Feather name="map" size={13} color="#CE93D8" />
-                      <Text style={{ color: "#CE93D8", fontFamily: F.bold, fontSize: 12 }}>
+                      <Feather name="map" size={13} color={colors.isModern ? colors.purple : "#CE93D8"} />
+                      <Text style={{ color: colors.isModern ? colors.purple : "#CE93D8", fontFamily: F.bold, fontSize: 12 }}>
                         {isEn ? "Manual" : "خريطة"}
                       </Text>
                     </TouchableOpacity>
@@ -1012,16 +1012,16 @@ export default function CheckoutScreen() {
         </View>
 
         {/* ── Promo Code ── */}
-        <View style={[styles.listCard, dyn.card, { backgroundColor: colors.card, borderColor: appliedDiscount > 0 ? "#22C55E60" : colors.border }]}>
+        <View style={[styles.listCard, dyn.card, { backgroundColor: colors.card, borderColor: appliedDiscount > 0 ? (colors.isModern ? colors.success + "60" : "#22C55E60") : colors.border }]}>
           {appliedDiscount > 0 ? (
             <View style={[styles.listRow, dyn.row]}>
-              <TouchableOpacity onPress={removePromo} style={[styles.locActionBtn, { backgroundColor: "#3A1A1A" }]}>
-                <Feather name="x" size={13} color="#E57373" />
-                <Text style={{ color: "#E57373", fontFamily: F.bold, fontSize: 12 }}>{isEn ? "Remove" : "إزالة"}</Text>
+              <TouchableOpacity onPress={removePromo} style={[styles.locActionBtn, { backgroundColor: (colors.isModern ? colors.dangerBg : "#3A1A1A") }]}>
+                <Feather name="x" size={13} color={(colors.isModern ? colors.danger : "#E57373")} />
+                <Text style={{ color: (colors.isModern ? colors.danger : "#E57373"), fontFamily: F.bold, fontSize: 12 }}>{isEn ? "Remove" : "إزالة"}</Text>
               </TouchableOpacity>
               <View style={styles.rowLeft}>
-                <Feather name="tag" size={16} color="#22C55E" />
-                <Text style={[styles.rowLabel, dyn.lbl, { color: "#22C55E", fontFamily: F.bold }]}>{appliedCodeLabel}</Text>
+                <Feather name="tag" size={16} color={(colors.isModern ? colors.success : "#22C55E")} />
+                <Text style={[styles.rowLabel, dyn.lbl, { color: (colors.isModern ? colors.success : "#22C55E"), fontFamily: F.bold }]}>{appliedCodeLabel}</Text>
               </View>
             </View>
           ) : (
@@ -1079,13 +1079,13 @@ export default function CheckoutScreen() {
                     style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: GOLD, borderRadius: 10, justifyContent: "center", opacity: promoLoading ? 0.6 : 1 }}
                   >
                     {promoLoading
-                      ? <ActivityIndicator size="small" color="#1A0A00" />
-                      : <Text style={{ color: "#1A0A00", fontFamily: F.extra, fontSize: 13 }}>{isEn ? "Apply" : "تطبيق"}</Text>
+                      ? <ActivityIndicator size="small" color={(colors.isModern ? colors.background : "#1A0A00")} />
+                      : <Text style={{ color: (colors.isModern ? colors.background : "#1A0A00"), fontFamily: F.extra, fontSize: 13 }}>{isEn ? "Apply" : "تطبيق"}</Text>
                     }
                   </TouchableOpacity>
                 </View>
                 {promoError ? (
-                  <Text style={{ color: "#E57373", fontFamily: F.semi, fontSize: 12, textAlign: "right" }}>{promoError}</Text>
+                  <Text style={{ color: (colors.isModern ? colors.danger : "#E57373"), fontFamily: F.semi, fontSize: 12, textAlign: "right" }}>{promoError}</Text>
                 ) : null}
               </View>
             </>
@@ -1133,7 +1133,7 @@ export default function CheckoutScreen() {
 
           {/* رسوم التوصيل بدون الضريبة */}
           <View style={[styles.listRow, { paddingHorizontal: dyn.row.paddingHorizontal, paddingVertical: 6 }]}>
-            <Text style={[styles.rowValue, dyn.val, { color: deliveryFee > 0 ? colors.mutedForeground : "#4CAF50", fontFamily: F.bold }]}>
+            <Text style={[styles.rowValue, dyn.val, { color: deliveryFee > 0 ? colors.mutedForeground : (colors.isModern ? colors.success : "#4CAF50"), fontFamily: F.bold }]}>
               {deliveryFee > 0 ? (deliveryFee / 1.15).toFixed(2) : "0"} {isEn ? "SAR" : "ر.س"}
             </Text>
             <Text style={[styles.rowLabel, dyn.lbl, { color: colors.foreground, fontFamily: F.semi }]}>
@@ -1144,10 +1144,10 @@ export default function CheckoutScreen() {
           {/* خصم الكود */}
           {appliedDiscount > 0 && (
             <View style={[styles.listRow, { paddingHorizontal: dyn.row.paddingHorizontal, paddingVertical: 6 }]}>
-              <Text style={[styles.rowValue, dyn.val, { color: "#22C55E", fontFamily: F.bold }]}>
+              <Text style={[styles.rowValue, dyn.val, { color: (colors.isModern ? colors.success : "#22C55E"), fontFamily: F.bold }]}>
                 -{appliedDiscount % 1 === 0 ? appliedDiscount : appliedDiscount.toFixed(2)} {isEn ? "SAR" : "ر.س"}
               </Text>
-              <Text style={[styles.rowLabel, dyn.lbl, { color: "#22C55E", fontFamily: F.semi }]}>
+              <Text style={[styles.rowLabel, dyn.lbl, { color: (colors.isModern ? colors.success : "#22C55E"), fontFamily: F.semi }]}>
                 🏷️ {isEn ? "Discount" : "خصم الكود"}
               </Text>
             </View>
@@ -1197,11 +1197,11 @@ export default function CheckoutScreen() {
           </View>
         </TouchableOpacity>
         {cooldownSeconds > 0 ? (
-          <View style={[styles.submitBtn, { backgroundColor: "#1A2A1A", alignItems: "center", justifyContent: "center", gap: 4 }]}>
-            <Text style={{ color: "#4CAF50", fontFamily: F.extra, fontSize: 14, textAlign: "center" }}>
+          <View style={[styles.submitBtn, { backgroundColor: colors.isModern ? colors.successBg : "#1A2A1A", alignItems: "center", justifyContent: "center", gap: 4 }]}>
+            <Text style={{ color: (colors.isModern ? colors.success : "#4CAF50"), fontFamily: F.extra, fontSize: 14, textAlign: "center" }}>
               ✅ {isEn ? "Order pending!" : "طلبك السابق قيد الانتظار"}
             </Text>
-            <Text style={{ color: "#7A9A7A", fontFamily: F.regular, fontSize: 12, textAlign: "center" }}>
+            <Text style={{ color: colors.isModern ? colors.mutedForeground : "#7A9A7A", fontFamily: F.regular, fontSize: 12, textAlign: "center" }}>
               {isEn ? `Reorder in ${cooldownSeconds}s` : `متاح بعد ${cooldownSeconds} ث`}
             </Text>
           </View>
@@ -1251,7 +1251,7 @@ export default function CheckoutScreen() {
         }}
       >
         <View style={{
-          backgroundColor: "#2D0A6E",
+          backgroundColor: colors.isModern ? colors.purpleBg : "#2D0A6E",
           borderRadius: 16,
           paddingVertical: 14,
           paddingHorizontal: 18,
@@ -1264,14 +1264,14 @@ export default function CheckoutScreen() {
           shadowOffset: { width: 0, height: 4 },
           elevation: 8,
           borderWidth: 1,
-          borderColor: "#6A30CC",
+          borderColor: colors.isModern ? colors.purple : "#6A30CC",
         }}>
           <Text style={{ fontSize: 24 }}>🔒</Text>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: "#FFFFFF", fontFamily: F.extra, fontSize: 13, textAlign: "right", marginBottom: 2 }}>
+            <Text style={{ color: colors.isModern ? colors.foreground : "#FFFFFF", fontFamily: F.extra, fontSize: 13, textAlign: "right", marginBottom: 2 }}>
               {isEn ? "Outside Working Hours" : "خارج أوقات العمل"}
             </Text>
-            <Text style={{ color: "#C4A8FF", fontFamily: F.semi, fontSize: 12, textAlign: "right", lineHeight: 18 }}>
+            <Text style={{ color: colors.isModern ? colors.purple : "#C4A8FF", fontFamily: F.semi, fontSize: 12, textAlign: "right", lineHeight: 18 }}>
               {closedMsg}
             </Text>
           </View>

@@ -30,6 +30,8 @@ import { useChatUnreadAlert } from "@/hooks/useChatSound";
 import { useOrderBadge } from "@/context/OrderBadgeContext";
 import { useLanguage } from "@/context/LanguageContext";
 
+import { modernTokens } from "@/constants/modernTokens";
+
 const F = {
   regular: "Cairo_400Regular",
   semi:    "Cairo_600SemiBold",
@@ -75,7 +77,7 @@ const STATUS_LABEL_EN: Record<OrderStatus, string> = {
   cancelled:        "Cancelled",
 };
 
-const STATUS_COLOR: Record<OrderStatus, string> = {
+const STATUS_COLOR_CLASSIC: Record<OrderStatus, string> = {
   pending:          "#E8920C",
   preparing:        "#3B82F6",
   ready:            "#22C55E",
@@ -83,6 +85,8 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   done:             "#9A7A5A",
   cancelled:        "#E53935",
 };
+
+const STATUS_COLOR_MODERN: Record<OrderStatus, string> = modernTokens.status;
 
 const STATUS_ICON: Record<OrderStatus, string> = {
   pending:          "clock",
@@ -465,7 +469,7 @@ export default function OrdersScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={colors.isModern && colors.isLight ? "dark-content" : "light-content"} />
 
       <View style={[styles.header, { backgroundColor: colors.card, paddingTop: topInset + 8, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground, fontFamily: F.extra }]}>
@@ -489,29 +493,29 @@ export default function OrdersScreen() {
             left: 12,
             right: 12,
             zIndex: 999,
-            backgroundColor: "#1A0808",
+            backgroundColor: colors.isModern ? colors.dangerBg : "#1A0808",
             borderRadius: 16,
             borderWidth: 1.5,
-            borderColor: "#E5393588",
+            borderColor: colors.isModern ? colors.danger + "88" : "#E5393588",
             flexDirection: "row-reverse",
             alignItems: "center",
             gap: 12,
             paddingHorizontal: 16,
             paddingVertical: 14,
-            shadowColor: "#E53935",
+            shadowColor: colors.isModern ? colors.danger : "#E53935",
             shadowOpacity: 0.3,
             shadowRadius: 12,
             elevation: 10,
           }}
         >
-          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "#E5393520", alignItems: "center", justifyContent: "center" }}>
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.isModern ? colors.danger + "20" : "#E5393520", alignItems: "center", justifyContent: "center" }}>
             <Text style={{ fontSize: 20 }}>❌</Text>
           </View>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ color: "#EF4444", fontFamily: F.bold, fontSize: 14, textAlign: "right" }}>
+            <Text style={{ color: colors.isModern ? colors.danger : "#EF4444", fontFamily: F.bold, fontSize: 14, textAlign: "right" }}>
               {isEn ? "Order Cancelled" : "تم إلغاء طلبك"}
             </Text>
-            <Text style={{ color: "#9A7A7A", fontFamily: F.regular, fontSize: 12, textAlign: "right" }}>
+            <Text style={{ color: colors.isModern ? colors.mutedForeground : "#9A7A7A", fontFamily: F.regular, fontSize: 12, textAlign: "right" }}>
               {isEn
                 ? `Order #${cancelBanner.orderNum} has been cancelled by the restaurant`
                 : `طلبك رقم #${cancelBanner.orderNum} تم إلغاؤه من قِبل المطعم`}
@@ -521,7 +525,7 @@ export default function OrdersScreen() {
             if (bannerTimer.current) clearTimeout(bannerTimer.current);
             Animated.timing(bannerAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => setCancelBanner(null));
           }}>
-            <Feather name="x" size={16} color="#9A7A7A" />
+            <Feather name="x" size={16} color={colors.isModern ? colors.mutedForeground : "#9A7A7A"} />
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -563,8 +567,8 @@ export default function OrdersScreen() {
                   style={{ flex: 1, backgroundColor: ratingStars > 0 ? colors.gold : colors.secondary, borderRadius: 14, paddingVertical: 13, alignItems: "center" }}
                 >
                   {ratingSending
-                    ? <ActivityIndicator size="small" color="#1A0A00" />
-                    : <Text style={{ color: "#1A0A00", fontFamily: F.extra, fontSize: 15 }}>{isEn ? "Submit" : "إرسال"}</Text>
+                    ? <ActivityIndicator size="small" color={(colors.isModern ? colors.background : "#1A0A00")} />
+                    : <Text style={{ color: (colors.isModern ? colors.background : "#1A0A00"), fontFamily: F.extra, fontSize: 15 }}>{isEn ? "Submit" : "إرسال"}</Text>
                   }
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -587,7 +591,7 @@ export default function OrdersScreen() {
             <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
               <View style={{ flex: 1, backgroundColor: colors.background }}>
                 {/* Header */}
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: topInset + 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: "#0D1F30" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: topInset + 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.isModern ? colors.background : "#0D1F30" }}>
                   <TouchableOpacity onPress={() => setChatOrderId(null)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.secondary, alignItems: "center", justifyContent: "center" }}>
                     <Feather name="x" size={20} color={colors.foreground} />
                   </TouchableOpacity>
@@ -607,9 +611,9 @@ export default function OrdersScreen() {
                   {activeDriver && activeDriver.orderId === chatOrderId ? (
                     <TouchableOpacity
                       onPress={() => Linking.openURL(`tel:${activeDriver.driverPhone}`)}
-                      style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#1A3A20", borderWidth: 1.5, borderColor: "#4CAF50", alignItems: "center", justifyContent: "center" }}
+                      style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.isModern ? colors.successBg : "#1A3A20", borderWidth: 1.5, borderColor: colors.isModern ? colors.success : "#4CAF50", alignItems: "center", justifyContent: "center" }}
                     >
-                      <Feather name="phone" size={17} color="#4CAF50" />
+                      <Feather name="phone" size={17} color={colors.isModern ? colors.success : "#4CAF50"} />
                     </TouchableOpacity>
                   ) : (
                     <View style={{ width: 36 }} />
@@ -639,8 +643,8 @@ export default function OrdersScreen() {
                     const time = new Date(msg.createdAt).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
                     return (
                       <View key={msg.id} style={{ alignItems: isCustomer ? "flex-end" : "flex-start" }}>
-                        <View style={{ maxWidth: "80%", backgroundColor: isCustomer ? "#2A1800" : colors.secondary, borderRadius: 18, borderTopRightRadius: isCustomer ? 4 : 18, borderTopLeftRadius: isCustomer ? 18 : 4, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: isCustomer ? colors.gold + "55" : colors.border }}>
-                          <Text style={{ color: isCustomer ? colors.gold : colors.foreground, fontFamily: F.semi, fontSize: 14, textAlign: isCustomer ? "right" : "left" }}>{msg.text}</Text>
+                        <View style={{ maxWidth: "80%", backgroundColor: isCustomer ? (colors.isModern ? colors.surface : "#2A1800") : colors.secondary, borderRadius: 18, borderTopRightRadius: isCustomer ? 4 : 18, borderTopLeftRadius: isCustomer ? 18 : 4, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: isCustomer ? (colors.isModern ? colors.primary : colors.gold) + "55" : colors.border }}>
+                          <Text style={{ color: isCustomer ? (colors.isModern ? colors.primary : colors.gold) : colors.foreground, fontFamily: F.semi, fontSize: 14, textAlign: isCustomer ? "right" : "left" }}>{msg.text}</Text>
                           <Text style={{ color: colors.mutedForeground, fontFamily: F.regular, fontSize: 10, marginTop: 4, textAlign: isCustomer ? "right" : "left" }}>
                             {time}{isCustomer ? (isEn ? " • You" : " • أنت") : (msg.driverId ? (isEn ? " • Driver" : " • المندوب") : (isEn ? " • Cashier" : " • الكاشير"))}
                           </Text>
@@ -657,7 +661,7 @@ export default function OrdersScreen() {
                     disabled={chatSending || !chatInput.trim()}
                     style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: chatInput.trim() ? colors.gold : colors.secondary, alignItems: "center", justifyContent: "center" }}
                   >
-                    {chatSending ? <ActivityIndicator size="small" color="#1A0A00" /> : <Feather name="send" size={18} color={chatInput.trim() ? "#1A0A00" : colors.mutedForeground} />}
+                    {chatSending ? <ActivityIndicator size="small" color={(colors.isModern ? colors.background : "#1A0A00")} /> : <Feather name="send" size={18} color={chatInput.trim() ? (colors.isModern ? colors.background : "#1A0A00") : colors.mutedForeground} />}
                   </TouchableOpacity>
                   <TextInput
                     value={chatInput}
@@ -683,45 +687,45 @@ export default function OrdersScreen() {
             activeOpacity={0.88}
             onPress={() => router.push(`/order-confirmed?orderId=${activeDriver.orderId}`)}
             style={{
-              backgroundColor: "#0A1F2A",
+              backgroundColor: colors.isModern ? colors.infoBg : "#0A1F2A",
               borderRadius: 16,
               borderWidth: 1.5,
-              borderColor: "#29B6F6",
+              borderColor: colors.isModern ? colors.info : (colors.isModern ? colors.info : "#29B6F6"),
               padding: 14,
               flexDirection: "row-reverse",
               alignItems: "center",
               gap: 12,
-              shadowColor: "#29B6F6",
+              shadowColor: (colors.isModern ? colors.info : "#29B6F6"),
               shadowOpacity: 0.3,
               shadowRadius: 12,
               elevation: 8,
             }}
           >
             {activeDriver.driverPhoto ? (
-              <Image source={{ uri: activeDriver.driverPhoto }} style={{ width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: "#29B6F6" }} />
+              <Image source={{ uri: activeDriver.driverPhoto }} style={{ width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: (colors.isModern ? colors.info : "#29B6F6") }} />
             ) : (
-              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "#29B6F622", borderWidth: 2, borderColor: "#29B6F6", alignItems: "center", justifyContent: "center" }}>
+              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: (colors.isModern ? colors.info + "22" : "#29B6F622"), borderWidth: 2, borderColor: (colors.isModern ? colors.info : "#29B6F6"), alignItems: "center", justifyContent: "center" }}>
                 <Text style={{ fontSize: 22 }}>🛵</Text>
               </View>
             )}
             <View style={{ flex: 1, gap: 3 }}>
               <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 6 }}>
-                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: "#29B6F6" }} />
-                <Text style={{ color: "#29B6F6", fontFamily: F.extra, fontSize: 13 }}>
+                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: (colors.isModern ? colors.info : "#29B6F6") }} />
+                <Text style={{ color: (colors.isModern ? colors.info : "#29B6F6"), fontFamily: F.extra, fontSize: 13 }}>
                   {isEn ? "Driver on the way!" : "المندوب في الطريق إليك!"}
                 </Text>
               </View>
               <Text style={{ color: "#fff", fontFamily: F.bold, fontSize: 14 }}>{activeDriver.driverName}</Text>
-              <Text style={{ color: "#7ECFF8", fontFamily: F.regular, fontSize: 11 }}>
+              <Text style={{ color: colors.isModern ? colors.info : "#7ECFF8", fontFamily: F.regular, fontSize: 11 }}>
                 {isEn ? `Order #${activeDriver.dailyNumber} • Tap to track` : `طلب #${activeDriver.dailyNumber} • اضغط للتتبع`}
               </Text>
             </View>
             {/* Call button */}
             <TouchableOpacity
               onPress={(e) => { e.stopPropagation(); Linking.openURL(`tel:${activeDriver.driverPhone}`); }}
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#29B6F6", alignItems: "center", justifyContent: "center" }}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: (colors.isModern ? colors.info : "#29B6F6"), alignItems: "center", justifyContent: "center" }}
             >
-              <Feather name="phone" size={20} color="#032B3D" />
+              <Feather name="phone" size={20} color={colors.isModern ? colors.background : "#032B3D"} />
             </TouchableOpacity>
           </TouchableOpacity>
         </Animated.View>
@@ -764,7 +768,7 @@ export default function OrdersScreen() {
             const status      = liveStatus[order.id] ?? "pending";
             const isDone      = status === "done" || status === "cancelled";
             const isCancelling = cancellingId === order.id;
-            const statusColor = STATUS_COLOR[status];
+            const statusColor = colors.isModern ? STATUS_COLOR_MODERN[status] : STATUS_COLOR_CLASSIC[status];
 
             return (
               <View
@@ -822,19 +826,19 @@ export default function OrdersScreen() {
                 {/* Rating button — for done orders not yet rated */}
                 {status === "done" && !ratedOrders[order.id] && (
                   <TouchableOpacity
-                    style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 10, backgroundColor: "#2A1800", borderTopWidth: 1, borderTopColor: "#5A3800" }}
+                    style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 10, backgroundColor: colors.isModern ? colors.warningBg : "#2A1800", borderTopWidth: 1, borderTopColor: colors.isModern ? colors.warning : "#5A3800" }}
                     onPress={() => { setRatingOrderId(order.id); setRatingStars(0); setRatingComment(""); }}
                   >
                     <Text style={{ fontSize: 16 }}>⭐</Text>
-                    <Text style={{ color: "#E8920C", fontFamily: F.bold, fontSize: 13 }}>
+                    <Text style={{ color: colors.isModern ? colors.warning : "#E8920C", fontFamily: F.bold, fontSize: 13 }}>
                       {isEn ? "Rate your order" : "قيّم طلبك"}
                     </Text>
                   </TouchableOpacity>
                 )}
                 {status === "done" && !!ratedOrders[order.id] && (
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, backgroundColor: "#1A2A1A" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, backgroundColor: colors.isModern ? colors.successBg : "#1A2A1A" }}>
                     <Text style={{ fontSize: 13 }}>{"⭐".repeat(ratedOrders[order.id])}</Text>
-                    <Text style={{ color: "#4CAF50", fontFamily: F.semi, fontSize: 12 }}>
+                    <Text style={{ color: colors.isModern ? colors.success : "#4CAF50", fontFamily: F.semi, fontSize: 12 }}>
                       {isEn ? "Rated" : "تم التقييم"}
                     </Text>
                   </View>
@@ -842,18 +846,18 @@ export default function OrdersScreen() {
 
                 {/* Chat button */}
                 <TouchableOpacity
-                  style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 10, backgroundColor: "#0D2030", borderTopWidth: 1, borderTopColor: "#1E4A6A" }}
+                  style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 10, backgroundColor: colors.isModern ? colors.infoBg : "#0D2030", borderTopWidth: 1, borderTopColor: colors.isModern ? colors.info : "#1E4A6A" }}
                   onPress={() => openChat(order.id)}
                 >
                   <View style={{ position: "relative" }}>
-                    <Feather name="message-circle" size={16} color="#64B5F6" />
+                    <Feather name="message-circle" size={16} color={(colors.isModern ? colors.info : "#64B5F6")} />
                     {!!unreadByOrder[order.id] && (
-                      <View style={{ position: "absolute", top: -5, right: -5, backgroundColor: "#E53935", borderRadius: 8, minWidth: 14, height: 14, alignItems: "center", justifyContent: "center", paddingHorizontal: 2 }}>
+                      <View style={{ position: "absolute", top: -5, right: -5, backgroundColor: colors.isModern ? colors.danger : "#E53935", borderRadius: 8, minWidth: 14, height: 14, alignItems: "center", justifyContent: "center", paddingHorizontal: 2 }}>
                         <Text style={{ color: "#fff", fontSize: 8, fontFamily: F.bold }}>{unreadByOrder[order.id]}</Text>
                       </View>
                     )}
                   </View>
-                  <Text style={{ color: "#64B5F6", fontFamily: F.bold, fontSize: 13 }}>
+                  <Text style={{ color: (colors.isModern ? colors.info : "#64B5F6"), fontFamily: F.bold, fontSize: 13 }}>
                     {isEn ? "Chat with us" : `تواصل معنا${unreadByOrder[order.id] ? `  •  ${unreadByOrder[order.id]} رسالة جديدة` : ""}`}
                   </Text>
                 </TouchableOpacity>
@@ -861,7 +865,7 @@ export default function OrdersScreen() {
                 {/* Cancel button */}
                 {allowCancel && status === "pending" && (
                   <TouchableOpacity
-                    style={[styles.cancelBtn, { borderColor: "#E53935" + "60", backgroundColor: "#E5393510" }]}
+                    style={[styles.cancelBtn, { borderColor: (colors.isModern ? colors.danger : "#E53935") + "60", backgroundColor: (colors.isModern ? colors.danger : "#E53935") + "10" }]}
                     onPress={() =>
                       Alert.alert(
                         isEn ? "Cancel Order" : "إلغاء الطلب",
@@ -875,11 +879,11 @@ export default function OrdersScreen() {
                     disabled={isCancelling}
                   >
                     {isCancelling ? (
-                      <ActivityIndicator size="small" color="#E53935" />
+                      <ActivityIndicator size="small" color={colors.isModern ? colors.danger : "#E53935"} />
                     ) : (
                       <>
-                        <Feather name="x-circle" size={15} color="#E53935" />
-                        <Text style={[styles.cancelBtnText, { fontFamily: F.bold }]}>
+                        <Feather name="x-circle" size={15} color={colors.isModern ? colors.danger : "#E53935"} />
+                        <Text style={[styles.cancelBtnText, { color: colors.isModern ? colors.danger : "#E53935", fontFamily: F.bold }]}>
                           {isEn ? "Cancel Order" : "إلغاء الطلب"}
                         </Text>
                       </>
@@ -910,12 +914,12 @@ export default function OrdersScreen() {
                 flexDirection: "row",
                 alignItems: "center",
                 gap: 10,
-                backgroundColor: "#0D2030",
+                backgroundColor: colors.isModern ? colors.infoBg : "#0D2030",
                 borderRadius: 30,
                 paddingHorizontal: 18,
                 paddingVertical: 13,
                 borderWidth: 1.5,
-                borderColor: "#1E4A6A",
+                borderColor: colors.isModern ? colors.info : "#1E4A6A",
                 shadowColor: "#000",
                 shadowOpacity: 0.4,
                 shadowRadius: 12,
@@ -925,13 +929,13 @@ export default function OrdersScreen() {
             >
               {/* Badge */}
               <View style={{ position: "relative" }}>
-                <Feather name="message-circle" size={22} color="#64B5F6" />
+                <Feather name="message-circle" size={22} color={(colors.isModern ? colors.info : "#64B5F6")} />
                 {totalUnread > 0 && (
                   <View style={{
                     position: "absolute",
                     top: -5,
                     right: -5,
-                    backgroundColor: "#E53935",
+                    backgroundColor: colors.isModern ? colors.danger : "#E53935",
                     borderRadius: 9,
                     minWidth: 17,
                     height: 17,
@@ -939,13 +943,13 @@ export default function OrdersScreen() {
                     justifyContent: "center",
                     paddingHorizontal: 3,
                     borderWidth: 1.5,
-                    borderColor: "#0D2030",
+                    borderColor: colors.isModern ? colors.background : "#0D2030",
                   }}>
                     <Text style={{ color: "#fff", fontSize: 9, fontFamily: F.bold }}>{totalUnread}</Text>
                   </View>
                 )}
               </View>
-              <Text style={{ color: "#64B5F6", fontFamily: F.bold, fontSize: 14 }}>
+              <Text style={{ color: (colors.isModern ? colors.info : "#64B5F6"), fontFamily: F.bold, fontSize: 14 }}>
                 {isEn ? "Chat with us" : "تواصل معنا"}
               </Text>
             </TouchableOpacity>

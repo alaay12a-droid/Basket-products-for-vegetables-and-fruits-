@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useRef, useState, useEffect } from "react";
+import { modernTokens } from "@/constants/modernTokens";
 import { MapPickerModal } from "@/components/MapPickerModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -97,7 +98,7 @@ export default function OnboardingScreen() {
     border:  cl.border,
     green:   "#1DBF47",
   };
-  const isModern = cl.primary === "#0F3D2E";
+  const isModern = cl.primary === modernTokens.colors.primary;
 
   const [step, setStep] = useState<Step>("name");
   const [name, setName] = useState("");

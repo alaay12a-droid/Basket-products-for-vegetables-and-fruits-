@@ -72,13 +72,13 @@ export const BG_THEMES: Record<BgThemeKey, BgTheme> = {
     isLight: true,
   },
   "light-warm": {
-    background: "#FFF8F0",
-    card: "#FFF0E0",
-    secondary: "#FFE5CC",
-    border: "#E8D0B8",
-    surface: "#FAEBD7",
-    foreground: "#3A1A00",
-    mutedForeground: "#8B6040",
+    background: "#F4F8F3",
+    card: "#FFFFFF",
+    secondary: "#E4EFE4",
+    border: "#CBDCCB",
+    surface: "#EDF5ED",
+    foreground: "#183522",
+    mutedForeground: "#627268",
     isLight: true,
   },
 };
@@ -104,7 +104,7 @@ export const BG_THEME_META: Record<BgThemeKey, { label: string; preview: string 
   "dark-red":    { label: "أحمر داكن",   preview: "#180A0A" },
   "dark-purple": { label: "بنفسجي داكن", preview: "#120A20" },
   "light":       { label: "أبيض",        preview: "#FFFFFF" },
-  "light-warm":  { label: "كريمي",       preview: "#FFF8F0" },
+  "light-warm":  { label: "أخضر فاتح",   preview: "#F4F8F3" },
 };
 
 export interface AppConfig {
@@ -151,7 +151,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   tabPaddingBottom: 10,
   tabFontSize: 12,
 
-  accentColor: "#E8920C",
+  accentColor: "#237A3B",
   bgTheme: "light-warm",
   logoBg: "#FFFFFF",
   minOrderAmount: 0,

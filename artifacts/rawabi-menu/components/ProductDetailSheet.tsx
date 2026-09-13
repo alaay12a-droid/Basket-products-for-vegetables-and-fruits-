@@ -15,6 +15,7 @@ import { useColors } from "@/hooks/useColors";
 import { useCart, CartCustomization } from "@/context/CartContext";
 import { MenuItem, MenuItemOptionGroup } from "@/constants/menu";
 import { getExplicitChickenSizeOptions } from "@/utils/chickenSizeVariants";
+import { modernTokens } from "@/constants/modernTokens";
 
 const F = {
   regular: "Cairo_400Regular",
@@ -218,7 +219,8 @@ export function ProductDetailSheet({ item, menuItems = EMPTY_MENU_ITEMS, visible
           </View>
 
           <ScrollView
-            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 148, gap: 18 }}
+            style={styles.contentScroll}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 24, gap: 18 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
@@ -295,7 +297,7 @@ export function ProductDetailSheet({ item, menuItems = EMPTY_MENU_ITEMS, visible
                         <Text style={{ color: active ? "#fff" : colors.foreground, fontFamily: active ? F.bold : F.regular, fontSize: 15, textAlign: "center" }}>
                           {opt.name}
                         </Text>
-                        <Text style={{ color: active ? "#ffee99" : colors.gold, fontFamily: F.bold, fontSize: 13 }}>
+                        <Text style={{ color: active ? (colors.isModern ? modernTokens.colors.contrastText : "#ffee99") : colors.gold, fontFamily: F.bold, fontSize: 13 }}>
                           {priceStr(opt.price)} ر.س
                         </Text>
                       </TouchableOpacity>
@@ -332,7 +334,7 @@ export function ProductDetailSheet({ item, menuItems = EMPTY_MENU_ITEMS, visible
                         <Text style={{ color: active ? "#fff" : colors.foreground, fontFamily: active ? F.bold : F.regular, fontSize: 14 }}>
                           {opt.label}
                         </Text>
-                        <Text style={{ color: active ? "#ffee99" : colors.gold, fontFamily: F.bold, fontSize: 13 }}>
+                        <Text style={{ color: active ? (colors.isModern ? modernTokens.colors.contrastText : "#ffee99") : colors.gold, fontFamily: F.bold, fontSize: 13 }}>
                           {priceStr(opt.item.price)} ر.س
                         </Text>
                       </TouchableOpacity>
@@ -350,8 +352,8 @@ export function ProductDetailSheet({ item, menuItems = EMPTY_MENU_ITEMS, visible
                     {group.groupName}
                   </Text>
                   {group.required && (
-                    <View style={[styles.requiredBadge, { backgroundColor: "#C8171A22" }]}>
-                      <Text style={{ color: "#C8171A", fontFamily: F.bold, fontSize: 10 }}>مطلوب</Text>
+                    <View style={[styles.requiredBadge, { backgroundColor: colors.isModern ? colors.dangerBg : "#C8171A22" }]}>
+                      <Text style={{ color: colors.isModern ? colors.danger : "#C8171A", fontFamily: F.bold, fontSize: 10 }}>مطلوب</Text>
                     </View>
                   )}
                 </View>
@@ -529,7 +531,7 @@ export function ProductDetailSheet({ item, menuItems = EMPTY_MENU_ITEMS, visible
               <Text style={{ color: "#fff", fontFamily: F.extra, fontSize: 17 }}>
                 {priceStr(totalPrice)} ر.س
               </Text>
-              <Text style={{ color: "#ffee99", fontFamily: F.bold, fontSize: 14 }}>إضافة للسلة</Text>
+              <Text style={{ color: colors.isModern ? modernTokens.colors.contrastText : "#ffee99", fontFamily: F.bold, fontSize: 14 }}>إضافة للسلة</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -586,6 +588,9 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 200,
     borderRadius: 16,
+  },
+  contentScroll: {
+    flexShrink: 1,
   },
   closeRow: {
     flexDirection: "row",
@@ -648,10 +653,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,

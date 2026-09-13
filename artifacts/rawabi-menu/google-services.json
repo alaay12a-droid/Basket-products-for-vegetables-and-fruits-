@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "53545575076",
+    "project_id": "basket-products",
+    "storage_bucket": "basket-products.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:53545575076:android:16eded2e7013df9b6d7c31",
+        "android_client_info": {
+          "package_name": "com.basket.products"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtHlTIBvRibTy63YSV9srNGb-uYkCkyIA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:53545575076:android:229d386c484454e06d7c31",
+        "android_client_info": {
+          "package_name": "com.rwabi.almndi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtHlTIBvRibTy63YSV9srNGb-uYkCkyIA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:53545575076:android:d8ff0f0006dce6126d7c31",
+        "android_client_info": {
+          "package_name": "com.rwabi.driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtHlTIBvRibTy63YSV9srNGb-uYkCkyIA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

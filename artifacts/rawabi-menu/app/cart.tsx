@@ -40,6 +40,7 @@ export default function CartScreen() {
   const { language } = useLanguage();
   const { categories } = useMenu();
   const { config } = useAppConfig();
+  const isModern = config.menuTemplate === "modern";
   const isEn = language === "en";
 
   const minOrder = config.minOrderAmount ?? 0;
@@ -97,7 +98,7 @@ export default function CartScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={colors.isModern && colors.isLight ? "dark-content" : "light-content"} />
 
       {/* Header */}
       <View
@@ -189,7 +190,7 @@ export default function CartScreen() {
                           {itemName}
                         </Text>
                         {customParts.length > 0 && (
-                          <Text style={{ color: "#E8920C", fontFamily: "Cairo_400Regular", fontSize: 11, textAlign: "right", marginTop: 1 }}>
+                          <Text style={{ color: colors.isModern ? colors.accent : "#E8920C", fontFamily: "Cairo_400Regular", fontSize: 11, textAlign: "right", marginTop: 1 }}>
                             {customParts.join(" · ")}
                           </Text>
                         )}
@@ -341,7 +342,7 @@ export default function CartScreen() {
               onPress={() => !belowMinOrder && router.push("/checkout")}
               style={[
                 styles.checkoutBtn,
-                { backgroundColor: belowMinOrder ? colors.border : colors.gold },
+                { backgroundColor: belowMinOrder ? colors.border : colors.gold, shadowColor: colors.isModern ? colors.gold : "#E8920C" },
               ]}
               activeOpacity={belowMinOrder ? 1 : 0.85}
             >
@@ -553,7 +554,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 15,
     paddingHorizontal: 20,
-    shadowColor: "#E8920C",
     shadowOpacity: 0.35,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },

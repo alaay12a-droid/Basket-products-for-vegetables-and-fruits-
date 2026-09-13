@@ -6,20 +6,20 @@ const router = Router();
 
 const DEFAULTS: Record<string, string> = {
   txt_name:             "منتجات السلة للخضار والفواكه",
-  txt_name_en:          "Sallat Al Khodar",
-  txt_tagline:          "للمذاق فن وأصول",
-  txt_tagline_en:       "A Fine Art of Taste",
-  txt_phone:            "0530707042",
-  txt_whatsapp:         "966530707042",
-  txt_location:         "تبوك - حي الروضة",
-  txt_location_en:      "Tabuk - Al-Rawdah District",
-  txt_instagram:        "@rwabi-almndi",
-  txt_dhabiha_phone:    "0531555268",
-  txt_dhabiha_whatsapp: "966531555268",
+  txt_name_en:          "Basket Vegetables and Fruits",
+  txt_tagline:          "خضار وفواكه طازجة كل يوم",
+  txt_tagline_en:       "Fresh vegetables and fruits every day",
+  txt_phone:            "0596548325",
+  txt_whatsapp:         "966596548325",
+  txt_location:         "تبوك - حي الصفا",
+  txt_location_en:      "Tabuk - Al Safa District",
+  txt_instagram:        "",
+  txt_dhabiha_phone:    "",
+  txt_dhabiha_whatsapp: "",
   txt_announcement:     "",
-  txt_delivery_area:    "تبوك - حي الروضة وما حولها",
-  txt_snapchat:         "rwabi-almndi",
-  txt_tiktok:           "rwabialmndi",
+  txt_delivery_area:    "تبوك - حي الصفا وما حولها",
+  txt_snapchat:         "",
+  txt_tiktok:           "",
 };
 
 // ── GET /app-texts ─────────────────────────────────────────────────────────────

@@ -1,5 +1,7 @@
 **/node_modules/
 **/.expo/
+.cache/
+**/.cache/
 **/android/
 **/ios/
 **/*.log
@@ -9,6 +11,20 @@
 attached_assets/
 artifacts/dashboard/
 artifacts/mockup-sandbox/
-artifacts/rawabi-menu/
-lib/
-scripts/
+artifacts/api-server/
+
+# Local credentials and Firebase configuration are provided through EAS.
+**/.env
+**/.env.*
+**/*firebase-adminsdk*.json
+**/*service-account*.json
+**/google-play-service-account.json
+**/google-services.json
+!artifacts/rawabi-menu/google-services.json
+**/*.pem
+**/*.p8
+**/*.p12
+**/*.jks
+**/*.keystore
+**/*.mobileprovision
+**/credentials.json

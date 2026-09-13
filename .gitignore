@@ -53,3 +53,6 @@ attached_assets/*.txt
 attached_assets/*.json
 attached_assets/*.pem
 attached_assets/*.p12
+
+# Firebase Android configuration is supplied to EAS as a File variable.
+**/google-services.json

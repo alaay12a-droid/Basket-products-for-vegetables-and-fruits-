@@ -33,9 +33,9 @@ export const DEFAULT_TEXTS: AppTexts = {
   dhabihaPhone:     RESTAURANT_INFO.dhabihaPhone,
   dhabihaWhatsapp:  RESTAURANT_INFO.dhabihaWhatsapp,
   announcement:     "",
-  deliveryArea:     "تبوك - حي الروضة وما حولها",
-  snapchat:         "rwabi-almndi",
-  tiktok:           "rwabialmndi",
+  deliveryArea:     "تبوك - حي الصفا وما حولها",
+  snapchat:         "",
+  tiktok:           "",
 };
 
 let _cache: AppTexts | null = null;
@@ -43,21 +43,21 @@ let _promise: Promise<AppTexts> | null = null;
 
 function mapRaw(data: Record<string, string>): AppTexts {
   return {
-    name:            data.txt_name             || DEFAULT_TEXTS.name,
-    nameEn:          data.txt_name_en          || DEFAULT_TEXTS.nameEn,
-    tagline:         data.txt_tagline          || DEFAULT_TEXTS.tagline,
-    taglineEn:       data.txt_tagline_en       || DEFAULT_TEXTS.taglineEn,
-    phone:           data.txt_phone            || DEFAULT_TEXTS.phone,
-    whatsapp:        data.txt_whatsapp         || DEFAULT_TEXTS.whatsapp,
-    location:        data.txt_location         || DEFAULT_TEXTS.location,
-    locationEn:      data.txt_location_en      || DEFAULT_TEXTS.locationEn,
-    instagram:       data.txt_instagram        || DEFAULT_TEXTS.instagram,
-    dhabihaPhone:    data.txt_dhabiha_phone    || DEFAULT_TEXTS.dhabihaPhone,
-    dhabihaWhatsapp: data.txt_dhabiha_whatsapp || DEFAULT_TEXTS.dhabihaWhatsapp,
+    name:            DEFAULT_TEXTS.name,
+    nameEn:          DEFAULT_TEXTS.nameEn,
+    tagline:         DEFAULT_TEXTS.tagline,
+    taglineEn:       DEFAULT_TEXTS.taglineEn,
+    phone:           DEFAULT_TEXTS.phone,
+    whatsapp:        DEFAULT_TEXTS.whatsapp,
+    location:        DEFAULT_TEXTS.location,
+    locationEn:      DEFAULT_TEXTS.locationEn,
+    instagram:       "",
+    dhabihaPhone:    "",
+    dhabihaWhatsapp: "",
     announcement:    data.txt_announcement     ?? "",
-    deliveryArea:    data.txt_delivery_area    || DEFAULT_TEXTS.deliveryArea,
-    snapchat:        data.txt_snapchat         || DEFAULT_TEXTS.snapchat,
-    tiktok:          data.txt_tiktok           || DEFAULT_TEXTS.tiktok,
+    deliveryArea:    DEFAULT_TEXTS.deliveryArea,
+    snapchat:        "",
+    tiktok:          "",
   };
 }
 

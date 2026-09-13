@@ -15,6 +15,8 @@ import { MenuItem, FOOD_IMAGES } from "@/constants/menu";
 import { itemNeedsCustomization } from "@/components/ProductDetailSheet";
 import { isExplicitChickenSizeProduct } from "@/utils/chickenSizeVariants";
 
+import { modernTokens } from "@/constants/modernTokens";
+
 const F = {
   regular: "Cairo_400Regular",
   semi: "Cairo_600SemiBold",
@@ -110,7 +112,7 @@ function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, o
     >
       {isUnavailable && (
         <View style={[styles.statusBanner, { backgroundColor: colors.isLight ? "#F0D8D8" : "#4A1A1A" }]}>
-          <Text style={[styles.statusText, { color: colors.isLight ? "#C8171A" : "#E57373", fontFamily: F.bold }]}>
+          <Text style={[styles.statusText, { color: modern ? modernTokens.colors.dangerText : (colors.isLight ? "#C8171A" : "#E57373"), fontFamily: F.bold }]}>
             {isEn ? "Out of Stock" : "نافد"}
           </Text>
         </View>
@@ -145,7 +147,7 @@ function MenuItemCardInner({ item, quantity, onPress, isEn, isFavorite: faved, o
             </Text>
             <TouchableOpacity
               onPress={handleToggleFav}
-              style={[styles.heartBtn, { backgroundColor: faved ? (modern ? "#1E7A4422" : "#C8171A22") : "transparent" }]}
+              style={[styles.heartBtn, { backgroundColor: faved ? (modern ? modernTokens.colors.successBg : "#C8171A22") : "transparent" }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Feather name="heart" size={14} color={faved ? (modern ? accentColor : "#C8171A") : mutedColor} />

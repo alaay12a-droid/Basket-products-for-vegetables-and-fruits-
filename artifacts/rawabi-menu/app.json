@@ -1,23 +1,24 @@
 {
   "expo": {
     "name": "منتجات السلة للخضار والفواكه",
-    "slug": "rawabi-menu",
+    "slug": "basket-products-",
     "version": "1.4.3",
     "orientation": "portrait",
     "icon": "./assets/images/sallat-alkhodar-logo.png",
-    "scheme": "rawabi-menu",
+    "scheme": "basket-products",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/sallat-alkhodar-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0F0A05"
+      "backgroundColor": "#123D24"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.rwabi.almndi",
-      "buildNumber": "10",
+      "bundleIdentifier": "com.basket.products",
+      "buildNumber": "2",
       "infoPlist": {
+        "CFBundleDisplayName": "سلة الخضار والفواكه",
         "NSLocationWhenInUseUsageDescription": "نحتاج موقعك لتحديد عنوان التوصيل وتوفير خدمة أفضل",
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
@@ -26,11 +27,12 @@
       }
     },
     "android": {
-      "package": "com.rwabi.almndi",
-      "versionCode": 35,
+      "package": "com.basket.products",
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 36,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/sallat-alkhodar-logo.png",
-        "backgroundColor": "#0F0A05"
+        "backgroundColor": "#123D24"
       },
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
@@ -63,7 +65,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/sallat-alkhodar-logo.png",
-          "color": "#E8920C",
+          "color": "#237A3B",
           "defaultChannel": "orders",
           "sounds": [
             "./assets/sounds/notification.wav",
@@ -76,6 +78,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b445091a-537c-453e-a757-a6b87a0174e3"
+      }
+    },
+    "owner": "021837ala"
   }
 }
