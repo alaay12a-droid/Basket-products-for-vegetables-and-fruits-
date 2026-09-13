@@ -89,7 +89,7 @@ interface ExpoTicket {
   status: "ok" | "error";
   id?: string;
   message?: string;
-  details?: { error?: string };
+  details?: { error?: string; [key: string]: unknown };
 }
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
@@ -125,26 +125,35 @@ async function sendViaExpo(expoTokens: string[], msg: PushMessage): Promise<stri
 
       const json = (await resp.json()) as { data: ExpoTicket[] };
 
-      // Collect receipt IDs → masked token mapping for the deferred receipt check.
-      // Masking: first 30 chars of the token (safe to log, not a secret).
+      // Keep the full token only in memory so receipt failures can remove a stale
+      // device row. Logs always use a masked token.
       const receiptToToken = new Map<string, string>();
       json.data.forEach((ticket, idx) => {
-        const maskedToken = chunk[idx]?.slice(0, 30) ?? "unknown";
+        const token = chunk[idx];
+        const maskedToken = token?.slice(0, 30) ?? "unknown";
+        const ticketLog = {
+          token: maskedToken,
+          ticketId: ticket.id,
+          status: ticket.status,
+          message: ticket.message,
+          details: ticket.details,
+        };
         if (ticket.status === "ok" && ticket.id) {
-          receiptToToken.set(ticket.id, maskedToken);
+          receiptToToken.set(ticket.id, token!);
+          logger.info(ticketLog, "Expo push ticket accepted");
         } else if (ticket.status === "error") {
           const errCode = ticket.details?.error ?? "";
-          logger.warn(
-            {
-              errCode,
-              message: ticket.message,
-              details: ticket.details,
-              token: maskedToken,
-            },
-            "Expo push ticket error",
-          );
-          if (errCode === "DeviceNotRegistered" || errCode === "InvalidCredentials") {
-            invalid.push(chunk[idx]!);
+          logger.error({ ...ticketLog, errCode }, "Expo push ticket rejected");
+          if (errCode === "DeviceNotRegistered" && token) {
+            invalid.push(token);
+          } else if (errCode === "InvalidCredentials") {
+            logger.error(
+              {
+                errCode,
+                hint: "Configure Android FCM V1 credentials for this EAS project; do not delete the device token",
+              },
+              "Expo FCM credentials are invalid or missing",
+            );
           }
         }
       });
@@ -208,14 +217,19 @@ async function checkExpoReceipts(receiptToToken: Map<string, string>): Promise<v
     }
     const json = (await resp.json()) as { data: Record<string, ExpoTicket> };
     const entries = Object.entries(json.data);
+    const staleExpoTokens: string[] = [];
     entries.forEach(([receiptId, receipt]) => {
-      const maskedToken = receiptToToken.get(receiptId) ?? "unknown";
+      const token = receiptToToken.get(receiptId);
+      const maskedToken = token?.slice(0, 30) ?? "unknown";
       if (receipt.status === "ok") {
         logger.info(
           { receiptId, status: "ok", token: maskedToken },
           "Expo receipt — APNs/FCM confirmed delivery ✅",
         );
       } else {
+        if (receipt.details?.error === "DeviceNotRegistered" && token) {
+          staleExpoTokens.push(token);
+        }
         // Log every field Expo returns so we can diagnose the exact APNs failure.
         logger.error(
           {
@@ -245,7 +259,7 @@ async function checkExpoReceipts(receiptToToken: Map<string, string>): Promise<v
         status: r.status,
         message: r.message,
         apnsError: r.details?.error,
-        token: receiptToToken.get(receiptId) ?? "unknown",
+        token: receiptToToken.get(receiptId)?.slice(0, 30) ?? "unknown",
       })),
       checkedAt: new Date().toISOString(),
     };
@@ -262,6 +276,7 @@ async function checkExpoReceipts(receiptToToken: Map<string, string>): Promise<v
     } catch (dbErr) {
       logger.warn({ dbErr }, "Failed to persist receipt result to DB");
     }
+    await removeStaleExpoTokens(staleExpoTokens);
   } catch (err) {
     logger.error({ err }, "Expo receipts fetch error");
   }
@@ -312,7 +327,7 @@ async function removeStaleByFCMToken(fcmTokens: string[]): Promise<void> {
         .where(eq(pushTokensTable.role, role));
 
       logger.info(
-        { role, tokenCount: rows.length, tokens: rows.map((r) => r.token) },
+        { role, tokenCount: rows.length, tokens: rows.map((r) => r.token.slice(0, 30)) },
         "sendPushToRole — resolved target tokens for role",
       );
 
@@ -415,7 +430,8 @@ export async function sendPushToDriver(driverId: number, msg: PushMessage): Prom
         .filter((t): t is string => !!t && t.startsWith("ExponentPushToken["));
       if (fallback.length > 0) {
         logger.warn({ driverId, fallback: fallback.length }, "FCM failed — falling back to Expo for driver");
-        await sendViaExpo(fallback, msg);
+        const staleFallback = await sendViaExpo(fallback, msg);
+        await removeStaleExpoTokens(staleFallback);
       }
     }
 

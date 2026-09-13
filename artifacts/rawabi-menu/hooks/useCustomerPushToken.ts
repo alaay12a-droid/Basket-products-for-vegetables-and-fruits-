@@ -142,8 +142,25 @@ export async function runPushDiagnostics(
   }
   await setStep("permission", "success", "تم السماح بالإشعارات", `status: ${permission}`);
 
+  let fcmToken: string | undefined;
   if (Platform.OS !== "ios") {
     await setStep("apns", "skipped", "هذه الخطوة مخصصة لأجهزة iPhone");
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("order-status", {
+        name: "حالة طلبك",
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: "default",
+        vibrationPattern: [0, 200, 100, 200],
+        lightColor: "#D4AF37",
+        showBadge: true,
+      });
+      try {
+        const nativeToken = await Notifications.getDevicePushTokenAsync();
+        fcmToken = String(nativeToken.data);
+      } catch {
+        // Expo delivery remains available when a native token cannot be read.
+      }
+    }
   } else {
     await setStep("apns", "pending", "جارٍ طلب تسجيل الجهاز لدى APNs");
     try {
@@ -175,6 +192,7 @@ export async function runPushDiagnostics(
   try {
     await apiPost("/push-tokens", {
       token: expoToken,
+      fcmToken,
       role: "customer",
     });
     await setStep("post", "success", "تم قبول التوكن من خادم المشروع", "POST /api/push-tokens — HTTP 2xx");

@@ -78,20 +78,32 @@ function AuthGate() {
 function NotificationSetup() {
   const router = useRouter();
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
+  const handledResponseId = useRef<string | null>(null);
 
   useEffect(() => {
     // Request notification permissions immediately on app launch
     registerCustomerNotifications().catch(() => {});
 
-    // Navigate to order-confirmed screen when customer taps a status notification
+    const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
+      const responseId = response.notification.request.identifier;
+      if (handledResponseId.current === responseId) return;
+      handledResponseId.current = responseId;
+      const data = response.notification.request.content.data as Record<string, unknown>;
+      const orderId = data?.orderId;
+      if (orderId != null) {
+        router.push(`/order-confirmed?orderId=${orderId}`);
+      }
+    };
+
+    // Navigate when the app is already running or resumes from the background.
     try {
-      responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-        const data = response.notification.request.content.data as Record<string, unknown>;
-        const orderId = data?.orderId;
-        if (orderId != null) {
-          router.push(`/order-confirmed?orderId=${orderId}`);
-        }
-      });
+      responseListener.current = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
+      // A listener alone misses the notification that launched a fully closed app.
+      Notifications.getLastNotificationResponseAsync()
+        .then((response) => {
+          if (response) handleNotificationResponse(response);
+        })
+        .catch(() => {});
     } catch {
       // Not supported in this environment — safe to ignore
     }

@@ -31,15 +31,49 @@ router.post("/push-tokens", async (req, res) => {
   }
   try {
     const { token, fcmToken, role, driverId } = parsed.data;
-    await db
-      .insert(pushTokensTable)
-      .values({ token, fcmToken: fcmToken ?? null, role, driverId: driverId ?? null })
-      .onConflictDoUpdate({
-        target: pushTokensTable.token,
-        set: { fcmToken: fcmToken ?? null, role, driverId: driverId ?? null },
-      });
-    res.json({ ok: true });
-  } catch {
+    const values = { token, fcmToken: fcmToken ?? null, role, driverId: driverId ?? null };
+    if (fcmToken) {
+      await db
+        .insert(pushTokensTable)
+        .values(values)
+        .onConflictDoUpdate({
+          target: pushTokensTable.token,
+          set: { fcmToken, role, driverId: driverId ?? null },
+        });
+    } else {
+      // Diagnostic and older app builds may only send the Expo token. Preserve
+      // any native FCM token already registered for this device.
+      await db
+        .insert(pushTokensTable)
+        .values(values)
+        .onConflictDoUpdate({
+          target: pushTokensTable.token,
+          set: { role, driverId: driverId ?? null },
+        });
+    }
+    const [stored] = await db
+      .select({
+        token: pushTokensTable.token,
+        role: pushTokensTable.role,
+        driverId: pushTokensTable.driverId,
+        fcmToken: pushTokensTable.fcmToken,
+      })
+      .from(pushTokensTable)
+      .where(eq(pushTokensTable.token, token))
+      .limit(1);
+    req.log.info(
+      {
+        token: token.slice(0, 30),
+        role: stored?.role,
+        driverId: stored?.driverId,
+        hasFcmToken: !!stored?.fcmToken,
+        persisted: stored?.token === token,
+      },
+      "Push token persisted and verified",
+    );
+    res.json({ ok: true, persisted: stored?.token === token, hasFcmToken: !!stored?.fcmToken });
+  } catch (err) {
+    req.log.error({ err }, "Failed to persist push token");
     res.status(500).json({ error: "تعذر حفظ الرمز" });
   }
 });

@@ -219,7 +219,7 @@ router.post("/messages/driver/:driverId/order/:orderId", async (req, res) => {
         title: "💬 رسالة من المندوب",
         body: parsed.data.text.length > 80 ? parsed.data.text.slice(0, 77) + "…" : parsed.data.text,
         sound: "default",
-        data: { orderId, type: "message" },
+        data: { orderId: String(orderId), type: "message" },
         channelId: "order-status",
       }).catch(() => {});
     }
@@ -262,7 +262,7 @@ router.post("/messages/order/:orderId", async (req, res) => {
           title: "💬 رسالة من الكاشير",
           body: parsed.data.text.length > 80 ? parsed.data.text.slice(0, 77) + "…" : parsed.data.text,
           sound: "default",
-          data: { orderId, type: "message" },
+          data: { orderId: String(orderId), type: "message" },
           channelId: "order-status",
         }).catch(() => {});
       }
@@ -285,7 +285,7 @@ router.post("/messages/order/:orderId", async (req, res) => {
         title: `💬 رسالة من عميل — طلب #${order?.dailyNumber ?? orderId}`,
         body: `${order?.customerName ?? ""}: ${parsed.data.text.length > 60 ? parsed.data.text.slice(0, 57) + "…" : parsed.data.text}`,
         sound: "default",
-        data: { orderId, type: "message" },
+        data: { orderId: String(orderId), type: "message" },
       }).catch(() => {});
     }
   } catch {
