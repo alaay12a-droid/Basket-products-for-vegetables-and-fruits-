@@ -6,7 +6,7 @@ export function buildReferralPage(ref: string | undefined): string {
   const code = (ref ?? "").toUpperCase().trim();
   const hasCode = code.startsWith("REF") && code.length > 3;
 
-  const iosUrl = "/";
+  const iosUrl = "https://apps.apple.com/sa/app/id6811387566";
   const androidUrl = "https://play.google.com/store/apps/details?id=com.basket.products";
 
   // Deep link into onboarding screen with the ref param
