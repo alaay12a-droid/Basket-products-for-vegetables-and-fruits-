@@ -1,0 +1,25 @@
+{
+  "cli": {
+    "version": ">= 18.11.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "environment": "preview",
+      "withoutCredentials": true,
+      "config": "preview.yml",
+      "node": "22.16.0",
+      "pnpm": "10.26.1",
+      "env": {
+        "VITE_MERCHANT_SERVER_URL": "https://basket-products-api.onrender.com/basket-merchant"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug",
+        "applicationArchivePath": "android/app/build/outputs/apk/debug/app-debug.apk",
+        "image": "ubuntu-24.04-jdk-17-ndk-r27b"
+      }
+    }
+  }
+}

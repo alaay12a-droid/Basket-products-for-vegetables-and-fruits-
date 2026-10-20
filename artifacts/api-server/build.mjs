@@ -121,6 +121,21 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
   });
+
+  // A separate compiled module keeps merchant routes/auth isolated from the core
+  // API while allowing Render to expose both on its existing public HTTP port.
+  await esbuild({
+    entryPoints: [path.resolve(artifactDir, "../basket-merchant/server/service.ts")],
+    platform: "node",
+    bundle: true,
+    format: "esm",
+    outfile: path.join(distDir, "merchant-service.mjs"),
+    logLevel: "info",
+    external: ["pg-native", "pino", "pino-pretty"],
+    banner: {
+      js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+    },
+  });
 }
 
 buildAll().catch((err) => {

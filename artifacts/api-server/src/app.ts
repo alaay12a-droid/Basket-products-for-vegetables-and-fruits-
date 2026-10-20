@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { buildReferralPage } from "./lib/referralLanding";
+import { embeddedMerchant } from "./lib/embedded-merchant";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -32,6 +33,9 @@ app.use(
     },
   }),
 );
+// Merchant owns its native CORS, sessions, JSON limits and error responses.
+// Register before the core API's middleware without changing its existing routes.
+app.use(embeddedMerchant.middleware);
 app.use(cors({
   origin: true,
   credentials: true,

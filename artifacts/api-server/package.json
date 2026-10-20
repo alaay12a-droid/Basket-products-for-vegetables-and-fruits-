@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "export NODE_ENV=development && pnpm run start",
     "dev:fresh": "export NODE_ENV=development && pnpm run build && pnpm run start",
-    "build": "NODE_ENV=production pnpm --filter @workspace/dashboard run build && node ./build.mjs",
+    "build": "NODE_ENV=production pnpm --filter @workspace/dashboard run build && NODE_ENV=production BASE_PATH=/basket-merchant/ PORT=0 pnpm --filter @workspace/basket-merchant run build && node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:bootstrap": "node scripts/bootstrap-empty-database.mjs",

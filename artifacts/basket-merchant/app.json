@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "السلة للتاجر",
+    "slug": "basket-merchant",
+    "owner": "021837ala",
+    "version": "1.0.0",
+    "platforms": [
+      "android"
+    ],
+    "android": {
+      "package": "com.basket.merchant"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "66c018d0-5a52-4db3-897a-2f1af09697ac"
+      }
+    }
+  }
+}

@@ -5,13 +5,10 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
-
-export interface DashboardCredentials {
-  username: string;
-  password: string;
+export interface MerchantReadiness {
+  enabled: boolean;
+  message: string;
+  printerNote: string;
 }
 
 export type DashboardUserRole =
@@ -26,6 +23,47 @@ export interface DashboardUser {
   id: number;
   username: string;
   role: DashboardUserRole;
+}
+
+export interface MerchantSession {
+  user: DashboardUser;
+  token?: string;
+}
+
+export type MerchantCommandKind =
+  (typeof MerchantCommandKind)[keyof typeof MerchantCommandKind];
+
+export const MerchantCommandKind = {
+  accept: "accept",
+  reject: "reject",
+  ready: "ready",
+  deliver: "deliver",
+  "refund-create": "refund-create",
+  "refund-decide": "refund-decide",
+  "driver-save": "driver-save",
+  "assign-driver": "assign-driver",
+  "message-send": "message-send",
+  "message-read": "message-read",
+  "item-save": "item-save",
+  "item-delete": "item-delete",
+  "item-availability": "item-availability",
+  "category-save": "category-save",
+  "category-delete": "category-delete",
+  "category-availability": "category-availability",
+  "menu-reorder": "menu-reorder",
+  "hours-save": "hours-save",
+  "store-toggle": "store-toggle",
+  "notification-read": "notification-read",
+  "settings-save": "settings-save",
+} as const;
+
+export type MerchantCommandData = { [key: string]: unknown };
+
+export interface MerchantCommand {
+  kind: MerchantCommandKind;
+  id?: string;
+  requestId: string;
+  data: MerchantCommandData;
 }
 
 export interface OrderItemSelectedOption {
@@ -86,6 +124,226 @@ export interface Order {
   paymentMethod: string;
   notes?: string | null;
   createdAt: string;
+}
+
+export type MerchantOrder = Order & {
+  /** @nullable */
+  branchId?: number | null;
+  /** @nullable */
+  branchName?: string | null;
+  /** @nullable */
+  driverId?: number | null;
+  /** @nullable */
+  driverName?: string | null;
+  /** @nullable */
+  preparationMinutes?: number | null;
+  /** @nullable */
+  rejectionReason?: string | null;
+  taxAmount?: number;
+};
+
+export type MerchantProductOptionsItemChoicesItem = {
+  name: string;
+  extraPrice: number;
+  available: boolean;
+};
+
+export type MerchantProductOptionsItem = {
+  groupName: string;
+  required: boolean;
+  choices: MerchantProductOptionsItemChoicesItem[];
+};
+
+export interface SizeOption {
+  name: string;
+  price: number;
+  enabled: boolean;
+}
+
+export interface MenuItem {
+  id: number;
+  itemId: string;
+  name: string;
+  nameEn?: string | null;
+  category: string;
+  price: number;
+  available: boolean;
+  imageKey?: string | null;
+  imageUrl?: string | null;
+  stock?: number | null;
+  sizes: SizeOption[];
+  sortOrder: number;
+}
+
+export type MerchantProduct = MenuItem & {
+  /** @nullable */
+  unavailableUntil?: string | null;
+  options?: MerchantProductOptionsItem[];
+};
+
+export interface MerchantMessage {
+  id: number;
+  orderId: number;
+  text: string;
+  fromCashier: boolean;
+  createdAt: string;
+  /** @nullable */
+  readAt?: string | null;
+}
+
+export interface MerchantNotification {
+  id: number;
+  type: string;
+  title: string;
+  body: string;
+  /** @nullable */
+  orderId?: number | null;
+  createdAt: string;
+  /** @nullable */
+  readAt?: string | null;
+}
+
+export type MerchantRefundType =
+  (typeof MerchantRefundType)[keyof typeof MerchantRefundType];
+
+export const MerchantRefundType = {
+  cancel: "cancel",
+  refund: "refund",
+} as const;
+
+export type MerchantRefundStatus =
+  (typeof MerchantRefundStatus)[keyof typeof MerchantRefundStatus];
+
+export const MerchantRefundStatus = {
+  pending: "pending",
+  accepted: "accepted",
+  rejected: "rejected",
+} as const;
+
+export interface MerchantRefund {
+  id: number;
+  orderId: number;
+  reason: string;
+  type: MerchantRefundType;
+  status: MerchantRefundStatus;
+  createdAt: string;
+  /** @nullable */
+  decisionReason?: string | null;
+}
+
+export interface MerchantAssignment {
+  id: number;
+  orderId: number;
+  driverId: number;
+  driverName: string;
+  /** @nullable */
+  previousDriverId?: number | null;
+  createdAt: string;
+}
+
+export type MerchantDayHoursPeriodsItem = {
+  open: string;
+  close: string;
+};
+
+export interface MerchantDayHours {
+  /**
+   * @minimum 0
+   * @maximum 6
+   */
+  day: number;
+  periods: MerchantDayHoursPeriodsItem[];
+}
+
+export type MerchantSettingsPaperWidth =
+  (typeof MerchantSettingsPaperWidth)[keyof typeof MerchantSettingsPaperWidth];
+
+export const MerchantSettingsPaperWidth = {
+  NUMBER_58: 58,
+  NUMBER_80: 80,
+} as const;
+
+export type MerchantSettingsLanguage =
+  (typeof MerchantSettingsLanguage)[keyof typeof MerchantSettingsLanguage];
+
+export const MerchantSettingsLanguage = {
+  ar: "ar",
+  en: "en",
+} as const;
+
+export type MerchantSettingsPrinterTransport =
+  (typeof MerchantSettingsPrinterTransport)[keyof typeof MerchantSettingsPrinterTransport];
+
+export const MerchantSettingsPrinterTransport = {
+  none: "none",
+  tcp: "tcp",
+  bluetooth: "bluetooth",
+  sunmi: "sunmi",
+  vendor: "vendor",
+} as const;
+
+export interface MerchantSettings {
+  storeName: string;
+  storeAddress?: string;
+  taxNumber?: string;
+  supportPhone: string;
+  supportWhatsapp: string;
+  paperWidth: MerchantSettingsPaperWidth;
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  copies: number;
+  kitchenCopy: boolean;
+  autoPrint: boolean;
+  soundEnabled: boolean;
+  keepAwake: boolean;
+  language: MerchantSettingsLanguage;
+  printerTransport: MerchantSettingsPrinterTransport;
+  printerAddress: string;
+}
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  nameEn: string;
+  icon: string;
+  isCustom?: boolean;
+}
+
+export interface Driver {
+  id: number;
+  name: string;
+  phone: string;
+  active: boolean;
+  photoUrl?: string | null;
+}
+
+export interface MerchantSnapshot {
+  user: DashboardUser;
+  orders: MerchantOrder[];
+  products: MerchantProduct[];
+  categories: MenuCategory[];
+  drivers: Driver[];
+  messages: MerchantMessage[];
+  notifications: MerchantNotification[];
+  refunds: MerchantRefund[];
+  assignmentHistory: MerchantAssignment[];
+  hours: MerchantDayHours[];
+  settings: MerchantSettings;
+  storeOpen: boolean;
+  /** @nullable */
+  closedUntil?: string | null;
+  serverTime: string;
+}
+
+export interface HealthStatus {
+  status: string;
+}
+
+export interface DashboardCredentials {
+  username: string;
+  password: string;
 }
 
 export type OrderStatusUpdateStatus =
@@ -184,35 +442,6 @@ export interface MenuTemplateSetting {
   menuTemplate: MenuTemplateSettingMenuTemplate;
 }
 
-export interface SizeOption {
-  name: string;
-  price: number;
-  enabled: boolean;
-}
-
-export interface MenuCategory {
-  id: string;
-  name: string;
-  nameEn: string;
-  icon: string;
-  isCustom?: boolean;
-}
-
-export interface MenuItem {
-  id: number;
-  itemId: string;
-  name: string;
-  nameEn?: string | null;
-  category: string;
-  price: number;
-  available: boolean;
-  imageKey?: string | null;
-  imageUrl?: string | null;
-  stock?: number | null;
-  sizes: SizeOption[];
-  sortOrder: number;
-}
-
 export interface MenuItemUpdate {
   name?: string;
   nameEn?: string;
@@ -222,14 +451,6 @@ export interface MenuItemUpdate {
   imageUrl?: string | null;
   imageKey?: string | null;
   sizes?: SizeOption[];
-}
-
-export interface Driver {
-  id: number;
-  name: string;
-  phone: string;
-  active: boolean;
-  photoUrl?: string | null;
 }
 
 export interface DriverDailySummary {
@@ -267,6 +488,30 @@ export interface DriverRankingEntry {
   avgStars?: number | null;
   recentReviews: DriverReview[];
 }
+
+export type MerchantHistoryParams = {
+  /**
+   * @maxLength 100
+   */
+  search?: string;
+  date?: string;
+  status?: MerchantHistoryStatus;
+  /**
+   * @minimum 1
+   */
+  before?: number;
+};
+
+export type MerchantHistoryStatus =
+  (typeof MerchantHistoryStatus)[keyof typeof MerchantHistoryStatus];
+
+export const MerchantHistoryStatus = {
+  pending: "pending",
+  preparing: "preparing",
+  ready: "ready",
+  done: "done",
+  cancelled: "cancelled",
+} as const;
 
 export type ListOrdersParams = {
   status?: ListOrdersStatus;

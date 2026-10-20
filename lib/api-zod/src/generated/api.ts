@@ -7,6 +7,498 @@
  */
 import * as zod from "zod";
 
+export const MerchantStatusResponse = zod.object({
+  enabled: zod.boolean(),
+  message: zod.string(),
+  printerNote: zod.string(),
+});
+
+export const MerchantLoginBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+});
+
+export const MerchantLoginResponse = zod.object({
+  user: zod.object({
+    id: zod.number(),
+    username: zod.string(),
+    role: zod.enum(["admin", "employee"]),
+  }),
+  token: zod.string().optional(),
+});
+
+export const MerchantLogoutResponse = zod.object({
+  status: zod.string(),
+});
+
+export const merchantStateResponseHoursItemDayMin = 0;
+export const merchantStateResponseHoursItemDayMax = 6;
+
+export const merchantStateResponseSettingsCopiesMax = 5;
+
+export const MerchantStateResponse = zod.object({
+  user: zod.object({
+    id: zod.number(),
+    username: zod.string(),
+    role: zod.enum(["admin", "employee"]),
+  }),
+  orders: zod.array(
+    zod
+      .object({
+        id: zod.number(),
+        dailyNumber: zod.number(),
+        customerName: zod.string(),
+        customerPhone: zod.string(),
+        customerAddress: zod.string(),
+        items: zod.array(
+          zod.object({
+            id: zod.string(),
+            name: zod.string(),
+            price: zod.number(),
+            quantity: zod.number(),
+            customization: zod
+              .object({
+                size: zod.string().optional(),
+                riceType: zod.string().optional(),
+                addon: zod.string().optional(),
+                variantId: zod.string().optional(),
+                variantName: zod.string().optional(),
+                variantPrice: zod.number().optional(),
+                unitPrice: zod.number().optional(),
+                selectedOptions: zod
+                  .array(
+                    zod.object({
+                      groupName: zod.string(),
+                      choice: zod.string(),
+                    }),
+                  )
+                  .optional(),
+              })
+              .optional(),
+          }),
+        ),
+        totalPrice: zod.number(),
+        deliveryFee: zod.number(),
+        discountCode: zod.string().nullish(),
+        discountAmount: zod.number().nullish(),
+        orderType: zod.enum(["delivery", "pickup"]),
+        status: zod.enum([
+          "pending",
+          "preparing",
+          "ready",
+          "done",
+          "cancelled",
+        ]),
+        paymentMethod: zod.string(),
+        notes: zod.string().nullish(),
+        createdAt: zod.string(),
+      })
+      .and(
+        zod.object({
+          branchId: zod.number().nullish(),
+          branchName: zod.string().nullish(),
+          driverId: zod.number().nullish(),
+          driverName: zod.string().nullish(),
+          preparationMinutes: zod.number().nullish(),
+          rejectionReason: zod.string().nullish(),
+          taxAmount: zod.number().optional(),
+        }),
+      ),
+  ),
+  products: zod.array(
+    zod
+      .object({
+        id: zod.number(),
+        itemId: zod.string(),
+        name: zod.string(),
+        nameEn: zod.string().nullish(),
+        category: zod.string(),
+        price: zod.number(),
+        available: zod.boolean(),
+        imageKey: zod.string().nullish(),
+        imageUrl: zod.string().nullish(),
+        stock: zod.number().nullish(),
+        sizes: zod.array(
+          zod.object({
+            name: zod.string(),
+            price: zod.number(),
+            enabled: zod.boolean(),
+          }),
+        ),
+        sortOrder: zod.number(),
+      })
+      .and(
+        zod.object({
+          unavailableUntil: zod.string().nullish(),
+          options: zod
+            .array(
+              zod.object({
+                groupName: zod.string(),
+                required: zod.boolean(),
+                choices: zod.array(
+                  zod.object({
+                    name: zod.string(),
+                    extraPrice: zod.number(),
+                    available: zod.boolean(),
+                  }),
+                ),
+              }),
+            )
+            .optional(),
+        }),
+      ),
+  ),
+  categories: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      nameEn: zod.string(),
+      icon: zod.string(),
+      isCustom: zod.boolean().optional(),
+    }),
+  ),
+  drivers: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      phone: zod.string(),
+      active: zod.boolean(),
+      photoUrl: zod.string().nullish(),
+    }),
+  ),
+  messages: zod.array(
+    zod.object({
+      id: zod.number(),
+      orderId: zod.number(),
+      text: zod.string(),
+      fromCashier: zod.boolean(),
+      createdAt: zod.string(),
+      readAt: zod.string().nullish(),
+    }),
+  ),
+  notifications: zod.array(
+    zod.object({
+      id: zod.number(),
+      type: zod.string(),
+      title: zod.string(),
+      body: zod.string(),
+      orderId: zod.number().nullish(),
+      createdAt: zod.string(),
+      readAt: zod.string().nullish(),
+    }),
+  ),
+  refunds: zod.array(
+    zod.object({
+      id: zod.number(),
+      orderId: zod.number(),
+      reason: zod.string(),
+      type: zod.enum(["cancel", "refund"]),
+      status: zod.enum(["pending", "accepted", "rejected"]),
+      createdAt: zod.string(),
+      decisionReason: zod.string().nullish(),
+    }),
+  ),
+  assignmentHistory: zod.array(
+    zod.object({
+      id: zod.number(),
+      orderId: zod.number(),
+      driverId: zod.number(),
+      driverName: zod.string(),
+      previousDriverId: zod.number().nullish(),
+      createdAt: zod.string(),
+    }),
+  ),
+  hours: zod.array(
+    zod.object({
+      day: zod
+        .number()
+        .min(merchantStateResponseHoursItemDayMin)
+        .max(merchantStateResponseHoursItemDayMax),
+      periods: zod.array(
+        zod.object({
+          open: zod.string(),
+          close: zod.string(),
+        }),
+      ),
+    }),
+  ),
+  settings: zod.object({
+    storeName: zod.string(),
+    storeAddress: zod.string().optional(),
+    taxNumber: zod.string().optional(),
+    supportPhone: zod.string(),
+    supportWhatsapp: zod.string(),
+    paperWidth: zod.union([zod.literal(58), zod.literal(80)]),
+    copies: zod.number().min(1).max(merchantStateResponseSettingsCopiesMax),
+    kitchenCopy: zod.boolean(),
+    autoPrint: zod.boolean(),
+    soundEnabled: zod.boolean(),
+    keepAwake: zod.boolean(),
+    language: zod.enum(["ar", "en"]),
+    printerTransport: zod.enum(["none", "tcp", "bluetooth", "sunmi", "vendor"]),
+    printerAddress: zod.string(),
+  }),
+  storeOpen: zod.boolean(),
+  closedUntil: zod.string().nullish(),
+  serverTime: zod.string(),
+});
+
+export const merchantHistoryQuerySearchMax = 100;
+
+export const MerchantHistoryQueryParams = zod.object({
+  search: zod.coerce.string().max(merchantHistoryQuerySearchMax).optional(),
+  date: zod.date().optional(),
+  status: zod
+    .enum(["pending", "preparing", "ready", "done", "cancelled"])
+    .optional(),
+  before: zod.coerce.number().min(1).optional(),
+});
+
+export const merchantHistoryResponseHoursItemDayMin = 0;
+export const merchantHistoryResponseHoursItemDayMax = 6;
+
+export const merchantHistoryResponseSettingsCopiesMax = 5;
+
+export const MerchantHistoryResponse = zod.object({
+  user: zod.object({
+    id: zod.number(),
+    username: zod.string(),
+    role: zod.enum(["admin", "employee"]),
+  }),
+  orders: zod.array(
+    zod
+      .object({
+        id: zod.number(),
+        dailyNumber: zod.number(),
+        customerName: zod.string(),
+        customerPhone: zod.string(),
+        customerAddress: zod.string(),
+        items: zod.array(
+          zod.object({
+            id: zod.string(),
+            name: zod.string(),
+            price: zod.number(),
+            quantity: zod.number(),
+            customization: zod
+              .object({
+                size: zod.string().optional(),
+                riceType: zod.string().optional(),
+                addon: zod.string().optional(),
+                variantId: zod.string().optional(),
+                variantName: zod.string().optional(),
+                variantPrice: zod.number().optional(),
+                unitPrice: zod.number().optional(),
+                selectedOptions: zod
+                  .array(
+                    zod.object({
+                      groupName: zod.string(),
+                      choice: zod.string(),
+                    }),
+                  )
+                  .optional(),
+              })
+              .optional(),
+          }),
+        ),
+        totalPrice: zod.number(),
+        deliveryFee: zod.number(),
+        discountCode: zod.string().nullish(),
+        discountAmount: zod.number().nullish(),
+        orderType: zod.enum(["delivery", "pickup"]),
+        status: zod.enum([
+          "pending",
+          "preparing",
+          "ready",
+          "done",
+          "cancelled",
+        ]),
+        paymentMethod: zod.string(),
+        notes: zod.string().nullish(),
+        createdAt: zod.string(),
+      })
+      .and(
+        zod.object({
+          branchId: zod.number().nullish(),
+          branchName: zod.string().nullish(),
+          driverId: zod.number().nullish(),
+          driverName: zod.string().nullish(),
+          preparationMinutes: zod.number().nullish(),
+          rejectionReason: zod.string().nullish(),
+          taxAmount: zod.number().optional(),
+        }),
+      ),
+  ),
+  products: zod.array(
+    zod
+      .object({
+        id: zod.number(),
+        itemId: zod.string(),
+        name: zod.string(),
+        nameEn: zod.string().nullish(),
+        category: zod.string(),
+        price: zod.number(),
+        available: zod.boolean(),
+        imageKey: zod.string().nullish(),
+        imageUrl: zod.string().nullish(),
+        stock: zod.number().nullish(),
+        sizes: zod.array(
+          zod.object({
+            name: zod.string(),
+            price: zod.number(),
+            enabled: zod.boolean(),
+          }),
+        ),
+        sortOrder: zod.number(),
+      })
+      .and(
+        zod.object({
+          unavailableUntil: zod.string().nullish(),
+          options: zod
+            .array(
+              zod.object({
+                groupName: zod.string(),
+                required: zod.boolean(),
+                choices: zod.array(
+                  zod.object({
+                    name: zod.string(),
+                    extraPrice: zod.number(),
+                    available: zod.boolean(),
+                  }),
+                ),
+              }),
+            )
+            .optional(),
+        }),
+      ),
+  ),
+  categories: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      nameEn: zod.string(),
+      icon: zod.string(),
+      isCustom: zod.boolean().optional(),
+    }),
+  ),
+  drivers: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      phone: zod.string(),
+      active: zod.boolean(),
+      photoUrl: zod.string().nullish(),
+    }),
+  ),
+  messages: zod.array(
+    zod.object({
+      id: zod.number(),
+      orderId: zod.number(),
+      text: zod.string(),
+      fromCashier: zod.boolean(),
+      createdAt: zod.string(),
+      readAt: zod.string().nullish(),
+    }),
+  ),
+  notifications: zod.array(
+    zod.object({
+      id: zod.number(),
+      type: zod.string(),
+      title: zod.string(),
+      body: zod.string(),
+      orderId: zod.number().nullish(),
+      createdAt: zod.string(),
+      readAt: zod.string().nullish(),
+    }),
+  ),
+  refunds: zod.array(
+    zod.object({
+      id: zod.number(),
+      orderId: zod.number(),
+      reason: zod.string(),
+      type: zod.enum(["cancel", "refund"]),
+      status: zod.enum(["pending", "accepted", "rejected"]),
+      createdAt: zod.string(),
+      decisionReason: zod.string().nullish(),
+    }),
+  ),
+  assignmentHistory: zod.array(
+    zod.object({
+      id: zod.number(),
+      orderId: zod.number(),
+      driverId: zod.number(),
+      driverName: zod.string(),
+      previousDriverId: zod.number().nullish(),
+      createdAt: zod.string(),
+    }),
+  ),
+  hours: zod.array(
+    zod.object({
+      day: zod
+        .number()
+        .min(merchantHistoryResponseHoursItemDayMin)
+        .max(merchantHistoryResponseHoursItemDayMax),
+      periods: zod.array(
+        zod.object({
+          open: zod.string(),
+          close: zod.string(),
+        }),
+      ),
+    }),
+  ),
+  settings: zod.object({
+    storeName: zod.string(),
+    storeAddress: zod.string().optional(),
+    taxNumber: zod.string().optional(),
+    supportPhone: zod.string(),
+    supportWhatsapp: zod.string(),
+    paperWidth: zod.union([zod.literal(58), zod.literal(80)]),
+    copies: zod.number().min(1).max(merchantHistoryResponseSettingsCopiesMax),
+    kitchenCopy: zod.boolean(),
+    autoPrint: zod.boolean(),
+    soundEnabled: zod.boolean(),
+    keepAwake: zod.boolean(),
+    language: zod.enum(["ar", "en"]),
+    printerTransport: zod.enum(["none", "tcp", "bluetooth", "sunmi", "vendor"]),
+    printerAddress: zod.string(),
+  }),
+  storeOpen: zod.boolean(),
+  closedUntil: zod.string().nullish(),
+  serverTime: zod.string(),
+});
+
+export const MerchantActionBody = zod.object({
+  kind: zod.enum([
+    "accept",
+    "reject",
+    "ready",
+    "deliver",
+    "refund-create",
+    "refund-decide",
+    "driver-save",
+    "assign-driver",
+    "message-send",
+    "message-read",
+    "item-save",
+    "item-delete",
+    "item-availability",
+    "category-save",
+    "category-delete",
+    "category-availability",
+    "menu-reorder",
+    "hours-save",
+    "store-toggle",
+    "notification-read",
+    "settings-save",
+  ]),
+  id: zod.string().optional(),
+  requestId: zod.string().uuid(),
+  data: zod.record(zod.string(), zod.unknown()),
+});
+
+export const MerchantActionResponse = zod.object({
+  status: zod.string(),
+});
+
 /**
  * @summary Health check
  */

@@ -1,0 +1,32 @@
+build:
+  name: Basket Merchant — Preview APK
+  steps:
+    - eas/checkout
+    - eas/install_node_modules
+    - run:
+        name: Select Java 21 for Capacitor Android
+        command: |
+          if [ ! -x /usr/lib/jvm/java-21-openjdk-amd64/bin/java ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends openjdk-21-jdk-headless
+          fi
+          set-env JAVA_HOME /usr/lib/jvm/java-21-openjdk-amd64
+          set-env PATH "/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH"
+    - run:
+        name: Build merchant assets and synchronize Capacitor
+        command: |
+          pnpm run build:native
+          pnpm exec cap sync android
+    - run:
+        name: Assemble standalone merchant Android APK
+        command: |
+          cd android
+          ./gradlew :app:assembleDebug --no-daemon --max-workers=2
+          test -s app/build/outputs/apk/debug/app-debug.apk
+    - eas/upload_artifact:
+        name: Upload installable Preview APK
+        inputs:
+          type: application-archive
+          # This built-in resolves paths from the uploaded repository root,
+          # unlike run steps, which execute in the merchant app directory.
+          path: artifacts/basket-merchant/android/app/build/outputs/apk/debug/app-debug.apk

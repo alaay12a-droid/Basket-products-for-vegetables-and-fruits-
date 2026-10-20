@@ -1,5 +1,7 @@
 import { schedule } from "node-cron";
 import app from "./app";
+import { createServer } from "node:http";
+import { embeddedMerchant } from "./lib/embedded-merchant";
 import { logger } from "./lib/logger";
 import { seedOccasions } from "./routes/occasions";
 import { cleanupExpiredDiscountCodes } from "./routes/discounts";
@@ -28,12 +30,14 @@ async function runRuntimeSeeds() {
 }
 
 runRuntimeSeeds()
-  .then(() => {
-    app.listen(port, "0.0.0.0", (err) => {
-      if (err) {
-        logger.error({ err }, "Error listening on port");
-        process.exit(1);
-      }
+  .then(async () => {
+    const server = createServer(app);
+    await embeddedMerchant.attach(server);
+    server.on("error", (err) => {
+      logger.error({ err }, "Error listening on port");
+      process.exit(1);
+    });
+    server.listen(port, "0.0.0.0", () => {
 
       logger.info({ port }, "Server listening");
 

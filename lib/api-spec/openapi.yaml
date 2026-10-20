@@ -22,6 +22,85 @@ tags:
     description: Driver management
 
 paths:
+  /merchant/status:
+    get:
+      operationId: merchantStatus
+      tags: [merchant]
+      responses:
+        "200":
+          description: Independent merchant service readiness, without accessing customer data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MerchantReadiness" }
+  /merchant/login:
+    post:
+      operationId: merchantLogin
+      tags: [merchant]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DashboardCredentials" }
+      responses:
+        "200":
+          description: Independent merchant session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MerchantSession" }
+  /merchant/logout:
+    post:
+      operationId: merchantLogout
+      tags: [merchant]
+      responses:
+        "200":
+          description: Session revoked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+  /merchant/state:
+    get:
+      operationId: merchantState
+      tags: [merchant]
+      responses:
+        "200":
+          description: Authorized branch-scoped merchant snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MerchantSnapshot" }
+        "401": { description: Merchant login required }
+        "503": { description: Merchant service not activated or schema not installed }
+  /merchant/history:
+    get:
+      operationId: merchantHistory
+      tags: [merchant]
+      parameters:
+        - { name: search, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: date, in: query, schema: { type: string, format: date } }
+        - { name: status, in: query, schema: { type: string, enum: [pending, preparing, ready, done, cancelled] } }
+        - { name: before, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        "200":
+          description: Server-filtered archive page, up to 250 orders, with branch-scoped detail data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MerchantSnapshot" }
+        "401": { description: Merchant login required }
+  /merchant/actions:
+    post:
+      operationId: merchantAction
+      tags: [merchant]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MerchantCommand" }
+      responses:
+        "200":
+          description: Persisted command result; refresh state after success
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+        "409": { description: State conflict; reload before retrying }
   /healthz:
     get:
       operationId: healthCheck
@@ -413,6 +492,175 @@ paths:
 
 components:
   schemas:
+    MerchantReadiness:
+      type: object
+      required: [enabled, message, printerNote]
+      properties:
+        enabled: { type: boolean }
+        message: { type: string }
+        printerNote: { type: string }
+    MerchantSession:
+      type: object
+      required: [user]
+      properties:
+        user: { $ref: "#/components/schemas/DashboardUser" }
+        token: { type: string }
+    MerchantCommand:
+      type: object
+      required: [kind, data, requestId]
+      properties:
+        kind:
+          type: string
+          enum: [accept, reject, ready, deliver, refund-create, refund-decide, driver-save, assign-driver, message-send, message-read, item-save, item-delete, item-availability, category-save, category-delete, category-availability, menu-reorder, hours-save, store-toggle, notification-read, settings-save]
+        id: { type: string }
+        requestId: { type: string, format: uuid }
+        data:
+          type: object
+          additionalProperties: true
+    MerchantOrder:
+      allOf:
+        - { $ref: "#/components/schemas/Order" }
+        - type: object
+          properties:
+            branchId: { type: ["integer", "null"] }
+            branchName: { type: ["string", "null"] }
+            driverId: { type: ["integer", "null"] }
+            driverName: { type: ["string", "null"] }
+            preparationMinutes: { type: ["integer", "null"] }
+            rejectionReason: { type: ["string", "null"] }
+            taxAmount: { type: number }
+    MerchantProduct:
+      allOf:
+        - { $ref: "#/components/schemas/MenuItem" }
+        - type: object
+          properties:
+            unavailableUntil: { type: ["string", "null"] }
+            options:
+              type: array
+              items:
+                type: object
+                required: [groupName, required, choices]
+                properties:
+                  groupName: { type: string }
+                  required: { type: boolean }
+                  choices:
+                    type: array
+                    items:
+                      type: object
+                      required: [name, extraPrice, available]
+                      properties:
+                        name: { type: string }
+                        extraPrice: { type: number }
+                        available: { type: boolean }
+    MerchantMessage:
+      type: object
+      required: [id, orderId, text, fromCashier, createdAt]
+      properties:
+        id: { type: integer }
+        orderId: { type: integer }
+        text: { type: string }
+        fromCashier: { type: boolean }
+        createdAt: { type: string }
+        readAt: { type: ["string", "null"] }
+    MerchantNotification:
+      type: object
+      required: [id, type, title, body, createdAt]
+      properties:
+        id: { type: integer }
+        type: { type: string }
+        title: { type: string }
+        body: { type: string }
+        orderId: { type: ["integer", "null"] }
+        createdAt: { type: string }
+        readAt: { type: ["string", "null"] }
+    MerchantRefund:
+      type: object
+      required: [id, orderId, reason, type, status, createdAt]
+      properties:
+        id: { type: integer }
+        orderId: { type: integer }
+        reason: { type: string }
+        type: { type: string, enum: [cancel, refund] }
+        status: { type: string, enum: [pending, accepted, rejected] }
+        createdAt: { type: string }
+        decisionReason: { type: ["string", "null"] }
+    MerchantAssignment:
+      type: object
+      required: [id, orderId, driverId, driverName, createdAt]
+      properties:
+        id: { type: integer }
+        orderId: { type: integer }
+        driverId: { type: integer }
+        driverName: { type: string }
+        previousDriverId: { type: ["integer", "null"] }
+        createdAt: { type: string }
+    MerchantDayHours:
+      type: object
+      required: [day, periods]
+      properties:
+        day: { type: integer, minimum: 0, maximum: 6 }
+        periods:
+          type: array
+          items:
+            type: object
+            required: [open, close]
+            properties:
+              open: { type: string }
+              close: { type: string }
+    MerchantSettings:
+      type: object
+      required: [storeName, supportPhone, supportWhatsapp, paperWidth, copies, kitchenCopy, autoPrint, soundEnabled, keepAwake, language, printerTransport, printerAddress]
+      properties:
+        storeName: { type: string }
+        storeAddress: { type: string }
+        taxNumber: { type: string }
+        supportPhone: { type: string }
+        supportWhatsapp: { type: string }
+        paperWidth: { type: integer, enum: [58, 80] }
+        copies: { type: integer, minimum: 1, maximum: 5 }
+        kitchenCopy: { type: boolean }
+        autoPrint: { type: boolean }
+        soundEnabled: { type: boolean }
+        keepAwake: { type: boolean }
+        language: { type: string, enum: [ar, en] }
+        printerTransport: { type: string, enum: [none, tcp, bluetooth, sunmi, vendor] }
+        printerAddress: { type: string }
+    MerchantSnapshot:
+      type: object
+      required: [user, orders, products, categories, drivers, messages, notifications, refunds, assignmentHistory, hours, settings, storeOpen, serverTime]
+      properties:
+        user: { $ref: "#/components/schemas/DashboardUser" }
+        orders:
+          type: array
+          items: { $ref: "#/components/schemas/MerchantOrder" }
+        products:
+          type: array
+          items: { $ref: "#/components/schemas/MerchantProduct" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/MenuCategory" }
+        drivers:
+          type: array
+          items: { $ref: "#/components/schemas/Driver" }
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/MerchantMessage" }
+        notifications:
+          type: array
+          items: { $ref: "#/components/schemas/MerchantNotification" }
+        refunds:
+          type: array
+          items: { $ref: "#/components/schemas/MerchantRefund" }
+        assignmentHistory:
+          type: array
+          items: { $ref: "#/components/schemas/MerchantAssignment" }
+        hours:
+          type: array
+          items: { $ref: "#/components/schemas/MerchantDayHours" }
+        settings: { $ref: "#/components/schemas/MerchantSettings" }
+        storeOpen: { type: boolean }
+        closedUntil: { type: ["string", "null"] }
+        serverTime: { type: string }
     HealthStatus:
       type: object
       properties:
