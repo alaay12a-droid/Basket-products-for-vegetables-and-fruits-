@@ -19,7 +19,7 @@ type SettingsSection = "hours" | "payment" | "security" | "appearance" | "menuTe
 type MenuTemplate = "classic" | "modern";
 
 interface ApiMenuItem { id: string; name: string; nameEn?: string; category: string; price: number; isAvailable: boolean; stock: number | null; imageUrl?: string; description?: string; }
-interface ApiOccasion { id: string; name: string; description?: string; imageUrl?: string; isActive: boolean; }
+interface ApiOccasion { id: string; occasionId: string; name: string; description?: string; imageUrl?: string; active: boolean; }
 interface ApiBanner { bannerId: string; imageUrl: string; title?: string | null; active: boolean; createdAt: string; }
 interface ApiCombo { id: string; name: string; price: number; description?: string; imageUrl?: string; isAvailable: boolean; components: { name: string; quantity: number }[]; }
 interface ApiZone { id: number; name: string; deliveryFee: number; minOrder: number; enabled: boolean; polygon?: LatLng[]; sortOrder?: number; branchId?: number | null; }
@@ -368,7 +368,10 @@ export default function Admin() {
     finally { setOccasionSaving(false); }
   };
   const handleToggleOccasion = async (o: ApiOccasion) => {
-    try { await apiPut(`/occasions/${o.id}`, { isActive: !o.isActive }); setOccasions(prev => prev.map(x => x.id === o.id ? { ...x, isActive: !x.isActive } : x)); }
+    try {
+      const updated = await apiPut<ApiOccasion>(`/occasions/${encodeURIComponent(o.occasionId)}`, { active: !o.active });
+      setOccasions(prev => prev.map(x => x.occasionId === o.occasionId ? updated : x));
+    }
     catch { toast({ title: "خطأ", variant: "destructive" }); }
   };
   const handleDeleteOccasion = async (id: string) => {
@@ -774,7 +777,7 @@ export default function Admin() {
                     {occ.description && <div className="text-xs text-muted-foreground mt-0.5">{occ.description}</div>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Switch checked={occ.isActive} onCheckedChange={() => handleToggleOccasion(occ)} />
+                    <Switch checked={occ.active === true} onCheckedChange={() => handleToggleOccasion(occ)} />
                     <button onClick={() => openEditOccasion(occ)} className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center hover:bg-blue-200 transition-colors">
                       <Pencil className="h-3.5 w-3.5" />
                     </button>

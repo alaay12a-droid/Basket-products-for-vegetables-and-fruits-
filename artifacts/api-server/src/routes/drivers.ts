@@ -1532,9 +1532,11 @@ router.get("/map/:orderId", async (req, res) => {
   const orderId = parseInt(req.params.orderId);
   if (isNaN(orderId)) { res.status(400).send("معرّف غير صحيح"); return; }
 
-  // Restaurant location — منتجات السلة للخضار والفواكه، تبوك حي الصفا
-  const RESTAURANT_LAT = 28.410769;
-  const RESTAURANT_LNG = 36.532353;
+  // Only the branch assigned to this order may supply the store marker.
+  // Missing branch coordinates must not fall back to another store.
+  let branchLat: number | null = null;
+  let branchLng: number | null = null;
+  let branchName = "";
 
   // Fetch order info for customer address + names
   let customerLat: number | null = null;
@@ -1552,8 +1554,12 @@ router.get("/map/:orderId", async (req, res) => {
         driverName:      deliveryDriversTable.name,
         driverLat:       orderDriverAssignmentsTable.driverLat,
         driverLng:       orderDriverAssignmentsTable.driverLng,
+        branchLat:       branchesTable.lat,
+        branchLng:       branchesTable.lng,
+        branchName:      branchesTable.name,
       })
       .from(ordersTable)
+      .leftJoin(branchesTable, eq(branchesTable.id, ordersTable.branchId))
       .leftJoin(orderDriverAssignmentsTable, eq(orderDriverAssignmentsTable.orderId, ordersTable.id))
       .leftJoin(deliveryDriversTable, eq(deliveryDriversTable.id, orderDriverAssignmentsTable.driverId))
       .where(eq(ordersTable.id, orderId))
@@ -1564,6 +1570,16 @@ router.get("/map/:orderId", async (req, res) => {
       customerName = row.customerName ?? "";
       driverName   = row.driverName   ?? "المندوب";
       dailyNumber  = row.dailyNumber  ?? null;
+      branchName = row.branchName ?? "";
+      if (
+        typeof row.branchLat === "number" && Number.isFinite(row.branchLat) &&
+        typeof row.branchLng === "number" && Number.isFinite(row.branchLng) &&
+        row.branchLat >= -90 && row.branchLat <= 90 &&
+        row.branchLng >= -180 && row.branchLng <= 180
+      ) {
+        branchLat = row.branchLat;
+        branchLng = row.branchLng;
+      }
       // Parse Google Maps URL: https://maps.google.com/?q=LAT,LNG
       const addr = row.customerAddress ?? "";
       const match = addr.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
@@ -1576,6 +1592,7 @@ router.get("/map/:orderId", async (req, res) => {
 
   const customerLatJs = customerLat !== null ? customerLat.toString() : "null";
   const customerLngJs = customerLng !== null ? customerLng.toString() : "null";
+  const branchNameJs = JSON.stringify(branchName).replace(/</g, "\\u003c");
 
   const html = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -1685,6 +1702,7 @@ router.get("/map/:orderId", async (req, res) => {
     ${customerName ? ` — ${customerName}` : ""}
   </div>
   <div id="infoSub">🛵 ${driverName}</div>
+  ${branchLat === null ? '<div id="branchLocationNotice" style="color:#E8920C;font-size:12px;margin-top:4px">موقع فرع الطلب غير متوفر — لن يُعرض موقع متجر بديل</div>' : ""}
   <div id="statusRow"><div class="dot"></div><span id="statusText">جاري تحديد موقع المندوب...</span></div>
 </div>
 
@@ -1698,7 +1716,7 @@ router.get("/map/:orderId", async (req, res) => {
 <div id="legend">
   <div class="leg-item">🛵 <span>المندوب</span></div>
   <div class="leg-item" style="color:#E8920C">🏠 <span>العميل</span></div>
-  <div class="leg-item" style="color:#C8171A">🏪 <span>المطعم</span></div>
+  ${branchLat !== null ? '<div class="leg-item" style="color:#C8171A">🏪 <span>الفرع</span></div>' : ""}
   <div class="leg-item" id="routeLegend" style="display:none;color:#29B6F6">
     <svg width="22" height="8" viewBox="0 0 22 8" style="vertical-align:middle"><line x1="0" y1="4" x2="22" y2="4" stroke="#29B6F6" stroke-width="2.5" stroke-dasharray="5,4"/></svg>
     <span>المسار</span>
@@ -1718,8 +1736,10 @@ router.get("/map/:orderId", async (req, res) => {
   var POLL_MS       = 10000;
   var CUSTOMER_LAT  = ${customerLatJs};
   var CUSTOMER_LNG  = ${customerLngJs};
-  var REST_LAT      = ${RESTAURANT_LAT};
-  var REST_LNG      = ${RESTAURANT_LNG};
+  var REST_LAT      = ${branchLat};
+  var REST_LNG      = ${branchLng};
+  var BRANCH_NAME   = ${branchNameJs};
+  var HAS_BRANCH_LOCATION = REST_LAT !== null && REST_LNG !== null;
 
   var map = null, driverMarker = null, routeLine = null;
   var curLat = null, curLng = null, animReq = null;
@@ -1811,9 +1831,14 @@ router.get("/map/:orderId", async (req, res) => {
   function addStaticMarkers() {
     if (staticMarkersAdded) return;
     staticMarkersAdded = true;
-    /* restaurant always shown */
-    var restMarker = L.marker([REST_LAT, REST_LNG],{icon:restaurantIcon}).addTo(map);
-    restMarker.bindPopup('<div style="font-family:Cairo,sans-serif;font-weight:700;color:#C8171A;text-align:center;direction:rtl">🏪 منتجات السلة للخضار والفواكه</div>');
+    /* Show only the assigned branch, and only with valid coordinates. */
+    if (HAS_BRANCH_LOCATION) {
+      var restMarker = L.marker([REST_LAT, REST_LNG],{icon:restaurantIcon}).addTo(map);
+      var branchPopup = document.createElement('div');
+      branchPopup.style.cssText = 'font-family:Cairo,sans-serif;font-weight:700;color:#C8171A;text-align:center;direction:rtl';
+      branchPopup.textContent = '🏪 ' + (BRANCH_NAME || 'فرع الطلب');
+      restMarker.bindPopup(branchPopup);
+    }
     /* customer home — only if coords available */
     if (CUSTOMER_LAT !== null && CUSTOMER_LNG !== null) {
       var homeMarker = L.marker([CUSTOMER_LAT, CUSTOMER_LNG],{icon:homeIcon}).addTo(map);
@@ -1823,7 +1848,8 @@ router.get("/map/:orderId", async (req, res) => {
 
   /* ── fit bounds to show driver + customer + restaurant ── */
   function fitAll(dLat, dLng) {
-    var points = [[dLat, dLng], [REST_LAT, REST_LNG]];
+    var points = [[dLat, dLng]];
+    if (HAS_BRANCH_LOCATION) points.push([REST_LAT, REST_LNG]);
     if (CUSTOMER_LAT !== null && CUSTOMER_LNG !== null) points.push([CUSTOMER_LAT, CUSTOMER_LNG]);
     var bounds = L.latLngBounds(points);
     map.fitBounds(bounds, {padding:[60,60], maxZoom:15, animate:true});
@@ -1908,12 +1934,18 @@ router.get("/map/:orderId", async (req, res) => {
   /* ── if no driver location yet, show static map with restaurant + customer ── */
   window.addEventListener('load', function() {
     setTimeout(function() {
-      if (!map && (CUSTOMER_LAT !== null || true)) {
+      if (!map) {
+        var pts = [];
+        if (HAS_BRANCH_LOCATION) pts.push([REST_LAT, REST_LNG]);
+        if (CUSTOMER_LAT !== null && CUSTOMER_LNG !== null) pts.push([CUSTOMER_LAT, CUSTOMER_LNG]);
+        if (pts.length === 0) {
+          document.getElementById('noLoc').style.display = 'block';
+          document.getElementById('statusText').textContent = 'في انتظار مشاركة موقع المندوب...';
+          return;
+        }
         map = L.map('map',{zoomControl:true,attributionControl:false});
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
         addStaticMarkers();
-        var pts = [[REST_LAT, REST_LNG]];
-        if (CUSTOMER_LAT !== null && CUSTOMER_LNG !== null) pts.push([CUSTOMER_LAT, CUSTOMER_LNG]);
         map.fitBounds(L.latLngBounds(pts),{padding:[60,60],maxZoom:15});
         document.getElementById('statusText').textContent = 'في انتظار مشاركة موقع المندوب...';
         document.getElementById('statusText').style.color = '#aaa';

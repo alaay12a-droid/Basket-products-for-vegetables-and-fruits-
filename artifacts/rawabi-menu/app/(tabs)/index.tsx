@@ -138,8 +138,20 @@ function ClassicMenuScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useUser();
-  const { categories, loading: menuLoading, refresh: refreshMenu, refreshIfStale } = useMenu();
+  const { categories: menuCategories, loading: menuLoading, refresh: refreshMenu, refreshIfStale } = useMenu();
   const { occasions } = useOccasions();
+  const categories = useMemo<typeof menuCategories>(() => {
+    const regular = menuCategories.filter((category) => !category.isOccasions);
+    if (occasions.length === 0) return regular;
+    return [...regular, {
+      id: "__occasion_offers__",
+      name: "عروض المناسبات",
+      nameEn: "Special Offers",
+      icon: "🎉",
+      items: [],
+      isOccasions: true,
+    }];
+  }, [menuCategories, occasions.length]);
   const { banners, refresh: refreshBanners } = useBanners();
   const { combos } = useCombos();
   const { addItem } = useCartActions();
@@ -205,7 +217,12 @@ function ClassicMenuScreen() {
     }
   };
   const availableCombos = useMemo(() => combos.filter((c) => c.available), [combos]);
-  const [activeCategory, setActiveCategory] = useState("chicken");
+  const [activeCategory, setActiveCategory] = useState("");
+  useEffect(() => {
+    if (activeCategory === "__occasion_offers__" && occasions.length === 0) {
+      setActiveCategory(categories[0]?.id ?? "");
+    }
+  }, [activeCategory, categories, occasions.length]);
   const [driversEnabled, setDriversEnabled] = useState(false);
   const [showStaffPicker, setShowStaffPicker] = useState(false);
   // Single shared detail sheet — replaces per-item modals for 50× less memory usage
@@ -683,7 +700,7 @@ function ClassicMenuScreen() {
           contentContainerStyle={styles.tabsContent}
           style={styles.tabsScroll}
         >
-          {categories.filter((c) => !c.isOccasions).map((cat) => {
+          {categories.map((cat) => {
             const active = activeCategory === cat.id;
             return (
               <TouchableOpacity
