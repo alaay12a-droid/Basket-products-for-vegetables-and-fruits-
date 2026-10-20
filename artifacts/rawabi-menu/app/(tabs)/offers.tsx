@@ -9,6 +9,7 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  Clipboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -31,9 +32,28 @@ export default function OffersScreen() {
   const [activeTab, setActiveTab] = useState<"offers" | "codes">("offers");
   const { language } = useLanguage();
   const isEn = language === "en";
+  const [copyResult, setCopyResult] = useState<{ code: string; copied: boolean } | null>(null);
+
+  const copyCode = async (code: string) => {
+    try {
+      if (Platform.OS === "web") {
+        await navigator.clipboard.writeText(code);
+      } else {
+        Clipboard.setString(code);
+      }
+      setCopyResult({ code, copied: true });
+    } catch {
+      setCopyResult({ code, copied: false });
+    }
+  };
 
   const { occasions, loading: occasionsLoading } = useOccasions();
-  const { activeCodes, loaded: codesLoaded } = useDiscountCodes();
+  const { activeCodes: allActiveCodes, loaded: codesLoaded } = useDiscountCodes();
+  // Also hide older incentive responses already loaded by this app session.
+  const activeCodes = allActiveCodes.filter((code) =>
+    !/^VIP-/i.test(code.code) &&
+    !/^تحفيز\s+ل[أا]فضل\s+عميل/.test(code.description?.trim() ?? "")
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -147,11 +167,17 @@ export default function OffersScreen() {
             {activeCodes.map((dc) => (
               <View key={dc.id} style={[styles.codeCard, { backgroundColor: colors.card, borderColor: colors.gold }]}>
                 <View style={styles.codeTop}>
-                  <View style={[styles.codeBadge, { backgroundColor: colors.isModern ? colors.surface : "#2A1A08", borderColor: colors.gold }]}>
-                    <Text style={{ color: colors.gold, fontFamily: F.extra, fontSize: 18, letterSpacing: 2 }}>
+                  <TouchableOpacity
+                    style={[styles.codeBadge, { backgroundColor: colors.isModern ? colors.surface : "#2A1A08", borderColor: colors.gold }]}
+                    onPress={() => void copyCode(dc.code)}
+                    accessibilityRole="button"
+                    accessibilityLabel={isEn ? `Copy discount code ${dc.code}` : `نسخ كود الخصم ${dc.code}`}
+                  >
+                    <Feather name={copyResult?.code === dc.code && copyResult.copied ? "check" : "copy"} size={20} color={colors.gold} />
+                    <Text style={{ color: colors.gold, fontFamily: F.extra, fontSize: 18, letterSpacing: 2, flexShrink: 1 }}>
                       {dc.code}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                   <View style={[styles.discountBadge, { backgroundColor: colors.gold }]}>
                     <Text style={{ color: colors.isModern ? colors.background : "#1A0A00", fontFamily: F.extra, fontSize: 15 }}>
                       {dc.type === "percentage"
@@ -160,6 +186,16 @@ export default function OffersScreen() {
                     </Text>
                   </View>
                 </View>
+                {copyResult?.code === dc.code && (
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    style={{ color: colors.mutedForeground, fontFamily: F.semi, fontSize: 12, textAlign: isEn ? "left" : "right" }}
+                  >
+                    {copyResult.copied
+                      ? isEn ? "Code copied" : "تم نسخ الكود"
+                      : isEn ? "Could not copy. Please try again." : "تعذّر النسخ، حاول مرة أخرى"}
+                  </Text>
+                )}
                 {dc.description ? (
                   <Text style={{ color: colors.mutedForeground, fontFamily: F.regular, fontSize: 13, textAlign: isEn ? "left" : "right", marginTop: 6 }}>
                     {dc.description}
@@ -258,6 +294,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   codeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    minHeight: 44,
+    flexShrink: 1,
     borderRadius: 10,
     borderWidth: 1.5,
     paddingHorizontal: 14,

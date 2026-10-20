@@ -2,12 +2,19 @@ import { Router } from "express";
 import { z } from "zod";
 import { db, discountCodesTable, discountCodeUsagesTable, ordersTable } from "@workspace/db";
 import { eq, and, count, desc, gte, sql } from "drizzle-orm";
+import { resolveOptionalDashboardActor } from "./dashboard-auth";
 
 const router = Router();
 
 // ── GET /discount-codes
-router.get("/discount-codes", async (_req, res) => {
+router.get("/discount-codes", async (req, res) => {
+  // Personalized incentives are not public offers. Keep existing VIP codes
+  // private as well, without migrating or changing their redemption rules.
+  res.setHeader("Cache-Control", "private, no-store");
+  res.setHeader("Vary", "Cookie");
+  const actor = await resolveOptionalDashboardActor(req);
   const codes = await db.select().from(discountCodesTable).orderBy(discountCodesTable.createdAt);
+  const visibleCodes = actor ? codes : codes.filter((code) => !isCustomerIncentive(code));
 
   const usageCounts = await db
     .select({ discountCodeId: discountCodeUsagesTable.discountCodeId, cnt: count() })
@@ -29,8 +36,12 @@ router.get("/discount-codes", async (_req, res) => {
   const savingsMap: Record<number, number> = {};
   for (const s of savingsSums) savingsMap[s.discountCodeId] = Number(s.totalSavings);
 
-  res.json(codes.map((c) => ({ ...c, usageCount: countMap[c.id] ?? 0, totalSavings: savingsMap[c.id] ?? 0 })));
+  res.json(visibleCodes.map((c) => ({ ...c, usageCount: countMap[c.id] ?? 0, totalSavings: savingsMap[c.id] ?? 0 })));
 });
+
+function isCustomerIncentive(code: { code: string; description: string | null }): boolean {
+  return /^VIP-/i.test(code.code) || /^تحفيز\s+ل[أا]فضل\s+عميل/.test(code.description?.trim() ?? "");
+}
 
 // ── GET /discount-codes/:id/usages
 router.get("/discount-codes/:id/usages", async (req, res) => {
