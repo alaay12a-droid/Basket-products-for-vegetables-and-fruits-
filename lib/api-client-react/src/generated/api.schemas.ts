@@ -190,6 +190,14 @@ export interface SizeOption {
   enabled: boolean;
 }
 
+export interface MenuCategory {
+  id: string;
+  name: string;
+  nameEn: string;
+  icon: string;
+  isCustom?: boolean;
+}
+
 export interface MenuItem {
   id: number;
   itemId: string;

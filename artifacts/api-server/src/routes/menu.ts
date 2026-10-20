@@ -4,12 +4,23 @@ import { eq, asc, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { ObjectStorageService } from "../lib/objectStorage";
+import { requireDashboardUser } from "./dashboard-auth";
 
 const objectStorageService = new ObjectStorageService();
 
 const router = Router();
 
 const MENU_CATEGORIES_SETTING_KEY = "menu_categories";
+type CategoryDb = Pick<typeof db, "select" | "insert" | "update">;
+
+// Serialize category edits and product category assignments so stale screens
+// cannot recreate a deleted category or overwrite another category edit.
+async function withMenuCategoryLock<T>(action: (tx: CategoryDb) => Promise<T>): Promise<T> {
+  return db.transaction(async tx => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${MENU_CATEGORIES_SETTING_KEY}))`);
+    return action(tx);
+  });
+}
 
 type MenuCategoryConfig = {
   id: string;
@@ -57,16 +68,13 @@ function normalizeMenuCategories(value: unknown): MenuCategoryConfig[] {
     seen.add(category.id!);
   }
 
-  // Keep legacy/default sections available if the settings record predates them.
-  for (const category of DEFAULT_MENU_CATEGORIES) {
-    if (!seen.has(category.id)) categories.push(category);
-  }
-
+  // An explicitly saved list (including []) is authoritative. Defaults are
+  // used only when settings are absent/invalid, never to resurrect deletions.
   return categories;
 }
 
-async function getMenuCategories(): Promise<MenuCategoryConfig[]> {
-  const [row] = await db
+async function getMenuCategories(client: CategoryDb = db): Promise<MenuCategoryConfig[]> {
+  const [row] = await client
     .select({ value: appSettingsTable.value })
     .from(appSettingsTable)
     .where(eq(appSettingsTable.key, MENU_CATEGORIES_SETTING_KEY))
@@ -82,7 +90,7 @@ async function getMenuCategories(): Promise<MenuCategoryConfig[]> {
 
   // Preserve any legacy category already used by an item even if it predates
   // the configurable category list.
-  const existingCategories = await db
+  const existingCategories = await client
     .select({ id: menuItemsTable.category })
     .from(menuItemsTable)
     .groupBy(menuItemsTable.category);
@@ -101,8 +109,8 @@ async function getMenuCategories(): Promise<MenuCategoryConfig[]> {
   return categories;
 }
 
-async function saveMenuCategories(categories: MenuCategoryConfig[]) {
-  await db
+async function saveMenuCategories(categories: MenuCategoryConfig[], client: CategoryDb = db) {
+  await client
     .insert(appSettingsTable)
     .values({
       key: MENU_CATEGORIES_SETTING_KEY,
@@ -319,12 +327,6 @@ router.post("/menu-categories", async (req, res) => {
     return;
   }
 
-  const categories = await getMenuCategories();
-  if (categories.some(category => category.name.localeCompare(parsed.data.name, undefined, { sensitivity: "accent" }) === 0)) {
-    res.status(409).json({ error: "يوجد قسم بهذا الاسم بالفعل" });
-    return;
-  }
-
   const category: MenuCategoryConfig = {
     id: `custom-${randomUUID()}`,
     name: parsed.data.name,
@@ -332,8 +334,16 @@ router.post("/menu-categories", async (req, res) => {
     icon: "🍽️",
     isCustom: true,
   };
-  const updatedCategories = [...categories, category];
-  await saveMenuCategories(updatedCategories);
+  const created = await withMenuCategoryLock(async tx => {
+    const categories = await getMenuCategories(tx);
+    if (categories.some(current => current.name.localeCompare(parsed.data.name, undefined, { sensitivity: "accent" }) === 0)) return false;
+    await saveMenuCategories([...categories, category], tx);
+    return true;
+  });
+  if (!created) {
+    res.status(409).json({ error: "يوجد قسم بهذا الاسم بالفعل" });
+    return;
+  }
   res.status(201).json(category);
 });
 
@@ -348,24 +358,53 @@ router.put("/menu-categories/reorder", async (req, res) => {
     return;
   }
 
-  const categories = await getMenuCategories();
-  const knownIds = new Set(categories.map(category => category.id));
-  const requestedIds = [...new Set(parsed.data.ids)];
-  if (
-    requestedIds.length !== parsed.data.ids.length ||
-    requestedIds.some(id => !knownIds.has(id))
-  ) {
+  const reordered = await withMenuCategoryLock(async tx => {
+    const categories = await getMenuCategories(tx);
+    const knownIds = new Set(categories.map(category => category.id));
+    const requestedIds = [...new Set(parsed.data.ids)];
+    if (
+      requestedIds.length !== parsed.data.ids.length ||
+      requestedIds.some(id => !knownIds.has(id))
+    ) {
+      return null;
+    }
+
+    const requestedSet = new Set(requestedIds);
+    const reordered = [
+      ...requestedIds.map(id => categories.find(category => category.id === id)!),
+      ...categories.filter(category => !requestedSet.has(category.id)),
+    ];
+    await saveMenuCategories(reordered, tx);
+    return reordered;
+  });
+  if (!reordered) {
     res.status(400).json({ error: "الأقسام المحددة غير صحيحة" });
     return;
   }
-
-  const requestedSet = new Set(requestedIds);
-  const reordered = [
-    ...requestedIds.map(id => categories.find(category => category.id === id)!),
-    ...categories.filter(category => !requestedSet.has(category.id)),
-  ];
-  await saveMenuCategories(reordered);
   res.json(reordered);
+});
+
+router.delete("/menu-categories/:categoryId", requireDashboardUser, async (req, res) => {
+  const categoryId = req.params.categoryId;
+  if (typeof categoryId !== "string") {
+    res.status(404).json({ error: "القسم غير موجود" });
+    return;
+  }
+  const result = await withMenuCategoryLock(async tx => {
+    const categories = await getMenuCategories(tx);
+    if (!categories.some(category => category.id === categoryId)) {
+      return { status: 404, body: { error: "القسم غير موجود" } };
+    }
+    const [product] = await tx.select({ id: menuItemsTable.itemId })
+      .from(menuItemsTable).where(eq(menuItemsTable.category, categoryId)).limit(1);
+    if (product) {
+      return { status: 409, body: { error: "لا يمكن حذف قسم يحتوي على منتجات. انقل المنتجات إلى قسم آخر أو احذفها بنفسك أولاً." } };
+    }
+    const remaining = categories.filter(category => category.id !== categoryId);
+    await saveMenuCategories(remaining, tx);
+    return { status: 200, body: remaining };
+  });
+  res.status(result.status).json(result.body);
 });
 
 router.post("/menu", async (req, res) => {
@@ -375,26 +414,35 @@ router.post("/menu", async (req, res) => {
     return;
   }
   const data = parsed.data;
-  const [item] = await db.insert(menuItemsTable).values({
-    itemId: randomUUID(),
-    name: data.name,
-    nameEn: data.nameEn ?? null,
-    category: data.category,
-    price: Math.round(data.price * 100),
-    available: true,
-    imageKey: data.imageKey ?? null,
-    imageUrl: data.imageUrl ?? null,
-    sizes: (data.sizes ?? []).map(s => ({ ...s, price: Math.round(s.price * 100) })),
-    options: (data.options ?? []).map(g => ({
-      ...g,
-      choices: g.choices.map(c => ({ ...c, extraPrice: Math.round(c.extraPrice * 100) })),
-    })),
-    riceTypes: (data.riceTypes ?? []).map(r => ({ ...r, extraPrice: Math.round(r.extraPrice * 100) })),
-    additions: (data.additions ?? []).map(a => ({ ...a, extraPrice: Math.round(a.extraPrice * 100) })),
-    calories: data.calories ?? null,
-    walkingMinutes: data.walkingMinutes ?? null,
-    sortOrder: 999,
-  }).returning();
+  const item = await withMenuCategoryLock(async tx => {
+    const categories = await getMenuCategories(tx);
+    if (!categories.some(category => category.id === data.category)) return null;
+    const [created] = await tx.insert(menuItemsTable).values({
+      itemId: randomUUID(),
+      name: data.name,
+      nameEn: data.nameEn ?? null,
+      category: data.category,
+      price: Math.round(data.price * 100),
+      available: true,
+      imageKey: data.imageKey ?? null,
+      imageUrl: data.imageUrl ?? null,
+      sizes: (data.sizes ?? []).map(s => ({ ...s, price: Math.round(s.price * 100) })),
+      options: (data.options ?? []).map(g => ({
+        ...g,
+        choices: g.choices.map(c => ({ ...c, extraPrice: Math.round(c.extraPrice * 100) })),
+      })),
+      riceTypes: (data.riceTypes ?? []).map(r => ({ ...r, extraPrice: Math.round(r.extraPrice * 100) })),
+      additions: (data.additions ?? []).map(a => ({ ...a, extraPrice: Math.round(a.extraPrice * 100) })),
+      calories: data.calories ?? null,
+      walkingMinutes: data.walkingMinutes ?? null,
+      sortOrder: 999,
+    }).returning();
+    return created;
+  });
+  if (!item) {
+    res.status(409).json({ error: "القسم المحدد لم يعد موجوداً. أعد تحميل القائمة واختر قسماً آخر." });
+    return;
+  }
   req.log.info({ itemId: item.itemId }, "Menu item created");
   res.status(201).json(item);
 });
@@ -431,11 +479,23 @@ router.put("/menu/:itemId", async (req, res) => {
     else if (data.stock > 0) updates.available = true;
   }
 
-  const [item] = await db
-    .update(menuItemsTable)
-    .set(updates)
-    .where(eq(menuItemsTable.itemId, itemId))
-    .returning();
+  const result = await withMenuCategoryLock(async tx => {
+    if (data.category !== undefined) {
+      const categories = await getMenuCategories(tx);
+      if (!categories.some(category => category.id === data.category)) return { invalidCategory: true as const };
+    }
+    const [updated] = await tx
+      .update(menuItemsTable)
+      .set(updates)
+      .where(eq(menuItemsTable.itemId, itemId))
+      .returning();
+    return { item: updated };
+  });
+  if ("invalidCategory" in result) {
+    res.status(409).json({ error: "القسم المحدد لم يعد موجوداً. أعد تحميل القائمة واختر قسماً آخر." });
+    return;
+  }
+  const item = result.item;
 
   if (!item) {
     res.status(404).json({ error: "الصنف غير موجود" });

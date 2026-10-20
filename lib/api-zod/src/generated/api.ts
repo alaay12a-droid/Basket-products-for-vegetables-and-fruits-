@@ -485,6 +485,25 @@ export const GetRevenueRangeResponse = zod.object({
 });
 
 /**
+ * @summary Delete an empty menu category without deleting products
+ */
+
+export const DeleteMenuCategoryParams = zod.object({
+  categoryId: zod.coerce.string().min(1),
+});
+
+export const DeleteMenuCategoryResponseItem = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  nameEn: zod.string(),
+  icon: zod.string(),
+  isCustom: zod.boolean().optional(),
+});
+export const DeleteMenuCategoryResponse = zod.array(
+  DeleteMenuCategoryResponseItem,
+);
+
+/**
  * @summary List all menu items
  */
 export const ListMenuItemsResponseItem = zod.object({

@@ -249,6 +249,34 @@ paths:
                 $ref: "#/components/schemas/RevenueData"
 
   # ── Menu ─────────────────────────────────────────────────────────────
+  /menu-categories/{categoryId}:
+    delete:
+      operationId: deleteMenuCategory
+      tags: [menu]
+      summary: Delete an empty menu category without deleting products
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Remaining categories in their saved order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuCategory"
+        "401":
+          description: Dashboard session required
+        "404":
+          description: Category not found
+        "409":
+          description: Category still contains products and cannot be deleted
+
   /menu:
     get:
       operationId: listMenuItems
@@ -635,6 +663,21 @@ components:
         enabled:
           type: boolean
       required: [name, price, enabled]
+
+    MenuCategory:
+      type: object
+      required: [id, name, nameEn, icon]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        nameEn:
+          type: string
+        icon:
+          type: string
+        isCustom:
+          type: boolean
 
     MenuItem:
       type: object

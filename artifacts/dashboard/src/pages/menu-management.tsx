@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { apiGet, apiPost, apiPut, apiDel } from "@/lib/api";
+import { deleteMenuCategory } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,17 +70,6 @@ interface MenuCategory {
   isCustom?: boolean;
 }
 
-const DEFAULT_CATEGORIES: MenuCategory[] = [
-  { id: "chicken",  name: "الدجاج",           icon: "🍗" },
-  { id: "meat",     name: "اللحوم",           icon: "🥩" },
-  { id: "mains",    name: "الأطباق الرئيسية", icon: "🍽️" },
-  { id: "sides",    name: "الإيدامات",        icon: "🥘" },
-  { id: "salads",   name: "السلطات",          icon: "🥗" },
-  { id: "desserts", name: "الحلويات",         icon: "🍮" },
-  { id: "drinks",   name: "المشروبات",        icon: "🥤" },
-  { id: "extras",   name: "إضافات",           icon: "✨" },
-];
-
 const getCatMeta = (id: string, categories: MenuCategory[]) =>
   categories.find(c => c.id === id) ?? { id, name: id, icon: "🍽️" };
 
@@ -129,7 +119,7 @@ const emptyForm = (): ItemForm => ({
 export default function MenuManagement() {
   const { toast } = useToast();
   const [items, setItems]         = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<MenuCategory[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch]       = useState("");
@@ -153,6 +143,9 @@ export default function MenuManagement() {
   const [categoryError, setCategoryError] = useState("");
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [reorderingCategoryId, setReorderingCategoryId] = useState<string | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<MenuCategory | null>(null);
+  const [categoryDeleting, setCategoryDeleting] = useState(false);
+  const [categoryDeleteError, setCategoryDeleteError] = useState("");
   const imgFileRef                      = useRef<HTMLInputElement>(null);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,6 +229,38 @@ export default function MenuManagement() {
     }
   };
 
+  const requestCategoryDelete = (category: MenuCategory) => {
+    const count = items.filter(item => item.category === category.id).length;
+    if (count > 0) {
+      toast({
+        title: "لا يمكن حذف قسم يحتوي على منتجات",
+        description: `يحتوي قسم «${category.name}» على ${count} من المنتجات. انقلها إلى قسم آخر أو احذفها بنفسك أولاً.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setCategoryDeleteError("");
+    setCategoryToDelete(category);
+  };
+
+  const handleCategoryDelete = async () => {
+    if (!categoryToDelete || categoryDeleting) return;
+    setCategoryDeleting(true);
+    setCategoryDeleteError("");
+    try {
+      const remaining = await deleteMenuCategory(categoryToDelete.id, { credentials: "include" });
+      setCategories(remaining);
+      setCatFilter(current => current === categoryToDelete.id ? "all" : current);
+      setCategoryToDelete(null);
+      toast({ title: "تم حذف القسم الفارغ بنجاح" });
+    } catch (error: unknown) {
+      const details = error as { data?: { error?: string }; message?: string };
+      setCategoryDeleteError(details.data?.error ?? details.message ?? "تعذّر حذف القسم. أعد تحميل القائمة وحاول مرة أخرى.");
+    } finally {
+      setCategoryDeleting(false);
+    }
+  };
+
   const moveCategory = async (categoryId: string, direction: -1 | 1) => {
     const currentIndex = categories.findIndex(category => category.id === categoryId);
     const nextIndex = currentIndex + direction;
@@ -281,7 +306,12 @@ export default function MenuManagement() {
   };
 
   const openAdd = () => {
-    setForm(emptyForm());
+    const category = categories.find(current => current.id === catFilter) ?? categories[0];
+    if (!category) {
+      toast({ title: "أضف قسماً أولاً قبل إضافة المنتجات", variant: "destructive" });
+      return;
+    }
+    setForm({ ...emptyForm(), category: category.id, sizes: defaultSizesForCategory(category.id) });
     setFormError("");
     setDialogOpen(true);
   };
@@ -685,7 +715,7 @@ export default function MenuManagement() {
                   size="icon"
                   className="h-8 w-7"
                   onClick={() => moveCategory(cat.id, -1)}
-                  disabled={categoryIndex === 0 || reorderingCategoryId !== null}
+                  disabled={categoryIndex === 0 || reorderingCategoryId !== null || categoryDeleting}
                   aria-label={`تحريك قسم ${cat.name} للأعلى`}
                   title="تحريك القسم للأعلى"
                 >
@@ -699,11 +729,23 @@ export default function MenuManagement() {
                   size="icon"
                   className="h-8 w-7"
                   onClick={() => moveCategory(cat.id, 1)}
-                  disabled={categoryIndex === categories.length - 1 || reorderingCategoryId !== null}
+                  disabled={categoryIndex === categories.length - 1 || reorderingCategoryId !== null || categoryDeleting}
                   aria-label={`تحريك قسم ${cat.name} للأسفل`}
                   title="تحريك القسم للأسفل"
                 >
                   <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-7 text-destructive hover:text-destructive"
+                  onClick={() => requestCategoryDelete(cat)}
+                  disabled={reorderingCategoryId !== null || categoryDeleting}
+                  aria-label={`حذف قسم ${cat.name}`}
+                  title={count > 0 ? "انقل منتجات القسم أو احذفها أولاً" : "حذف القسم الفارغ"}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             );
@@ -906,6 +948,35 @@ export default function MenuManagement() {
           </div>
         </div>
       )}
+
+      <AlertDialog
+        open={!!categoryToDelete}
+        onOpenChange={open => {
+          if (!open && !categoryDeleting) setCategoryToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف القسم الفارغ</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل تريد حذف قسم «{categoryToDelete?.name}»؟ لن يتم حذف أي منتج أو طلب.
+              لا يمكن حذف القسم إذا كان يحتوي على منتجات.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {categoryDeleteError && <p role="alert" className="text-sm text-destructive">{categoryDeleteError}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={categoryDeleting}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={event => { event.preventDefault(); void handleCategoryDelete(); }}
+              disabled={categoryDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {categoryDeleting && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+              حذف القسم
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add category dialog */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>

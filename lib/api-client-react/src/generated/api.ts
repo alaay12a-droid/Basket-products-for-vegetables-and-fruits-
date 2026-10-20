@@ -27,6 +27,7 @@ import type {
   HealthStatus,
   ListOrdersParams,
   LiveRevenueData,
+  MenuCategory,
   MenuItem,
   MenuItemUpdate,
   MenuTemplateSetting,
@@ -1030,6 +1031,90 @@ export function useGetRevenueRange<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Delete an empty menu category without deleting products
+ */
+export const getDeleteMenuCategoryUrl = (categoryId: string) => {
+  return `/api/menu-categories/${categoryId}`;
+};
+
+export const deleteMenuCategory = async (
+  categoryId: string,
+  options?: RequestInit,
+): Promise<MenuCategory[]> => {
+  return customFetch<MenuCategory[]>(getDeleteMenuCategoryUrl(categoryId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteMenuCategoryMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMenuCategory>>,
+    TError,
+    { categoryId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteMenuCategory>>,
+  TError,
+  { categoryId: string },
+  TContext
+> => {
+  const mutationKey = ["deleteMenuCategory"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMenuCategory>>,
+    { categoryId: string }
+  > = (props) => {
+    const { categoryId } = props ?? {};
+
+    return deleteMenuCategory(categoryId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMenuCategoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteMenuCategory>>
+>;
+
+export type DeleteMenuCategoryMutationError = ErrorType<void>;
+
+/**
+ * @summary Delete an empty menu category without deleting products
+ */
+export const useDeleteMenuCategory = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMenuCategory>>,
+    TError,
+    { categoryId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteMenuCategory>>,
+  TError,
+  { categoryId: string },
+  TContext
+> => {
+  return useMutation(getDeleteMenuCategoryMutationOptions(options));
+};
 
 /**
  * @summary List all menu items
