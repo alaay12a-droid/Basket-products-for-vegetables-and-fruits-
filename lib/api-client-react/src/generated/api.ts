@@ -28,6 +28,7 @@ import type {
   ListOrdersParams,
   LiveRevenueData,
   MenuCategory,
+  MenuCategoryImageInput,
   MenuItem,
   MenuItemUpdate,
   MenuTemplateSetting,
@@ -1494,6 +1495,94 @@ export function useGetRevenueRange<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Set or remove a category image using a dashboard session
+ */
+export const getUpdateMenuCategoryImageUrl = (categoryId: string) => {
+  return `/api/menu-categories/${categoryId}`;
+};
+
+export const updateMenuCategoryImage = async (
+  categoryId: string,
+  menuCategoryImageInput: MenuCategoryImageInput,
+  options?: RequestInit,
+): Promise<MenuCategory> => {
+  return customFetch<MenuCategory>(getUpdateMenuCategoryImageUrl(categoryId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(menuCategoryImageInput),
+  });
+};
+
+export const getUpdateMenuCategoryImageMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMenuCategoryImage>>,
+    TError,
+    { categoryId: string; data: BodyType<MenuCategoryImageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMenuCategoryImage>>,
+  TError,
+  { categoryId: string; data: BodyType<MenuCategoryImageInput> },
+  TContext
+> => {
+  const mutationKey = ["updateMenuCategoryImage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMenuCategoryImage>>,
+    { categoryId: string; data: BodyType<MenuCategoryImageInput> }
+  > = (props) => {
+    const { categoryId, data } = props ?? {};
+
+    return updateMenuCategoryImage(categoryId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMenuCategoryImageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMenuCategoryImage>>
+>;
+export type UpdateMenuCategoryImageMutationBody =
+  BodyType<MenuCategoryImageInput>;
+export type UpdateMenuCategoryImageMutationError = ErrorType<void>;
+
+/**
+ * @summary Set or remove a category image using a dashboard session
+ */
+export const useUpdateMenuCategoryImage = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMenuCategoryImage>>,
+    TError,
+    { categoryId: string; data: BodyType<MenuCategoryImageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMenuCategoryImage>>,
+  TError,
+  { categoryId: string; data: BodyType<MenuCategoryImageInput> },
+  TContext
+> => {
+  return useMutation(getUpdateMenuCategoryImageMutationOptions(options));
+};
 
 /**
  * @summary Delete an empty menu category without deleting products

@@ -11,5 +11,7 @@ export interface MenuCategory {
   name: string;
   nameEn: string;
   icon: string;
+  /** @nullable */
+  imageUrl?: string | null;
   isCustom?: boolean;
 }

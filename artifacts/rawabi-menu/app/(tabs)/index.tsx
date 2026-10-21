@@ -33,6 +33,8 @@ import { MenuItemCard } from "@/components/MenuItemCard";
 import { ProductDetailSheet } from "@/components/ProductDetailSheet";
 import { CartBar } from "@/components/CartBar";
 import { useMenu } from "@/hooks/useMenu";
+import MenuLoadStatus from "@/components/MenuLoadStatus";
+import CategoryIcon from "@/components/CategoryIcon";
 import { useOccasions } from "@/hooks/useOccasions";
 import { useBanners } from "@/hooks/useBanners";
 import { BannerCarousel } from "@/components/BannerCarousel";
@@ -138,7 +140,7 @@ function ClassicMenuScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useUser();
-  const { categories: menuCategories, loading: menuLoading, refresh: refreshMenu, refreshIfStale } = useMenu();
+  const { categories: menuCategories, loading: menuLoading, offline, refresh: refreshMenu, refreshIfStale } = useMenu();
   const { occasions } = useOccasions();
   const categories = useMemo<typeof menuCategories>(() => {
     const regular = menuCategories.filter((category) => !category.isOccasions);
@@ -715,7 +717,7 @@ function ClassicMenuScreen() {
                     : { backgroundColor: colors.isLight ? "#EDE0CE" : "#1A1008", borderColor: colors.isLight ? "#D4C4A8" : "#3A2410" },
                 ]}
               >
-                <Text style={styles.tabIcon}>{cat.icon}</Text>
+                <CategoryIcon imageUrl={cat.imageUrl} icon={cat.icon} size={28} />
                 <Text style={[styles.tabLabel, { color: active ? "#fff" : colors.mutedForeground, fontFamily: F.bold }]}>
                   {isEn ? (cat.nameEn ?? cat.name) : cat.name}
                 </Text>
@@ -726,7 +728,10 @@ function ClassicMenuScreen() {
       </View>
 
       {/* ── CONTENT ── */}
-      {searchResults.length > 0 || (searchQuery.trim().length >= 1 && searchResults.length === 0) ? (
+      {offline && <MenuLoadStatus loading={false} isEn={isEn} onRetry={refreshMenu} />}
+      {menuLoading ? (
+        <MenuLoadStatus loading isEn={isEn} onRetry={refreshMenu} />
+      ) : searchResults.length > 0 || (searchQuery.trim().length >= 1 && searchResults.length === 0) ? (
         /* ── SEARCH RESULTS ── */
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -891,23 +896,6 @@ function ClassicMenuScreen() {
             </TouchableOpacity>
           ))}
         </Animated.ScrollView>
-      ) : menuLoading ? (
-        /* ── LOADING SKELETON — shown while fresh menu data is fetched ── */
-        /* Prevents stale cached data (e.g. deleted items) from flashing   */
-        <View style={{ flex: 1, paddingHorizontal: 14, paddingTop: 10 }}>
-          {[90, 90, 90, 90, 90, 70].map((h, i) => (
-            <View
-              key={i}
-              style={{
-                height: h,
-                borderRadius: 16,
-                backgroundColor: colors.card,
-                marginBottom: 10,
-                opacity: 0.55,
-              }}
-            />
-          ))}
-        </View>
       ) : (
         /* ── REGULAR MENU — FlashList (RecyclerView virtualization) ── */
         <View

@@ -5292,7 +5292,7 @@ ${kpiBlock}${payBlock}${sumBlock}
             <TextInput
               value={newName}
               onChangeText={setNewName}
-              placeholder="مثال: مندي دجاج كامل"
+              placeholder="مثال: كيلو تفاح"
               placeholderTextColor={colors.mutedForeground}
               style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.secondary, fontFamily: F.regular }]}
               textAlign="right"
@@ -5302,7 +5302,7 @@ ${kpiBlock}${payBlock}${sumBlock}
             <TextInput
               value={newNameEn}
               onChangeText={setNewNameEn}
-              placeholder="e.g. Whole Chicken Mandi"
+              placeholder="e.g. One Kilogram of Apples"
               placeholderTextColor={colors.mutedForeground}
               style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.secondary, fontFamily: F.regular }]}
               textAlign="left"

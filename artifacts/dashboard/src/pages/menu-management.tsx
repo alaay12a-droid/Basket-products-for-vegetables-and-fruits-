@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { apiGet, apiPost, apiPut, apiDel } from "@/lib/api";
-import { deleteMenuCategory } from "@workspace/api-client-react";
+import { deleteMenuCategory, updateMenuCategoryImage } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +67,7 @@ interface MenuCategory {
   name: string;
   nameEn?: string;
   icon: string;
+  imageUrl?: string | null;
   isCustom?: boolean;
 }
 
@@ -141,6 +142,12 @@ export default function MenuManagement() {
   const [categoryName, setCategoryName] = useState("");
   const [categorySaving, setCategorySaving] = useState(false);
   const [categoryError, setCategoryError] = useState("");
+  const [imageCategory, setImageCategory] = useState<MenuCategory | null>(null);
+  const [categoryImage, setCategoryImage] = useState<string | null>(null);
+  const [imageSaving, setImageSaving] = useState(false);
+  const [imageReading, setImageReading] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const imageReadId = useRef(0);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [reorderingCategoryId, setReorderingCategoryId] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<MenuCategory | null>(null);
@@ -206,6 +213,51 @@ export default function MenuManagement() {
     setCategoryName("");
     setCategoryError("");
     setCategoryDialogOpen(true);
+  };
+
+  const openCategoryImage = (category: MenuCategory) => {
+    imageReadId.current++;
+    setImageCategory(category);
+    setCategoryImage(category.imageUrl ?? null);
+    setImageReading(false);
+    setImageError("");
+  };
+
+  const readCategoryImage = async (file?: File) => {
+    if (!file) return;
+    const readId = ++imageReadId.current;
+    setImageError("");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      setImageError("اختر صورة JPG أو PNG أو WebP لا تتجاوز 10 ميجابايت");
+      return;
+    }
+    setImageReading(true);
+    try {
+      const url = await fileToCompressedDataUrl(file, 320, 0.8);
+      if (readId !== imageReadId.current) return;
+      if (url.length > 600000) throw new Error("حجم الصورة كبير، اختر صورة أصغر");
+      setCategoryImage(url);
+    } catch (e) {
+      if (readId === imageReadId.current) setImageError(e instanceof Error ? e.message : "تعذّر قراءة الصورة");
+    } finally {
+      if (readId === imageReadId.current) setImageReading(false);
+    }
+  };
+
+  const saveCategoryImage = async () => {
+    if (!imageCategory || imageSaving || imageReading) return;
+    setImageSaving(true);
+    setImageError("");
+    try {
+      const saved = await updateMenuCategoryImage(imageCategory.id, { imageUrl: categoryImage });
+      setCategories(prev => prev.map(category => category.id === saved.id ? saved : category));
+      setImageCategory(null);
+      toast({ title: "تم حفظ صورة القسم" });
+    } catch (e) {
+      setImageError(e instanceof Error ? e.message : "تعذّر حفظ الصورة");
+    } finally {
+      setImageSaving(false);
+    }
   };
 
   const handleCategorySave = async () => {
@@ -707,7 +759,15 @@ export default function MenuManagement() {
                   onClick={() => setCatFilter(cat.id)}
                   className="gap-1"
                 >
-                  {cat.icon} {cat.name} ({count})
+                  {cat.imageUrl ? <img src={cat.imageUrl} alt="" className="h-6 w-6 rounded-full object-cover" /> : cat.icon} {cat.name} ({count})
+                </Button>
+                <Button
+                  type="button" variant="ghost" size="icon"
+                  className="h-8 w-8"
+                  onClick={() => openCategoryImage(cat)}
+                  aria-label={`صورة قسم ${cat.name}`} title={`صورة قسم ${cat.name}`}
+                >
+                  <ImagePlus className="h-4 w-4" />
                 </Button>
                 <Button
                   type="button"
@@ -1005,6 +1065,38 @@ export default function MenuManagement() {
             <Button onClick={handleCategorySave} disabled={categorySaving}>
               {categorySaving && <Loader2 className="h-4 w-4 animate-spin" />}
               حفظ القسم
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!imageCategory} onOpenChange={open => {
+        if (!open && !imageSaving) { imageReadId.current++; setImageCategory(null); }
+      }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>صورة قسم {imageCategory?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-muted text-4xl">
+              {categoryImage ? <img src={categoryImage} alt="معاينة صورة القسم" className="h-full w-full object-cover" /> : imageCategory?.icon}
+            </div>
+            <Label htmlFor="category-image-file">رفع صورة أو تغييرها</Label>
+            <Input id="category-image-file" type="file" accept="image/jpeg,image/png,image/webp"
+              disabled={imageReading || imageSaving}
+              onChange={event => {
+                void readCategoryImage(event.target.files?.[0]);
+                event.target.value = "";
+              }} />
+            <p className="text-xs text-muted-foreground">تظهر الصورة داخل دائرة القسم في تطبيق العميل. تُضغط تلقائيًا لتسريع التحميل.</p>
+            {imageReading && <p className="text-sm">جارٍ تجهيز الصورة…</p>}
+            {categoryImage && <Button variant="outline" disabled={imageSaving || imageReading} onClick={() => setCategoryImage(null)}>
+              إزالة الصورة والعودة للرمز
+            </Button>}
+            {imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" disabled={imageSaving} onClick={() => { imageReadId.current++; setImageCategory(null); }}>إلغاء</Button>
+            <Button disabled={imageSaving || imageReading} onClick={saveCategoryImage}>
+              {imageSaving && <Loader2 className="h-4 w-4 animate-spin" />} حفظ الصورة
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,19 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiGet } from "@/constants/api";
-import { MENU_CATEGORIES, FOOD_IMAGES, type MenuItem } from "@/constants/menu";
+import { apiGet, STORAGE_BASE_URL } from "@/constants/api";
+import { FOOD_IMAGES, type MenuItem } from "@/constants/menu";
 
-// ── Cache key (unchanged — backward compatible) ─────────────────────────────
-const MENU_CACHE_KEY   = "@rawabi_menu_cache_v3";
 const OFFLINE_RETRY_MS = 30_000; // retry every 30 s while offline
-
-interface MenuCache {
-  items:     ApiMenuItem[];
-  categories?: ApiMenuCategory[];
-  savedAt:   number;
-  dataHash?: string; // lightweight freshness signature added in v2
-}
+// Never reuse the old, unscoped restaurant caches.
+const MENU_CACHE_KEY = `@basket_menu_v1:${STORAGE_BASE_URL || "web"}`;
+const LEGACY_MENU_CACHE_KEYS = [
+  "@rawabi_menu_cache_v1",
+  "@rawabi_menu_cache_v2",
+  "@rawabi_menu_cache_v3",
+  "@rawabi_menu_cache_v4",
+];
 
 // ── Interfaces (unchanged) ──────────────────────────────────────────────────
 
@@ -67,6 +66,7 @@ export interface MenuCategoryWithApi {
   name:          string;
   nameEn:        string;
   icon:          string;
+  imageUrl?:     string | null;
   isDelivery?:   boolean;
   isDhabiha?:    boolean;
   isOccasions?:  boolean;
@@ -78,21 +78,13 @@ export interface ApiMenuCategory {
   name: string;
   nameEn: string;
   icon: string;
+  imageUrl?: string | null;
   isCustom?: boolean;
 }
 
-// ── Category metadata (unchanged) ──────────────────────────────────────────
-
-const CATEGORY_META: Record<string, { name: string; nameEn: string; icon: string; isDelivery?: boolean; isDhabiha?: boolean; isOccasions?: boolean }> = {
-  chicken:  { name: "الدجاج",              nameEn: "Chicken",        icon: "🍗" },
-  meat:     { name: "اللحوم",              nameEn: "Meat",           icon: "🥩" },
-  mains:    { name: "الأطباق الرئيسية",    nameEn: "Main Dishes",    icon: "🍽️" },
-  sides:    { name: "الإيدامات",           nameEn: "Sides",          icon: "🥘" },
-  salads:   { name: "السلطات",             nameEn: "Salads",         icon: "🥗" },
-  desserts: { name: "الحلويات",            nameEn: "Desserts",       icon: "🍮" },
-  drinks:   { name: "المشروبات",           nameEn: "Drinks",         icon: "🥤" },
-  extras:   { name: "إضافات",              nameEn: "Extras",         icon: "✨" },
-};
+// Category labels are server-owned. Never recreate removed restaurant
+// categories from bundled metadata when the category request fails.
+const CATEGORY_META: Record<string, { name: string; nameEn: string; icon: string }> = {};
 
 // ── Helpers (unchanged) ─────────────────────────────────────────────────────
 
@@ -140,6 +132,7 @@ function buildCategories(apiItems: ApiMenuItem[], apiCategories?: ApiMenuCategor
       name: category.name,
       nameEn: category.nameEn,
       icon: category.icon,
+      imageUrl: category.imageUrl,
       items,
     });
   }
@@ -152,23 +145,8 @@ function buildCategories(apiItems: ApiMenuItem[], apiCategories?: ApiMenuCategor
     result.push({ id: catId, ...meta, items });
   }
 
-  const staticSpecial = MENU_CATEGORIES.filter(
-    (c) => c.isDelivery || c.isDhabiha || c.isOccasions
-  ).map((c) => ({
-    ...c,
-    nameEn: c.nameEn ?? c.name,
-    items:  c.items.map((i) => ({ ...i, available: true })),
-  })) as MenuCategoryWithApi[];
-
-  return [...result, ...staticSpecial];
+  return result;
 }
-
-const staticFallback = (): MenuCategoryWithApi[] =>
-  MENU_CATEGORIES.map((c) => ({
-    ...c,
-    nameEn: c.nameEn ?? c.name,
-    items:  c.items.map((i) => ({ ...i, available: true })),
-  })) as MenuCategoryWithApi[];
 
 // ── Lightweight freshness hash ───────────────────────────────────────────────
 // Covers every field the customer can see: name, price, availability, image, order.
@@ -179,6 +157,8 @@ function computeHash(items: ApiMenuItem[], categories: ApiMenuCategory[] = []): 
   for (const it of sorted) {
     const sig = [
       it.itemId,
+      it.category,
+      it.nameEn ?? "",
       it.price,
       it.available ? 1 : 0,
       it.name,
@@ -195,7 +175,7 @@ function computeHash(items: ApiMenuItem[], categories: ApiMenuCategory[] = []): 
     }
   }
   for (const category of categories) {
-    const sig = `${category.id}|${category.name}|${category.nameEn}|${category.icon}`;
+    const sig = `${category.id}|${category.name}|${category.nameEn}|${category.icon}|${category.isCustom ?? false}|${category.imageUrl ?? ""}`;
     for (let i = 0; i < sig.length; i++) {
       h = (Math.imul(31, h) + sig.charCodeAt(i)) | 0;
     }
@@ -209,6 +189,9 @@ export function useMenu() {
   const [categories, setCategories] = useState<MenuCategoryWithApi[]>([]);
   const [loading, setLoading]       = useState(true);
   const [apiItems, setApiItems]     = useState<ApiMenuItem[]>([]);
+  const [offline, setOffline] = useState(false);
+  const mounted = useRef(true);
+  const inFlight = useRef<Promise<boolean> | null>(null);
 
   // Hash of the data currently rendered — used to skip no-op re-renders
   const lastHashRef = useRef<string | null>(null);
@@ -221,13 +204,26 @@ export function useMenu() {
 
   /**
    * Fetch fresh menu from the server.
-   * - On success: updates state only if data changed (hash mismatch), persists cache, stops retry.
+   * - On success: updates state only if data changed (hash mismatch), stops retry.
    * - On failure: returns false — caller decides fallback behaviour.
    */
-  const doFetch = useCallback(async (): Promise<boolean> => {
+  const doFetch = useCallback((): Promise<boolean> => {
+    if (inFlight.current) return inFlight.current;
+    const request = (async () => {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
-      const data = await apiGet<ApiMenuItem[]>("/menu");
-      const categoryData = await apiGet<ApiMenuCategory[]>("/menu-categories").catch(() => undefined);
+      // A stalled connection must not leave the first-launch screen loading forever.
+      const [data, categoryData] = await Promise.race([
+        Promise.all([
+          apiGet<ApiMenuItem[]>("/menu"),
+          apiGet<ApiMenuCategory[]>("/menu-categories"),
+        ]),
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => reject(new Error("Menu request timed out")), 15000);
+        }),
+      ]);
+      if (!Array.isArray(data) || !Array.isArray(categoryData)) throw new Error("Invalid menu response");
+      if (!mounted.current) return false;
       const hash = computeHash(data, categoryData);
 
       if (hash !== lastHashRef.current) {
@@ -237,53 +233,60 @@ export function useMenu() {
         setCategories(buildCategories(data, categoryData));
       }
 
-      // Always overwrite cache so savedAt stays current
-      const cache: MenuCache = { items: data, categories: categoryData, savedAt: Date.now(), dataHash: hash };
-      AsyncStorage.setItem(MENU_CACHE_KEY, JSON.stringify(cache)).catch(() => {});
-
+      setOffline(false);
+      setLoading(false);
+      // Storage failures must never prevent the live menu from being displayed.
+      void AsyncStorage.setItem(MENU_CACHE_KEY, JSON.stringify({ items: data, categories: categoryData }))
+        .catch(() => {});
       stopRetry(); // we're online — cancel any retry loop
       return true;
     } catch {
+      if (mounted.current) {
+        setOffline(true);
+        setLoading(false);
+        if (!retryRef.current) retryRef.current = setInterval(() => { void doFetch(); }, OFFLINE_RETRY_MS);
+      }
       return false; // offline or server error
+    } finally {
+      if (timeout) clearTimeout(timeout);
     }
+    })();
+    inFlight.current = request;
+    void request.finally(() => { inFlight.current = null; });
+    return request;
   }, [stopRetry]);
 
-  // ── Mount: stale-while-revalidate ─────────────────────────────────────────
+  // ── Mount: hydrate this server's cache, then revalidate in the background ──
   useEffect(() => {
     let alive = true;
+    mounted.current = true;
 
     (async () => {
-      // Step 1 — Hydrate from AsyncStorage immediately so the screen is never blank
+      AsyncStorage.multiRemove(LEGACY_MENU_CACHE_KEYS).catch(() => {});
       try {
         const raw = await AsyncStorage.getItem(MENU_CACHE_KEY);
-        if (alive && raw) {
-          const { items, categories: cachedCategories, dataHash } = JSON.parse(raw) as MenuCache;
-          if (items?.length > 0) {
-            lastHashRef.current = dataHash ?? computeHash(items, cachedCategories);
-            setApiItems(items);
-            setCategories(buildCategories(items, cachedCategories));
-            setLoading(false); // show cached menu right away
+        if (raw && alive && lastHashRef.current === null) {
+          const cached = JSON.parse(raw);
+          if (Array.isArray(cached.items) && Array.isArray(cached.categories)) {
+            // Build before committing state so corrupt storage is ignored safely.
+            const restored = buildCategories(cached.items, cached.categories);
+            const hash = computeHash(cached.items, cached.categories);
+            if (lastHashRef.current === null) {
+              lastHashRef.current = hash;
+              setApiItems(cached.items);
+              setCategories(restored);
+              setLoading(false);
+            }
           }
         }
-      } catch { /* storage error — continue to network fetch */ }
-
-      // Step 2 — Always fetch fresh data in the background
+      } catch { /* Corrupt/unavailable storage: fetch the live menu instead. */ }
       if (!alive) return;
-      const online = await doFetch();
-      if (!alive) return;
-
-      if (!online) {
-        // Offline: keep whatever is displayed; schedule periodic retries
-        retryRef.current = setInterval(() => { doFetch(); }, OFFLINE_RETRY_MS);
-        // If cache was empty, show static bundle so menu is never blank
-        setCategories(prev => prev.length > 0 ? prev : staticFallback());
-      }
-
-      setLoading(false); // clear spinner in all cases
+      void doFetch();
     })();
 
     return () => {
       alive = false;
+      mounted.current = false;
       stopRetry();
     };
   // doFetch and stopRetry are stable (useCallback with no changing deps)
@@ -298,5 +301,5 @@ export function useMenu() {
     return () => sub.remove();
   }, [doFetch]);
 
-  return { categories, loading, refresh: doFetch, refreshIfStale: doFetch, apiItems, FOOD_IMAGES };
+  return { categories, loading, offline, refresh: doFetch, refreshIfStale: doFetch, apiItems, FOOD_IMAGES };
 }

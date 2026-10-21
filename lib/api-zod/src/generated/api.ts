@@ -154,6 +154,7 @@ export const MerchantStateResponse = zod.object({
       name: zod.string(),
       nameEn: zod.string(),
       icon: zod.string(),
+      imageUrl: zod.string().nullish(),
       isCustom: zod.boolean().optional(),
     }),
   ),
@@ -377,6 +378,7 @@ export const MerchantHistoryResponse = zod.object({
       name: zod.string(),
       nameEn: zod.string(),
       icon: zod.string(),
+      imageUrl: zod.string().nullish(),
       isCustom: zod.boolean().optional(),
     }),
   ),
@@ -977,6 +979,37 @@ export const GetRevenueRangeResponse = zod.object({
 });
 
 /**
+ * @summary Set or remove a category image using a dashboard session
+ */
+
+export const UpdateMenuCategoryImageParams = zod.object({
+  categoryId: zod.coerce.string().min(1),
+});
+
+export const updateMenuCategoryImageBodyImageUrlMax = 600000;
+
+export const updateMenuCategoryImageBodyImageUrlRegExp = new RegExp(
+  "^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/]+={0,2}$",
+);
+
+export const UpdateMenuCategoryImageBody = zod.object({
+  imageUrl: zod
+    .string()
+    .max(updateMenuCategoryImageBodyImageUrlMax)
+    .regex(updateMenuCategoryImageBodyImageUrlRegExp)
+    .nullable(),
+});
+
+export const UpdateMenuCategoryImageResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  nameEn: zod.string(),
+  icon: zod.string(),
+  imageUrl: zod.string().nullish(),
+  isCustom: zod.boolean().optional(),
+});
+
+/**
  * @summary Delete an empty menu category without deleting products
  */
 
@@ -989,6 +1022,7 @@ export const DeleteMenuCategoryResponseItem = zod.object({
   name: zod.string(),
   nameEn: zod.string(),
   icon: zod.string(),
+  imageUrl: zod.string().nullish(),
   isCustom: zod.boolean().optional(),
 });
 export const DeleteMenuCategoryResponse = zod.array(

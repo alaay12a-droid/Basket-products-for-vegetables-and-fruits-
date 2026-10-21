@@ -4,6 +4,7 @@ import { db, branchesTable, dashboardUserBranchesTable, dashboardUsersTable } fr
 import { count, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireDashboardAdmin, type DashboardActor } from "./dashboard-auth";
+import { isPostgresUniqueViolation } from "../lib/postgres-errors";
 
 const router = Router();
 const roleSchema = z.enum(["admin", "employee"]);
@@ -51,10 +52,6 @@ async function userResponse(user: Pick<typeof dashboardUsersTable.$inferSelect, 
   return { ...user, branches: memberships };
 }
 
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
-}
-
 function actorFromResponse(res: { locals: Record<string, unknown> }): DashboardActor {
   return res.locals.dashboardActor as DashboardActor;
 }
@@ -97,7 +94,7 @@ router.post("/dashboard/users", requireDashboardAdmin, async (req, res) => {
     });
     res.status(201).json(await userResponse(user));
   } catch (error) {
-    if (isUniqueViolation(error)) { res.status(409).json({ error: "اسم المستخدم مستخدم بالفعل" }); return; }
+    if (isPostgresUniqueViolation(error)) { res.status(409).json({ error: "اسم المستخدم مستخدم بالفعل" }); return; }
     if (error instanceof Error && error.message === "BRANCH_NOT_FOUND") { res.status(400).json({ error: "فرع غير موجود" }); return; }
     throw error;
   }
@@ -140,7 +137,7 @@ router.put("/dashboard/users/:id", requireDashboardAdmin, async (req, res) => {
     });
     res.json(await userResponse(user));
   } catch (error) {
-    if (isUniqueViolation(error)) { res.status(409).json({ error: "اسم المستخدم مستخدم بالفعل" }); return; }
+    if (isPostgresUniqueViolation(error)) { res.status(409).json({ error: "اسم المستخدم مستخدم بالفعل" }); return; }
     if (error instanceof Error && error.message === "BRANCH_NOT_FOUND") { res.status(400).json({ error: "فرع غير موجود" }); return; }
     if (error instanceof Error && error.message === "USER_NOT_FOUND") { res.status(404).json({ error: "المستخدم غير موجود" }); return; }
     if (error instanceof Error && error.message === "LAST_ADMIN") { res.status(400).json({ error: "لا يمكن تخفيض آخر مشرف" }); return; }

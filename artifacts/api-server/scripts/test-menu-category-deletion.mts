@@ -82,7 +82,7 @@ for (const method of ["get", "post", "put", "delete"]) {
 }
 const module = { exports: {} };
 const source = readFileSync(new URL("../src/routes/menu.ts", import.meta.url), "utf8");
-const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
+const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
 vm.runInNewContext(code, {
   module, exports: module.exports, Date, Set, Map,
   require: (name: string) => {
@@ -178,4 +178,41 @@ assert.equal(reverseRace[0].code, 201);
 assert.equal(reverseRace[1].code, 409);
 assert.equal(items.length, 1);
 assert.ok(locks > 0);
+// Image writes share the same lock and must never alter products or category order.
+const photo = "data:image/jpeg;base64,/9j/AA==";
+const image = (id: string, imageUrl: unknown, authenticated = true) =>
+  call("put", "/menu-categories/:categoryId", { categoryId: id }, { imageUrl }, authenticated);
+reset([fruit, herbs], [{ itemId: "apple", category: "fruit", price: 700 }]);
+assert.equal(routes.get("put /menu-categories/:categoryId")?.[0], auth);
+assert.equal((await image("fruit", photo, false)).code, 401);
+assert.equal(saves, 0);
+for (const invalid of ["https://untrusted.test/image.png", "data:image/svg+xml;base64,AAAA", "javascript:alert(1)", "", "data:image/jpeg;base64," + "a".repeat(600000), 2, undefined]) {
+  assert.equal((await image("fruit", invalid)).code, 400);
+}
+assert.equal(saves, 0);
+assert.equal((await image("missing", photo)).code, 404);
+const savedImage = await image("fruit", photo);
+assert.equal(savedImage.code, 200);
+assert.equal(savedImage.body.imageUrl, photo);
+let persisted = (await call("get", "/menu-categories")).body;
+assert.equal(persisted[0].imageUrl, photo);
+assert.equal(persisted[0].name, fruit.name);
+assert.equal(items[0].price, 700);
+const imageReorder = await call("put", "/menu-categories/reorder", {}, { ids: ["herbs", "fruit"] });
+assert.equal(imageReorder.code, 200, JSON.stringify({ error: imageReorder.body, persisted }));
+persisted = (await call("get", "/menu-categories")).body;
+assert.equal(persisted[1].imageUrl, photo, "Reordering must preserve images");
+const replacement = "data:image/png;base64,AAAA";
+assert.equal((await image("fruit", replacement)).body.imageUrl, replacement);
+assert.equal((await image("fruit", null)).body.imageUrl, null);
+assert.equal((await call("get", "/menu-categories")).body[1].imageUrl, null, "Removal must persist");
+const concurrent = await Promise.all([
+  image("fruit", photo),
+  call("put", "/menu-categories/reorder", {}, { ids: ["fruit", "herbs"] }),
+]);
+assert.ok(concurrent.every(r => r.code === 200));
+persisted = (await call("get", "/menu-categories")).body;
+assert.equal(persisted[0].id, "fruit");
+assert.equal(persisted[0].imageUrl, photo);
 console.log("Empty-category deletion checks passed: authenticated deletion, nonempty protection, persistence, default/final category deletion, stale writes, serialized category assignment, ordinary product edits. No real database used.");
+console.log("Category image checks passed: auth, validation, upload/replace/remove, persistence, reorder preservation, concurrent writes, unchanged products. No real database used.");

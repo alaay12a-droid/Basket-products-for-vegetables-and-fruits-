@@ -329,6 +329,36 @@ paths:
 
   # ── Menu ─────────────────────────────────────────────────────────────
   /menu-categories/{categoryId}:
+    put:
+      operationId: updateMenuCategoryImage
+      tags: [menu]
+      summary: Set or remove a category image using a dashboard session
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuCategoryImageInput"
+      responses:
+        "200":
+          description: Saved category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuCategory"
+        "400":
+          description: Invalid or oversized image
+        "401":
+          description: Dashboard session required
+        "404":
+          description: Category not found
     delete:
       operationId: deleteMenuCategory
       tags: [menu]
@@ -912,6 +942,15 @@ components:
           type: boolean
       required: [name, price, enabled]
 
+    MenuCategoryImageInput:
+      type: object
+      required: [imageUrl]
+      properties:
+        imageUrl:
+          type: [string, "null"]
+          maxLength: 600000
+          pattern: '^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$'
+
     MenuCategory:
       type: object
       required: [id, name, nameEn, icon]
@@ -924,6 +963,8 @@ components:
           type: string
         icon:
           type: string
+        imageUrl:
+          type: [string, "null"]
         isCustom:
           type: boolean
 

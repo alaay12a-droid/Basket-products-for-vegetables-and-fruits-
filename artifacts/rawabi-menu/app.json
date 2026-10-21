@@ -2,7 +2,7 @@
   "expo": {
     "name": "منتجات السلة للخضار والفواكه",
     "slug": "basket-products-",
-    "version": "1.4.3",
+    "version": "1.4.4",
     "orientation": "portrait",
     "icon": "./assets/images/sallat-alkhodar-logo.png",
     "scheme": "basket-products",
@@ -29,7 +29,7 @@
     "android": {
       "package": "com.basket.products",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 36,
+      "versionCode": 41,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/sallat-alkhodar-logo.png",
         "backgroundColor": "#123D24"

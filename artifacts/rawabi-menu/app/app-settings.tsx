@@ -200,17 +200,17 @@ function PreviewCard({ config }: { config: AppConfig }) {
             justifyContent: "center",
           }}
         >
-          <Text style={{ fontSize: 24 }}>🍗</Text>
+          <Text style={{ fontSize: 24 }}>🍎</Text>
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={{ color: colors.foreground, fontFamily: F.bold, fontSize: config.bodySize, textAlign: "right" }}>
-            مندي دجاج كامل
+            كيلو تفاح
           </Text>
           <Text style={{ color: colors.mutedForeground, fontFamily: F.regular, fontSize: config.captionSize, textAlign: "right" }}>
-            وجبة للأسرة • مع الرز
+            طازج ومختار بعناية
           </Text>
           <Text style={{ color: colors.gold, fontFamily: F.extra, fontSize: config.priceSize }}>
-            44 ر.س
+            7.50 ر.س
           </Text>
         </View>
       </View>

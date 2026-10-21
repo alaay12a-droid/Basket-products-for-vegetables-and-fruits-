@@ -2,6 +2,10 @@ import { db, pushTokensTable, appSettingsTable } from "@workspace/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { logger } from "./logger.js";
 import { getFCMMessaging } from "./firebase.js";
+import { randomUUID } from "node:crypto";
+import {
+  expoCredentialDiagnostic, logExpoReceipt, pushTokenRef, retryPendingExpoReceipts,
+} from "./expoPushDiagnostics.js";
 
 export interface PushMessage {
   title: string;
@@ -101,6 +105,7 @@ async function sendViaExpo(expoTokens: string[], msg: PushMessage): Promise<stri
 
   for (let i = 0; i < expoTokens.length; i += EXPO_CHUNK) {
     const chunk = expoTokens.slice(i, i + EXPO_CHUNK);
+    const sendId = randomUUID();
     const messages = chunk.map((to) => ({
       to,
       title: msg.title,
@@ -111,6 +116,8 @@ async function sendViaExpo(expoTokens: string[], msg: PushMessage): Promise<stri
       priority: "high",
     }));
 
+    logger.info({ sendId, tokenRefs: chunk.map(pushTokenRef), count: chunk.length },
+      "Expo Push API send started");
     try {
       const resp = await fetch(EXPO_PUSH_URL, {
         method: "POST",
@@ -119,7 +126,7 @@ async function sendViaExpo(expoTokens: string[], msg: PushMessage): Promise<stri
       });
 
       if (!resp.ok) {
-        logger.error({ status: resp.status }, "Expo Push API HTTP error");
+        logger.error({ sendId, status: resp.status }, "Expo Push API HTTP error");
         continue;
       }
 
@@ -132,6 +139,8 @@ async function sendViaExpo(expoTokens: string[], msg: PushMessage): Promise<stri
         const token = chunk[idx];
         const maskedToken = token?.slice(0, 30) ?? "unknown";
         const ticketLog = {
+          sendId,
+          tokenRef: pushTokenRef(token!),
           token: maskedToken,
           ticketId: ticket.id,
           status: ticket.status,
@@ -143,23 +152,16 @@ async function sendViaExpo(expoTokens: string[], msg: PushMessage): Promise<stri
           logger.info(ticketLog, "Expo push ticket accepted");
         } else if (ticket.status === "error") {
           const errCode = ticket.details?.error ?? "";
-          logger.error({ ...ticketLog, errCode }, "Expo push ticket rejected");
+          logger.error({ ...ticketLog, errCode, ...expoCredentialDiagnostic(ticket) }, "Expo push ticket rejected");
           if (errCode === "DeviceNotRegistered" && token) {
             invalid.push(token);
-          } else if (errCode === "InvalidCredentials") {
-            logger.error(
-              {
-                errCode,
-                hint: "Configure Android FCM V1 credentials for this EAS project; do not delete the device token",
-              },
-              "Expo FCM credentials are invalid or missing",
-            );
           }
         }
       });
 
       logger.info(
         {
+          sendId,
           ok: json.data.filter((t) => t.status === "ok").length,
           fail: json.data.filter((t) => t.status === "error").length,
           chunk: chunk.length,
@@ -175,13 +177,13 @@ async function sendViaExpo(expoTokens: string[], msg: PushMessage): Promise<stri
       // block the HTTP response.  The result appears in Render logs ~60 s later.
       if (receiptToToken.size > 0) {
         setTimeout(() => {
-          checkExpoReceipts(receiptToToken).catch((e) =>
-            logger.error({ err: e }, "Expo receipt check threw unexpectedly"),
+          checkExpoReceipts(receiptToToken, sendId).catch((e) =>
+            logger.error({ sendId, err: e }, "Expo receipt check threw unexpectedly"),
           );
         }, 60_000);
       }
     } catch (err) {
-      logger.error({ err }, "Expo push fetch error");
+      logger.error({ sendId, err }, "Expo push fetch error");
     }
   }
 
@@ -202,9 +204,18 @@ export function getLastReceiptResult(): ReceiptResult | null { return _lastRecei
 // ── Expo receipt checker ──────────────────────────────────────────────────────
 // Called 60 s after sending to read APNs delivery status from Expo's servers.
 // receiptToToken: Map<receiptId, maskedToken> — used to correlate failures with devices.
-async function checkExpoReceipts(receiptToToken: Map<string, string>): Promise<void> {
+async function checkExpoReceipts(receiptToToken: Map<string, string>, sendId: string): Promise<void> {
   if (receiptToToken.size === 0) return;
   const ids = [...receiptToToken.keys()];
+  const pending = new Map(receiptToToken);
+  const retryPending = () => {
+    if (pending.size === 0) return;
+    logger.info({ sendId, receiptIds: [...pending.keys()] }, "Expo receipts pending; scheduling read-only retries");
+    void retryPendingExpoReceipts(pending, sendId, logger, {
+      fetch,
+      wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    }).catch((error) => logger.error({ sendId, error }, "Expo pending receipt diagnostics failed"));
+  };
   try {
     const resp = await fetch("https://exp.host/--/api/v2/push/getReceipts", {
       method: "POST",
@@ -212,42 +223,32 @@ async function checkExpoReceipts(receiptToToken: Map<string, string>): Promise<v
       body: JSON.stringify({ ids }),
     });
     if (!resp.ok) {
-      logger.error({ status: resp.status }, "Expo receipts API HTTP error");
+      logger.error({ sendId, status: resp.status }, "Expo receipts API HTTP error");
+      retryPending();
       return;
     }
     const json = (await resp.json()) as { data: Record<string, ExpoTicket> };
-    const entries = Object.entries(json.data);
+    if (!json.data || typeof json.data !== "object" || Array.isArray(json.data)) {
+      throw new Error("Invalid Expo receipts response");
+    }
+    const entries = Object.entries(json.data).filter(([id, receipt]) =>
+      pending.has(id) && (receipt.status === "ok" || receipt.status === "error"));
     const staleExpoTokens: string[] = [];
     entries.forEach(([receiptId, receipt]) => {
       const token = receiptToToken.get(receiptId);
-      const maskedToken = token?.slice(0, 30) ?? "unknown";
-      if (receipt.status === "ok") {
-        logger.info(
-          { receiptId, status: "ok", token: maskedToken },
-          "Expo receipt — APNs/FCM confirmed delivery ✅",
-        );
-      } else {
+      pending.delete(receiptId);
+      logExpoReceipt(logger, sendId, receiptId, token!, receipt, 1);
+      if (receipt.status === "error") {
         if (receipt.details?.error === "DeviceNotRegistered" && token) {
           staleExpoTokens.push(token);
         }
-        // Log every field Expo returns so we can diagnose the exact APNs failure.
-        logger.error(
-          {
-            receiptId,
-            token: maskedToken,
-            status: receipt.status,
-            message: receipt.message,
-            apnsError: receipt.details?.error,
-            details: receipt.details,
-          },
-          "Expo receipt — delivery FAILED ❌",
-        );
       }
     });
+    retryPending();
     const okCount = entries.filter(([, r]) => r.status === "ok").length;
     const failCount = entries.filter(([, r]) => r.status === "error").length;
     logger.info(
-      { total: entries.length, ok: okCount, fail: failCount },
+      { sendId, total: entries.length, ok: okCount, fail: failCount, pending: pending.size },
       "Expo receipts check complete",
     );
 
@@ -278,7 +279,8 @@ async function checkExpoReceipts(receiptToToken: Map<string, string>): Promise<v
     }
     await removeStaleExpoTokens(staleExpoTokens);
   } catch (err) {
-    logger.error({ err }, "Expo receipts fetch error");
+    logger.error({ sendId, err }, "Expo receipts fetch error");
+    retryPending();
   }
 }
 

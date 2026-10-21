@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiPost } from "@/constants/api";
@@ -7,7 +8,50 @@ import { apiPost } from "@/constants/api";
 export const TOKEN_KEY = "@rawabi_customer_push_token";
 export const PUSH_DIAGNOSTICS_KEY = "@rawabi_push_diagnostics";
 
-export const PROJECT_ID = process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? "";
+export const PROJECT_ID = Platform.OS === "ios"
+  ? Constants.expoConfig?.extra?.eas?.projectId
+    ?? Constants.easConfig?.projectId
+    ?? process.env.EXPO_PUBLIC_EAS_PROJECT_ID
+    ?? ""
+  : process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? "";
+
+async function persistIosPushToken(token: string): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const result = await apiPost<{ ok: boolean; persisted: boolean }>("/push-tokens", {
+        token,
+        role: "customer",
+      });
+      if (result.ok !== true || result.persisted !== true) {
+        throw new Error("Push token persistence was not confirmed by the server");
+      }
+      // Do not expose the new token to checkout/heartbeat until persistence succeeds.
+      await AsyncStorage.setItem(TOKEN_KEY, token);
+      const diagnostic = {
+        step: "SUCCESS",
+        platform: "ios",
+        projectId: PROJECT_ID,
+        token: maskPushToken(token),
+        persisted: true,
+        attempt,
+      };
+      console.info("[iOS Push] Registration confirmed", diagnostic);
+      apiPost("/push-token-error", diagnostic).catch(() => {});
+      return;
+    } catch (error) {
+      lastError = error;
+      console.warn("[iOS Push] Registration not confirmed", {
+        attempt,
+        projectId: PROJECT_ID,
+        token: maskPushToken(token),
+        error: error instanceof Error ? error.message : String(error),
+      });
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+    }
+  }
+  throw lastError;
+}
 
 export type PushDiagnosticStepId = "permission" | "apns" | "expo" | "post";
 export type PushDiagnosticStatus = "idle" | "pending" | "success" | "error" | "skipped";
@@ -179,7 +223,7 @@ export async function runPushDiagnostics(
     const result = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
     expoToken = result.data;
     report.tokenPreview = maskPushToken(expoToken);
-    await AsyncStorage.setItem(TOKEN_KEY, expoToken);
+    if (Platform.OS !== "ios") await AsyncStorage.setItem(TOKEN_KEY, expoToken);
     await setStep("expo", "success", "تم استخراج Expo Push Token", `التوكن: ${report.tokenPreview ?? "غير متاح"}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -190,11 +234,15 @@ export async function runPushDiagnostics(
 
   await setStep("post", "pending", "جارٍ إرسال POST إلى خادم المشروع");
   try {
-    await apiPost("/push-tokens", {
-      token: expoToken,
-      fcmToken,
-      role: "customer",
-    });
+    if (Platform.OS === "ios") {
+      await persistIosPushToken(expoToken);
+    } else {
+      await apiPost("/push-tokens", {
+        token: expoToken,
+        fcmToken,
+        role: "customer",
+      });
+    }
     await setStep("post", "success", "تم قبول التوكن من خادم المشروع", "POST /api/push-tokens — HTTP 2xx");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -221,7 +269,10 @@ try {
 
 export async function registerCustomerNotifications(): Promise<string | null> {
   if (Platform.OS === "web") return null;
-  if (!PROJECT_ID) return null;
+  if (!PROJECT_ID) {
+    if (Platform.OS === "ios") console.error("[iOS Push] Missing EAS projectId");
+    return null;
+  }
 
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
@@ -239,7 +290,10 @@ export async function registerCustomerNotifications(): Promise<string | null> {
       });
       finalStatus = status;
     }
-    if (finalStatus !== "granted") return null;
+    if (finalStatus !== "granted") {
+      if (Platform.OS === "ios") console.warn("[iOS Push] Notifications permission not granted", { status: finalStatus });
+      return null;
+    }
 
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("order-status", {
@@ -282,6 +336,21 @@ export async function registerCustomerNotifications(): Promise<string | null> {
       }
       return null;
     }
+    if (Platform.OS === "ios") {
+      try {
+        await persistIosPushToken(expoToken);
+        return expoToken;
+      } catch (error) {
+        apiPost("/push-token-error", {
+          step: "POST /push-tokens",
+          error: error instanceof Error ? error.message : String(error),
+          token: maskPushToken(expoToken),
+          platform: "ios",
+          projectId: PROJECT_ID,
+        }).catch(() => {});
+        return null;
+      }
+    }
     await AsyncStorage.setItem(TOKEN_KEY, expoToken);
 
     // Get native FCM token for direct Firebase Admin SDK delivery.
@@ -316,17 +385,18 @@ export async function registerCustomerNotifications(): Promise<string | null> {
       }
     });
 
-    // iOS-only: log successful token retrieval so we can confirm the step
+    return expoToken;
+  } catch (error) {
     if (Platform.OS === "ios") {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[iOS Push] Registration failed", { error: message, projectId: PROJECT_ID });
       apiPost("/push-token-error", {
-        step: "SUCCESS",
-        token: expoToken.slice(0, 30),
+        step: "registration",
+        error: message,
         platform: "ios",
+        projectId: PROJECT_ID,
       }).catch(() => {});
     }
-
-    return expoToken;
-  } catch {
     return null;
   }
 }
@@ -336,9 +406,11 @@ export function useCustomerPushToken() {
 
   useEffect(() => {
     // Serve cached Expo token immediately so checkout screen has it right away
-    AsyncStorage.getItem(TOKEN_KEY).then((cached) => {
-      if (cached) setToken(cached);
-    });
+    if (Platform.OS !== "ios") {
+      AsyncStorage.getItem(TOKEN_KEY).then((cached) => {
+        if (cached) setToken(cached);
+      });
+    }
 
     // Always refresh in background on every launch:
     // - refreshes the FCM token stored in the DB (FCM tokens can rotate)

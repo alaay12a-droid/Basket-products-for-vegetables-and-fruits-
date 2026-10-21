@@ -12,6 +12,7 @@ import {
 } from "@workspace/db";
 import { and, desc, eq, isNull, or } from "drizzle-orm";
 import { sendPushToToken } from "../lib/sendPushNotification.js";
+import { pushTokenRef } from "../lib/expoPushDiagnostics.js";
 import { z } from "zod";
 
 const router = Router();
@@ -64,6 +65,7 @@ router.post("/push-tokens", async (req, res) => {
     req.log.info(
       {
         token: token.slice(0, 30),
+        tokenRef: pushTokenRef(token),
         role: stored?.role,
         driverId: stored?.driverId,
         hasFcmToken: !!stored?.fcmToken,
@@ -246,7 +248,24 @@ router.post("/account/delete", async (req, res) => {
 // Receives the error thrown by getExpoPushTokenAsync on the device and writes
 // it to the server log so it appears in Render's log stream.
 router.post("/push-token-error", (req, res) => {
-  req.log.error({ payload: req.body }, "iOS push-token registration failed on device");
+  // Log only known diagnostic fields. Never log a raw token or arbitrary payload.
+  const payload = req.body ?? {};
+  const diagnostic = {
+    step: payload.step,
+    platform: payload.platform,
+    projectId: payload.projectId,
+    persisted: payload.persisted,
+    attempt: payload.attempt,
+    attempts: payload.attempts,
+    error: typeof payload.error === "string" ? payload.error.slice(0, 800) : undefined,
+  };
+  if (payload.step === "SUCCESS" && payload.persisted === true) {
+    req.log.info(diagnostic, "iOS push-token registration confirmed by backend");
+  } else if (payload.step === "SUCCESS") {
+    req.log.info(diagnostic, "iOS push token obtained; persistence not confirmed by this app version");
+  } else {
+    req.log.error(diagnostic, "iOS push-token registration failed on device");
+  }
   res.json({ ok: true });
 });
 

@@ -19,6 +19,8 @@ import * as Haptics from "expo-haptics";
 import { useFocusEffect, useRouter } from "expo-router";
 
 import { useMenu } from "@/hooks/useMenu";
+import MenuLoadStatus from "@/components/MenuLoadStatus";
+import CategoryIcon from "@/components/CategoryIcon";
 import { useCartActions, useCartState } from "@/context/CartContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBranchStatus } from "@/hooks/useBranchStatus";
@@ -176,7 +178,7 @@ export default function ModernMenuScreen() {
   const router = useRouter();
   const { language } = useLanguage();
   const isEn = language === "en";
-  const { categories, loading, refreshIfStale } = useMenu();
+  const { categories, loading, offline, refreshIfStale } = useMenu();
   const { isOpen, message: closedMessage } = useBranchStatus();
   const info = useAppTexts();
 
@@ -296,6 +298,7 @@ export default function ModernMenuScreen() {
         </TouchableOpacity>
       </View>
 
+      {offline && categories.length > 0 && <MenuLoadStatus loading={false} isEn={isEn} onRetry={refreshIfStale} />}
       <View style={[styles.searchWrap, { backgroundColor: PAGE_BG }]}>
         <View style={[styles.searchBox, { backgroundColor: CARD_BG, borderColor: BORDER, flexDirection: isEn ? "row" : "row-reverse" }]}>
           <Feather name="search" size={18} color={TEXT_SEC} />
@@ -369,7 +372,7 @@ export default function ModernMenuScreen() {
                               { backgroundColor: active ? "#0F3D2E" : catColor.bg },
                             ]}
                           >
-                            <Text style={styles.catEmoji}>{cat.icon}</Text>
+                            <CategoryIcon imageUrl={cat.imageUrl} icon={cat.icon} />
                           </View>
                           <Text
                             style={[
@@ -402,6 +405,7 @@ export default function ModernMenuScreen() {
             </View>
           }
           ListEmptyComponent={
+            loading || (offline && categories.length === 0) ? <MenuLoadStatus loading={loading} isEn={isEn} onRetry={refreshIfStale} /> :
             <View style={{ padding: 40, alignItems: "center", marginTop: 40 }}>
               <Feather name="search" size={48} color={BORDER} style={{ marginBottom: 16 }} />
               <Text style={{ color: TEXT_SEC, fontFamily: F.semi, fontSize: 16 }}>

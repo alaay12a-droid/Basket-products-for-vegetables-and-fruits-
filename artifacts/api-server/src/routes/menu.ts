@@ -27,6 +27,7 @@ type MenuCategoryConfig = {
   name: string;
   nameEn: string;
   icon: string;
+  imageUrl?: string | null;
   isCustom?: boolean;
 };
 
@@ -63,6 +64,7 @@ function normalizeMenuCategories(value: unknown): MenuCategoryConfig[] {
         ? category.nameEn.trim()
         : category.name!.trim(),
       icon: typeof category.icon === "string" && category.icon.trim() ? category.icon : "🍽️",
+      imageUrl: typeof category.imageUrl === "string" ? category.imageUrl : null,
       ...(defaultCategory ? {} : { isCustom: true }),
     });
     seen.add(category.id!);
@@ -382,6 +384,32 @@ router.put("/menu-categories/reorder", async (req, res) => {
     return;
   }
   res.json(reordered);
+});
+
+const categoryImageSchema = z.object({
+  imageUrl: z.string().max(600000)
+    .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/).nullable(),
+});
+
+router.put("/menu-categories/:categoryId", requireDashboardUser, async (req, res) => {
+  const parsed = categoryImageSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "اختر صورة JPEG أو PNG أو WebP بحجم مناسب" });
+    return;
+  }
+  const saved = await withMenuCategoryLock(async tx => {
+    const categories = await getMenuCategories(tx);
+    const category = categories.find(category => category.id === req.params.categoryId);
+    if (!category) return null;
+    const updated = { ...category, imageUrl: parsed.data.imageUrl };
+    await saveMenuCategories(categories.map(current => current.id === updated.id ? updated : current), tx);
+    return updated;
+  });
+  if (!saved) {
+    res.status(404).json({ error: "القسم غير موجود" });
+    return;
+  }
+  res.json(saved);
 });
 
 router.delete("/menu-categories/:categoryId", requireDashboardUser, async (req, res) => {

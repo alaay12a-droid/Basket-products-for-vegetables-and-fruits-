@@ -308,6 +308,8 @@ export interface MenuCategory {
   name: string;
   nameEn: string;
   icon: string;
+  /** @nullable */
+  imageUrl?: string | null;
   isCustom?: boolean;
 }
 
@@ -440,6 +442,15 @@ export const MenuTemplateSettingMenuTemplate = {
 
 export interface MenuTemplateSetting {
   menuTemplate: MenuTemplateSettingMenuTemplate;
+}
+
+export interface MenuCategoryImageInput {
+  /**
+   * @maxLength 600000
+   * @nullable
+   * @pattern ^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$
+   */
+  imageUrl: string | null;
 }
 
 export interface MenuItemUpdate {

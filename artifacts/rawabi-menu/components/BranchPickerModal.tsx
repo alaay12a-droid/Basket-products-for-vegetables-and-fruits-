@@ -1,7 +1,7 @@
 /**
  * BranchPickerModal
  * Full-screen modal shown when the customer picks "استلام".
- * Displays an interactive map (react-native-maps) centred on the selected
+ * Displays an interactive map centred on the selected
  * branch, followed by a sorted branch list and a confirm button.
  */
 import React, { useMemo, useRef, useEffect } from "react";
@@ -18,8 +18,9 @@ import {
   Pressable,
   StatusBar,
 } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AndroidBranchMap from "./AndroidBranchMap";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 export interface PickerBranch {
@@ -147,11 +148,25 @@ export default function BranchPickerModal({
         {/* ── Map ─────────────────────────────────────────────────────────── */}
         {hasBranchCoords ? (
           <View style={[styles.mapContainer, { height: MAP_H }]}>
+            {Platform.OS === "android" ? (
+              visible && (
+                <AndroidBranchMap
+                  branches={sorted}
+                  selected={selected}
+                  userLat={userLat}
+                  userLng={userLng}
+                  onSelect={onSelect}
+                  isEn={isEn}
+                  textColor={colors.mutedForeground}
+                  backgroundColor={colors.card}
+                  fontFamily={F.regular}
+                />
+              )
+            ) : (
             <MapView
               ref={mapRef}
               style={StyleSheet.absoluteFill}
               initialRegion={mapRegion}
-              provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
               showsUserLocation={!!(userLat && userLng)}
               showsMyLocationButton={false}
             >
@@ -168,6 +183,7 @@ export default function BranchPickerModal({
                 ) : null,
               )}
             </MapView>
+            )}
 
             {/* Close button overlay */}
             <Pressable
